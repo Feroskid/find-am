@@ -12,9 +12,9 @@ export const Route = createFileRoute("/search")({
     page: s.page ? Number(s.page) : 1,
     lucky: s.lucky ? Number(s.lucky) : undefined,
   }),
-  head: ({ match }) => ({
+  head: () => ({
     meta: [
-      { title: `${(match.search as SearchParams).q || "Search"} — Find-Am` },
+      { title: "Search — Find-Am" },
       { name: "description", content: "Job search results on Find-Am." },
     ],
   }),
