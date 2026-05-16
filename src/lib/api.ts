@@ -1,4 +1,6 @@
-export const API_BASE = "http://167.71.4.178:8000";
+// Routed through our same-origin server proxy (src/routes/api/search.ts)
+// to avoid mixed-content blocks when the preview is served over HTTPS.
+export const API_BASE = "";
 
 export interface JobResult {
   job_id: number;
@@ -27,7 +29,7 @@ export async function searchJobs(params: {
   location?: string;
   job_type?: string;
 }): Promise<SearchResponse> {
-  const url = new URL(`${API_BASE}/search`);
+  const url = new URL("/api/search", typeof window !== "undefined" ? window.location.origin : "http://localhost");
   url.searchParams.set("q", params.q);
   url.searchParams.set("page", String(params.page ?? 1));
   url.searchParams.set("limit", String(params.limit ?? 10));
