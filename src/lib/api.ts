@@ -1,6 +1,8 @@
-// Routed through our same-origin server proxy (src/routes/api/search.ts)
-// to avoid mixed-content blocks when the preview is served over HTTPS.
-export const API_BASE = "";
+import { searchJobsServer, type SearchJobsInput } from "./search.functions";
+
+// Search is executed through a TanStack server function so the browser never
+// calls the HTTP backend or the preview-only /api/public route directly.
+export const API_BASE = "server-function";
 
 export interface JobResult {
   job_id: number;
@@ -22,20 +24,14 @@ export interface SearchResponse {
   results: JobResult[];
 }
 
-export async function searchJobs(params: {
-  q: string;
-  page?: number;
-  limit?: number;
-  location?: string;
-  job_type?: string;
-}): Promise<SearchResponse> {
-  const url = new URL("/api/public/search", typeof window !== "undefined" ? window.location.origin : "http://localhost");
-  url.searchParams.set("q", params.q);
-  url.searchParams.set("page", String(params.page ?? 1));
-  url.searchParams.set("limit", String(params.limit ?? 10));
-  if (params.location) url.searchParams.set("location", params.location);
-  if (params.job_type) url.searchParams.set("job_type", params.job_type);
-  const res = await fetch(url.toString());
-  if (!res.ok) throw new Error(`Search failed: ${res.status}`);
-  return res.json();
+export async function searchJobs(params: SearchJobsInput): Promise<SearchResponse> {
+  return searchJobsServer({
+    data: {
+      q: params.q,
+      page: params.page ?? 1,
+      limit: params.limit ?? 10,
+      location: params.location,
+      job_type: params.job_type,
+    },
+  });
 }
