@@ -29,7 +29,7 @@ export async function searchJobs(params: {
   location?: string;
   job_type?: string;
 }): Promise<SearchResponse> {
-  const url = new URL("/api/search", typeof window !== "undefined" ? window.location.origin : "http://localhost");
+  const url = new URL("/api/public/search", typeof window !== "undefined" ? window.location.origin : "http://localhost");
   url.searchParams.set("q", params.q);
   url.searchParams.set("page", String(params.page ?? 1));
   url.searchParams.set("limit", String(params.limit ?? 10));
