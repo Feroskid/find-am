@@ -3,7 +3,7 @@ import { z } from "zod";
 
 import type { SearchResponse } from "./api";
 
-const BACKEND_SEARCH_URL = "http://167.71.4.178:8000/search";
+const BACKEND_SEARCH_URL = "https://api.find-am.com/search";
 
 const SearchInputSchema = z.object({
   q: z.string().trim().min(1).max(200),
