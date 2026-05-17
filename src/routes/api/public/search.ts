@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 
 const BACKEND = "http://167.71.4.178:8000";
 
-export const Route = createFileRoute("/api/search")({
+export const Route = createFileRoute("/api/public/search")({
   server: {
     handlers: {
       GET: async ({ request }) => {
