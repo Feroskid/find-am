@@ -133,12 +133,36 @@
   --sidebar-ring: oklch(0.551 0.027 264.364);
 }
 
+/* Auto follow user's system color-scheme preference */
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) {
+    --background: oklch(0.16 0.02 285);
+    --foreground: oklch(0.97 0.01 285);
+    --card: oklch(0.21 0.02 285);
+    --card-foreground: oklch(0.97 0.01 285);
+    --popover: oklch(0.21 0.02 285);
+    --popover-foreground: oklch(0.97 0.01 285);
+    --primary: oklch(0.72 0.18 295);
+    --primary-foreground: oklch(0.14 0.02 285);
+    --primary-soft: oklch(0.28 0.06 295);
+    --secondary: oklch(0.24 0.02 285);
+    --secondary-foreground: oklch(0.97 0.01 285);
+    --muted: oklch(0.24 0.02 285);
+    --muted-foreground: oklch(0.7 0.02 285);
+    --accent: oklch(0.28 0.06 295);
+    --accent-foreground: oklch(0.92 0.05 295);
+    --border: oklch(1 0 0 / 12%);
+    --input: oklch(1 0 0 / 15%);
+    --ring: oklch(0.55 0.1 295);
+  }
+}
+
 @layer base {
   * {
     border-color: var(--color-border);
   }
 
-  body {
+  html, body {
     background-color: var(--color-background);
     color: var(--color-foreground);
   }

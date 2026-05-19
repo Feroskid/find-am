@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { Search, MapPin, Briefcase, ExternalLink, ChevronLeft, ChevronRight } from "lucide-react";
 import { searchJobs, type SearchResponse } from "@/lib/api";
+import { FindAmLogo } from "@/components/FindAmLogo";
 
 type SearchParams = { q: string; page?: number; lucky?: number };
 
@@ -58,7 +59,7 @@ function SearchPage() {
       {/* Header */}
       <header className="sticky top-0 z-10 bg-background/95 backdrop-blur border-b border-border">
         <div className="flex items-center gap-6 px-6 py-4">
-          <Link to="/" className="text-2xl font-extrabold text-primary shrink-0">Find-Am</Link>
+          <Link to="/" className="shrink-0"><FindAmLogo size="text-xl sm:text-2xl" /></Link>
           <form onSubmit={submit} className="flex-1 max-w-2xl">
             <div className="flex items-center gap-3 px-4 py-2.5 rounded-full border border-border bg-card shadow-sm hover:shadow transition-shadow">
               <Search className="h-4 w-4 text-muted-foreground" />
@@ -103,9 +104,9 @@ function SearchPage() {
           <div className="text-sm text-muted-foreground">No jobs found for "{q}". Try a different keyword.</div>
         )}
 
-        <ol className="space-y-7">
+        <ol className="divide-y divide-border">
           {data?.results.map((job) => (
-            <li key={job.job_id} className="group">
+            <li key={job.job_id} className="group py-5 first:pt-0">
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
                 <span className="truncate">{job.company}</span>
                 <span>›</span>
