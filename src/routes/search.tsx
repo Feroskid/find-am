@@ -1,17 +1,28 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
-import { Search, MapPin, Briefcase, ExternalLink, ChevronLeft, ChevronRight } from "lucide-react";
-import { searchJobs, type SearchResponse } from "@/lib/api";
+import { useEffect, useMemo, useState } from "react";
+import {
+  Search,
+  MapPin,
+  Briefcase,
+  ExternalLink,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
+import { searchJobs, type SearchResponse, type JobResult } from "@/lib/api";
 import { FindAmLogo } from "@/components/FindAmLogo";
+import { LanguageMenu } from "@/components/LanguageMenu";
+import { VoiceSearchButton } from "@/components/VoiceSearchButton";
+import { useI18n } from "@/lib/i18n";
+import { track } from "@/lib/track";
+import bgMask from "@/assets/bg-mask.jpeg";
 
-type SearchParams = { q: string; page?: number; lucky?: number };
+type SearchParams = { q: string; page?: number };
 
 export const Route = createFileRoute("/search")({
   validateSearch: (s: Record<string, unknown>): SearchParams => ({
     q: String(s.q ?? ""),
     page: s.page ? Number(s.page) : 1,
-    lucky: s.lucky ? Number(s.lucky) : undefined,
   }),
   head: () => ({
     meta: [
@@ -25,9 +36,11 @@ export const Route = createFileRoute("/search")({
 const LIMIT = 10;
 
 function SearchPage() {
-  const { q, page = 1, lucky } = Route.useSearch();
+  const { q, page = 1 } = Route.useSearch();
   const navigate = useNavigate();
+  const { t } = useI18n();
   const [input, setInput] = useState(q);
+  const showBg = useMemo(() => Math.random() < 0.5, []);
 
   useEffect(() => setInput(q), [q]);
 
@@ -37,48 +50,86 @@ function SearchPage() {
     enabled: !!q,
   });
 
-  // I'm Feeling Lucky: redirect to first result
   useEffect(() => {
-    if (lucky && data?.results?.[0]?.website_url) {
-      window.location.href = data.results[0].website_url;
-    }
-  }, [lucky, data]);
+    if (q) track({ action_type: "search_view", search_query: q });
+  }, [q, page]);
 
-  const submit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const next = input.trim();
+  const submit = (text: string) => {
+    const next = text.trim();
     if (!next) return;
+    track({ action_type: "search", search_query: next });
     navigate({ to: "/search", search: { q: next, page: 1 } });
   };
 
   const totalPages = data ? Math.max(1, Math.ceil(data.total / LIMIT)) : 1;
-  const goto = (p: number) => navigate({ to: "/search", search: { q, page: p } });
+  const goto = (p: number) => {
+    track({ action_type: "pagination", search_query: q, time_spent: p });
+    navigate({ to: "/search", search: { q, page: p } });
+  };
+
+  const onResultClick = (job: JobResult) => {
+    track({
+      action_type: "result_click",
+      search_query: q,
+      listing_id: job.job_id,
+    });
+  };
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
+    <div className="relative min-h-screen bg-background overflow-hidden">
+      {showBg && (
+        <div
+          aria-hidden
+          className="pointer-events-none fixed inset-0 bg-center bg-cover opacity-[0.03] dark:opacity-[0.045]"
+          style={{ backgroundImage: `url(${bgMask})` }}
+        />
+      )}
+
       <header className="sticky top-0 z-10 bg-background/95 backdrop-blur border-b border-border">
-        <div className="flex items-center gap-6 px-6 py-4">
-          <Link to="/" className="shrink-0"><FindAmLogo size="text-xl sm:text-2xl" /></Link>
-          <form onSubmit={submit} className="flex-1 max-w-2xl">
-            <div className="flex items-center gap-3 px-4 py-2.5 rounded-full border border-border bg-card shadow-sm hover:shadow transition-shadow">
-              <Search className="h-4 w-4 text-muted-foreground" />
+        <div className="flex items-center gap-4 px-4 sm:px-6 py-4">
+          <Link to="/" className="shrink-0">
+            <FindAmLogo size="text-xl sm:text-2xl" />
+          </Link>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              submit(input);
+            }}
+            className="flex-1 max-w-2xl"
+          >
+            <div className="flex items-center gap-2 px-3 py-2 rounded-full border border-border bg-card shadow-sm hover:shadow transition-shadow">
+              <Search className="h-4 w-4 text-muted-foreground shrink-0" />
               <input
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder="Search jobs…"
-                className="flex-1 bg-transparent outline-none text-sm"
+                placeholder={t.searchShort}
+                className="flex-1 bg-transparent outline-none text-sm min-w-0"
               />
-              <button type="submit" className="text-primary text-sm font-medium">Go</button>
+              <VoiceSearchButton
+                onResult={(text) => {
+                  setInput(text);
+                  submit(text);
+                }}
+              />
+              <button type="submit" className="text-primary text-sm font-medium px-2">
+                {t.go}
+              </button>
             </div>
           </form>
+          <div className="hidden sm:block">
+            <LanguageMenu />
+          </div>
         </div>
       </header>
 
-      <main className="max-w-3xl px-6 py-6 mx-0">
+      <main className="relative max-w-3xl px-4 sm:px-6 py-6 mx-0">
         {q && data && (
           <p className="text-xs text-muted-foreground mb-4">
-            About <span className="font-medium text-foreground">{data.total.toLocaleString()}</span> results · page {data.page} of {totalPages}
+            {t.about}{" "}
+            <span className="font-medium text-foreground">
+              {data.total.toLocaleString()}
+            </span>{" "}
+            {t.results} · {t.page} {data.page} {t.of} {totalPages}
           </p>
         )}
 
@@ -96,12 +147,14 @@ function SearchPage() {
 
         {isError && (
           <div className="p-4 rounded-lg border border-destructive/30 bg-destructive/5 text-sm">
-            Couldn't load results: {(error as Error).message}
+            {t.loadError}: {(error as Error).message}
           </div>
         )}
 
         {!isLoading && data && data.results.length === 0 && (
-          <div className="text-sm text-muted-foreground">No jobs found for "{q}". Try a different keyword.</div>
+          <div className="text-sm text-muted-foreground">
+            {t.noResults} "{q}".
+          </div>
         )}
 
         <ol className="divide-y divide-border">
@@ -116,23 +169,41 @@ function SearchPage() {
                 href={job.website_url}
                 target="_blank"
                 rel="noopener noreferrer"
+                onClick={() => onResultClick(job)}
                 className="block mt-1 text-xl text-primary group-hover:underline font-medium"
               >
                 {job.job_title}
                 <ExternalLink className="inline h-3.5 w-3.5 ml-1 opacity-60" />
               </a>
               <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
-                <span className="inline-flex items-center gap-1"><Briefcase className="h-3 w-3" />{job.company}</span>
+                <span className="inline-flex items-center gap-1">
+                  <Briefcase className="h-3 w-3" />
+                  {job.company}
+                </span>
                 {job.location && job.location !== "Not found" && (
-                  <span className="inline-flex items-center gap-1"><MapPin className="h-3 w-3" />{job.location}</span>
+                  <span className="inline-flex items-center gap-1">
+                    <MapPin className="h-3 w-3" />
+                    {job.location}
+                  </span>
                 )}
-                <span>Posted {job.posting_date}</span>
-                {job.tag && <span className="px-1.5 py-0.5 rounded bg-primary-soft text-primary font-medium">{job.tag}</span>}
+                <span>
+                  {t.posted} {job.posting_date}
+                </span>
+                {job.tag && (
+                  <span className="px-1.5 py-0.5 rounded bg-primary-soft text-primary font-medium">
+                    {job.tag}
+                  </span>
+                )}
               </div>
               {job.keyword_tags?.length > 0 && (
                 <div className="mt-2 flex flex-wrap gap-1.5">
-                  {job.keyword_tags.slice(0, 6).map((t) => (
-                    <span key={t} className="text-[11px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground">{t}</span>
+                  {job.keyword_tags.slice(0, 6).map((tag) => (
+                    <span
+                      key={tag}
+                      className="text-[11px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground"
+                    >
+                      {tag}
+                    </span>
                   ))}
                 </div>
               )}
@@ -148,7 +219,15 @@ function SearchPage() {
   );
 }
 
-function Pagination({ page, totalPages, onGo }: { page: number; totalPages: number; onGo: (p: number) => void }) {
+function Pagination({
+  page,
+  totalPages,
+  onGo,
+}: {
+  page: number;
+  totalPages: number;
+  onGo: (p: number) => void;
+}) {
   const window = 5;
   const start = Math.max(1, page - Math.floor(window / 2));
   const end = Math.min(totalPages, start + window - 1);
@@ -165,7 +244,9 @@ function Pagination({ page, totalPages, onGo }: { page: number; totalPages: numb
       </button>
       {start > 1 && (
         <>
-          <button onClick={() => onGo(1)} className="px-3 py-1.5 rounded-md hover:bg-muted">1</button>
+          <button onClick={() => onGo(1)} className="px-3 py-1.5 rounded-md hover:bg-muted">
+            1
+          </button>
           {start > 2 && <span className="px-1 text-muted-foreground">…</span>}
         </>
       )}
@@ -173,7 +254,11 @@ function Pagination({ page, totalPages, onGo }: { page: number; totalPages: numb
         <button
           key={p}
           onClick={() => onGo(p)}
-          className={`px-3 py-1.5 rounded-md font-medium ${p === page ? "bg-primary text-primary-foreground" : "hover:bg-muted text-foreground"}`}
+          className={`px-3 py-1.5 rounded-md font-medium ${
+            p === page
+              ? "bg-primary text-primary-foreground"
+              : "hover:bg-muted text-foreground"
+          }`}
         >
           {p}
         </button>
@@ -181,7 +266,12 @@ function Pagination({ page, totalPages, onGo }: { page: number; totalPages: numb
       {end < totalPages && (
         <>
           {end < totalPages - 1 && <span className="px-1 text-muted-foreground">…</span>}
-          <button onClick={() => onGo(totalPages)} className="px-3 py-1.5 rounded-md hover:bg-muted">{totalPages}</button>
+          <button
+            onClick={() => onGo(totalPages)}
+            className="px-3 py-1.5 rounded-md hover:bg-muted"
+          >
+            {totalPages}
+          </button>
         </>
       )}
       <button
