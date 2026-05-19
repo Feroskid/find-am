@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { Search, ScanLine, TrendingUp } from "lucide-react";
+import { Search, ScanLine, TrendingUp, Briefcase } from "lucide-react";
 import { FindAmLogo } from "@/components/FindAmLogo";
 import { LanguageMenu } from "@/components/LanguageMenu";
 import { VoiceSearchButton } from "@/components/VoiceSearchButton";
@@ -65,7 +65,16 @@ function Home() {
           <Link to="/" className="shrink-0">
             <FindAmLogo size="text-xl sm:text-2xl" />
           </Link>
-          <div className="flex-1" />
+          <div className="flex-1 flex justify-center">
+            <div className="inline-flex items-center gap-1 rounded-full bg-foreground text-background p-0.5 sm:p-1 shadow-lg">
+              <button className="inline-flex items-center gap-1.5 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full bg-primary text-primary-foreground text-xs sm:text-sm font-medium">
+                <Search className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> {t.search}
+              </button>
+              <button className="inline-flex items-center gap-1.5 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full text-xs sm:text-sm font-medium opacity-80 hover:opacity-100">
+                <Briefcase className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> {t.jobs}
+              </button>
+            </div>
+          </div>
           <LanguageMenu />
         </header>
 
