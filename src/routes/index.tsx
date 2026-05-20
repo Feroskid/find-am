@@ -22,14 +22,63 @@ export const Route = createFileRoute("/")({
   component: Home,
 });
 
-const TRENDING = [
+const TRENDING_POOL = [
   "Software Developer",
   "Accountant",
   "Customer Service",
   "Sales Executive",
   "Graphic Designer",
   "Remote Marketing",
+  "Frontend Engineer",
+  "Backend Engineer",
+  "Product Manager",
+  "Data Analyst",
+  "UI/UX Designer",
+  "Content Writer",
+  "Social Media Manager",
+  "Driver",
+  "Teacher",
+  "Nurse",
+  "Pharmacist",
+  "Electrician",
+  "Plumber",
+  "Chef",
+  "Waiter",
+  "Security Officer",
+  "Cleaner",
+  "Receptionist",
+  "Cashier",
+  "Warehouse Operator",
+  "Logistics Officer",
+  "Procurement Officer",
+  "HR Manager",
+  "Bank Teller",
+  "Loan Officer",
+  "Civil Engineer",
+  "Mechanical Engineer",
+  "Architect",
+  "Real Estate Agent",
+  "Digital Marketer",
+  "SEO Specialist",
+  "Video Editor",
+  "Photographer",
+  "Mobile App Developer",
+  "DevOps Engineer",
+  "Sales Representative",
+  "Brand Manager",
+  "Tailor",
+  "Makeup Artist",
+  "Barber",
+  "Carpenter",
+  "Welder",
+  "Delivery Rider",
+  "Call Center Agent",
 ];
+
+function pickTrending() {
+  const shuffled = [...TRENDING_POOL].sort(() => Math.random() - 0.5);
+  return shuffled.slice(0, 6);
+}
 
 function Home() {
   const navigate = useNavigate();
