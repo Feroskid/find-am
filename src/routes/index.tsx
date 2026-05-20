@@ -22,14 +22,63 @@ export const Route = createFileRoute("/")({
   component: Home,
 });
 
-const TRENDING = [
+const TRENDING_POOL = [
   "Software Developer",
   "Accountant",
   "Customer Service",
   "Sales Executive",
   "Graphic Designer",
   "Remote Marketing",
+  "Frontend Engineer",
+  "Backend Engineer",
+  "Product Manager",
+  "Data Analyst",
+  "UI/UX Designer",
+  "Content Writer",
+  "Social Media Manager",
+  "Driver",
+  "Teacher",
+  "Nurse",
+  "Pharmacist",
+  "Electrician",
+  "Plumber",
+  "Chef",
+  "Waiter",
+  "Security Officer",
+  "Cleaner",
+  "Receptionist",
+  "Cashier",
+  "Warehouse Operator",
+  "Logistics Officer",
+  "Procurement Officer",
+  "HR Manager",
+  "Bank Teller",
+  "Loan Officer",
+  "Civil Engineer",
+  "Mechanical Engineer",
+  "Architect",
+  "Real Estate Agent",
+  "Digital Marketer",
+  "SEO Specialist",
+  "Video Editor",
+  "Photographer",
+  "Mobile App Developer",
+  "DevOps Engineer",
+  "Sales Representative",
+  "Brand Manager",
+  "Tailor",
+  "Makeup Artist",
+  "Barber",
+  "Carpenter",
+  "Welder",
+  "Delivery Rider",
+  "Call Center Agent",
 ];
+
+function pickTrending() {
+  const shuffled = [...TRENDING_POOL].sort(() => Math.random() - 0.5);
+  return shuffled.slice(0, 6);
+}
 
 function Home() {
   const navigate = useNavigate();
@@ -38,6 +87,7 @@ function Home() {
 
   // Show background ~50% of the time, randomly per visit
   const showBg = useMemo(() => Math.random() < 0.5, []);
+  const trending = useMemo(() => pickTrending(), []);
 
   useEffect(() => {
     track({ action_type: "page_view", search_query: "home" });
@@ -55,8 +105,8 @@ function Home() {
       {showBg && (
         <div
           aria-hidden
-          className="pointer-events-none fixed inset-0 bg-center bg-cover opacity-[0.035] dark:opacity-[0.05]"
-          style={{ backgroundImage: `url(${bgMask})` }}
+          className="pointer-events-none fixed inset-0 bg-repeat opacity-[0.06] dark:opacity-[0.08] dark:invert"
+          style={{ backgroundImage: `url(${bgMask})`, backgroundSize: "520px auto" }}
         />
       )}
 
@@ -116,7 +166,7 @@ function Home() {
               <TrendingUp className="h-4 w-4 text-primary" /> {t.trending}
             </div>
             <ul className="divide-y divide-border rounded-xl border border-border bg-card/70 backdrop-blur overflow-hidden">
-              {TRENDING.map((item) => (
+              {trending.map((item: string) => (
                 <li key={item}>
                   <Link
                     to="/search"
