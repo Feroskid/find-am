@@ -105,8 +105,8 @@ function Home() {
       {showBg && (
         <div
           aria-hidden
-          className="pointer-events-none fixed inset-0 bg-center bg-cover opacity-[0.035] dark:opacity-[0.05]"
-          style={{ backgroundImage: `url(${bgMask})` }}
+          className="pointer-events-none fixed inset-0 bg-repeat opacity-[0.06] dark:opacity-[0.08] dark:invert"
+          style={{ backgroundImage: `url(${bgMask})`, backgroundSize: "520px auto" }}
         />
       )}
 
