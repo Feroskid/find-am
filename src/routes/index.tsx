@@ -87,6 +87,7 @@ function Home() {
 
   // Show background ~50% of the time, randomly per visit
   const showBg = useMemo(() => Math.random() < 0.5, []);
+  const trending = useMemo(() => pickTrending(), []);
 
   useEffect(() => {
     track({ action_type: "page_view", search_query: "home" });
