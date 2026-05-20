@@ -166,7 +166,7 @@ function Home() {
               <TrendingUp className="h-4 w-4 text-primary" /> {t.trending}
             </div>
             <ul className="divide-y divide-border rounded-xl border border-border bg-card/70 backdrop-blur overflow-hidden">
-              {TRENDING.map((item) => (
+              {trending.map((item: string) => (
                 <li key={item}>
                   <Link
                     to="/search"
