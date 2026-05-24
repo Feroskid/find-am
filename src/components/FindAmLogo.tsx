@@ -1,36 +1,35 @@
 import { cn } from "@/lib/utils";
+import logoUrl from "@/assets/findam-logo.png";
 
-// Google-style multicolor wordmark for Find-Am
-// F-i-n-d - A-m  using brand-ish primaries
-const COLORS = [
-  "#4285F4", // F - blue
-  "#EA4335", // i - red
-  "#FBBC05", // n - yellow
-  "#4285F4", // d - blue
-  "#34A853", // A - green
-  "#EA4335", // m - red
-];
-
-export function FindAmLogo({ className, size = "text-2xl" }: { className?: string; size?: string }) {
-  const letters = ["F", "i", "n", "d", "-", "A", "m"];
-  let ci = 0;
+// Find-Am wordmark + binoculars logo. Transparent PNG so it works on both
+// light and dark backgrounds.
+export function FindAmLogo({
+  className,
+  size = "text-2xl",
+}: {
+  className?: string;
+  size?: string;
+}) {
+  // Map the legacy `size` text-* class to a pixel height so the wordmark logo
+  // scales like the previous typographic logo.
+  const heightClass = sizeToHeight(size);
   return (
-    <span className={cn("font-extrabold tracking-tight select-none", size, className)}>
-      {letters.map((l, i) => {
-        if (l === "-") {
-          return (
-            <span key={i} className="text-foreground/70">
-              {l}
-            </span>
-          );
-        }
-        const color = COLORS[ci++ % COLORS.length];
-        return (
-          <span key={i} style={{ color }}>
-            {l}
-          </span>
-        );
-      })}
-    </span>
+    <img
+      src={logoUrl}
+      alt="Find-Am"
+      className={cn("w-auto select-none", heightClass, className)}
+      draggable={false}
+    />
   );
+}
+
+function sizeToHeight(size: string): string {
+  if (size.includes("7xl")) return "h-24 md:h-28";
+  if (size.includes("6xl")) return "h-20 md:h-24";
+  if (size.includes("5xl")) return "h-16";
+  if (size.includes("4xl")) return "h-14";
+  if (size.includes("3xl")) return "h-12";
+  if (size.includes("2xl")) return "h-9";
+  if (size.includes("xl")) return "h-8";
+  return "h-7";
 }
