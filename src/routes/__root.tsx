@@ -73,14 +73,18 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
+      { title: "FindAm Your Job Search Companion" },
+      { name: "description", content: "Find-Am is a job search engine platform for discovering employment opportunities online." },
       { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { property: "og:title", content: "FindAm Your Job Search Companion" },
+      { property: "og:description", content: "Find-Am is a job search engine platform for discovering employment opportunities online." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:site", content: "@Lovable" },
+      { name: "twitter:title", content: "FindAm Your Job Search Companion" },
+      { name: "twitter:description", content: "Find-Am is a job search engine platform for discovering employment opportunities online." },
+      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/ywsJIMslZUcqgcrtIVV1yqJOXPX2/social-images/social-1779614959427-9160f371-f903-48c1-a7f3-f42ca930298e.webp" },
+      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/ywsJIMslZUcqgcrtIVV1yqJOXPX2/social-images/social-1779614959427-9160f371-f903-48c1-a7f3-f42ca930298e.webp" },
     ],
     links: [
       {
