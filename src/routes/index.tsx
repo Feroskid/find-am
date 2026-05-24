@@ -85,11 +85,13 @@ function Home() {
   const { t } = useI18n();
   const [q, setQ] = useState("");
 
-  // Show background ~50% of the time, randomly per visit
-  const showBg = useMemo(() => Math.random() < 0.5, []);
-  const trending = useMemo(() => pickTrending(), []);
+  // Random picks must happen after mount to avoid SSR hydration mismatches.
+  const [showBg, setShowBg] = useState(false);
+  const [trending, setTrending] = useState<string[]>([]);
 
   useEffect(() => {
+    setShowBg(Math.random() < 0.5);
+    setTrending(pickTrending());
     track({ action_type: "page_view", search_query: "home" });
   }, []);
 
