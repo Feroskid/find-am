@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Search, ScanLine, TrendingUp, Briefcase } from "lucide-react";
 import { FindAmLogo } from "@/components/FindAmLogo";
 import { LanguageMenu } from "@/components/LanguageMenu";
