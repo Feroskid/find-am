@@ -4,6 +4,7 @@ import { Search, ScanLine, TrendingUp, Briefcase } from "lucide-react";
 import { FindAmLogo } from "@/components/FindAmLogo";
 import { LanguageMenu } from "@/components/LanguageMenu";
 import { VoiceSearchButton } from "@/components/VoiceSearchButton";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { useI18n } from "@/lib/i18n";
 import { track } from "@/lib/track";
 import bgMask from "@/assets/bg-mask.jpeg";

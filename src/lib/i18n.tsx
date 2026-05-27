@@ -40,7 +40,7 @@ type Dict = {
 const dictionaries: Record<Lang, Dict> = {
   en: {
     search: "Search",
-    jobs: "Jobs",
+    jobs: "Tasks",
     tagline: "you need work?… try Find-Am",
     searchPlaceholder: "Search jobs across Nigeria…",
     searchShort: "Search jobs…",
@@ -66,7 +66,7 @@ const dictionaries: Record<Lang, Dict> = {
   },
   yo: {
     search: "Wá",
-    jobs: "Iṣẹ́",
+    jobs: "Iṣẹ́-ṣíṣe",
     tagline: "Ṣé o nílò iṣẹ́?… gbìyànjú Find-Am",
     searchPlaceholder: "Wá iṣẹ́ jákèjádò Nàìjíríà…",
     searchShort: "Wá iṣẹ́…",
@@ -92,7 +92,7 @@ const dictionaries: Record<Lang, Dict> = {
   },
   ig: {
     search: "Chọọ",
-    jobs: "Ọrụ",
+    jobs: "Ọrụ nta",
     tagline: "Ị chọrọ ọrụ?… nwaa Find-Am",
     searchPlaceholder: "Chọọ ọrụ na Nigeria niile…",
     searchShort: "Chọọ ọrụ…",
@@ -118,7 +118,7 @@ const dictionaries: Record<Lang, Dict> = {
   },
   ha: {
     search: "Bincika",
-    jobs: "Aikace-aikace",
+    jobs: "Ayyuka",
     tagline: "Kana son aiki?… gwada Find-Am",
     searchPlaceholder: "Bincika aiki a faɗin Najeriya…",
     searchShort: "Bincika aiki…",
@@ -144,7 +144,7 @@ const dictionaries: Record<Lang, Dict> = {
   },
   pcm: {
     search: "Find",
-    jobs: "Work",
+    jobs: "Tasks",
     tagline: "You need work?… try Find-Am",
     searchPlaceholder: "Find work for Naija…",
     searchShort: "Find work…",
