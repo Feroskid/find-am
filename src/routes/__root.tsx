@@ -84,8 +84,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:site", content: "@Lovable" },
       { name: "twitter:title", content: "FindAm Your Job Search Companion" },
       { name: "twitter:description", content: "Find-Am is a job search engine platform for discovering employment opportunities online." },
-      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/ywsJIMslZUcqgcrtIVV1yqJOXPX2/social-images/social-1779614959427-9160f371-f903-48c1-a7f3-f42ca930298e.webp" },
-      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/ywsJIMslZUcqgcrtIVV1yqJOXPX2/social-images/social-1779614959427-9160f371-f903-48c1-a7f3-f42ca930298e.webp" },
+      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/ywsJIMslZUcqgcrtIVV1yqJOXPX2/social-images/social-1779919651091-IMG_3798.webp" },
+      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/ywsJIMslZUcqgcrtIVV1yqJOXPX2/social-images/social-1779919651091-IMG_3798.webp" },
     ],
     links: [
       {
