@@ -128,7 +128,10 @@ function Home() {
               </button>
             </div>
           </div>
-          <LanguageMenu />
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <LanguageMenu />
+          </div>
         </header>
 
         <main className="flex-1 flex flex-col items-center px-4 pt-12 sm:pt-16">
