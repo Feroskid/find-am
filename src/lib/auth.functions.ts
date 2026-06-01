@@ -16,8 +16,8 @@ const LoginSchema = z.object({
   password: z.string().min(1).max(128),
 });
 
-type AuthResult =
-  | { ok: true; data: Record<string, unknown> }
+export type AuthResult =
+  | { ok: true; data: any }
   | { ok: false; status: number; error: string };
 
 async function forward(path: string, body: unknown): Promise<AuthResult> {
