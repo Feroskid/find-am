@@ -1,57 +1,60 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
-import { Loader2, ClipboardList, Briefcase, User } from "lucide-react";
+import { useEffect } from "react";
+import { Loader2, Plus, MessageSquare, Bell, Wallet, Briefcase } from "lucide-react";
 import { TaskHeader } from "@/components/TaskHeader";
-import { TaskCard, type TaskCardData } from "@/components/TaskCard";
+import { TaskCard, toCardData } from "@/components/TaskCard";
 import { useAuth } from "@/lib/auth";
-import { myTasks, myApplications } from "@/lib/findtask.functions";
-
-type Tab = "posted" | "applications" | "profile";
+import { listTasks, unreadCount, walletBalance } from "@/lib/findtask.functions";
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({ meta: [{ title: "Dashboard — Find-task" }] }),
   component: Dashboard,
 });
 
-function extractList(d: any): TaskCardData[] {
-  if (!d) return [];
-  if (Array.isArray(d)) return d;
-  if (Array.isArray(d?.tasks)) return d.tasks;
-  if (Array.isArray(d?.applications)) return d.applications;
-  if (Array.isArray(d?.data)) return d.data;
-  if (Array.isArray(d?.results)) return d.results;
-  return [];
-}
-
 function Dashboard() {
   const { token, user, logout } = useAuth();
   const navigate = useNavigate();
-  const [tab, setTab] = useState<Tab>("posted");
 
   useEffect(() => {
     if (!token) navigate({ to: "/login", search: { redirect: "/dashboard" } as any });
   }, [token, navigate]);
 
-  const posted = useServerFn(myTasks);
-  const apps = useServerFn(myApplications);
+  const list = useServerFn(listTasks);
+  const unread = useServerFn(unreadCount);
+  const wallet = useServerFn(walletBalance);
 
-  const postedQ = useQuery({
-    queryKey: ["dashboard", "posted", token],
-    enabled: !!token && tab === "posted",
-    queryFn: () => posted({ data: { token: token! } }),
+  const recentQ = useQuery({
+    queryKey: ["dashboard", "recent"],
+    enabled: !!token,
+    queryFn: () => list({ data: { page: 1, limit: 6 } }),
   });
-  const appsQ = useQuery({
-    queryKey: ["dashboard", "applications", token],
-    enabled: !!token && tab === "applications",
-    queryFn: () => apps({ data: { token: token! } }),
+  const unreadQ = useQuery({
+    queryKey: ["dashboard", "unread", token],
+    enabled: !!token,
+    queryFn: () => unread({ data: { token: token! } }),
+    refetchInterval: 60_000,
+  });
+  const walletQ = useQuery({
+    queryKey: ["dashboard", "wallet", token],
+    enabled: !!token,
+    queryFn: () => wallet({ data: { token: token! } }),
   });
 
   if (!token) return null;
 
   const displayName =
     (user as any)?.name || (user as any)?.full_name || (user as any)?.email || "there";
+  const recent: any[] = recentQ.data?.ok
+    ? ((recentQ.data.data as any)?.results ?? [])
+    : [];
+  const unreadN: number = unreadQ.data?.ok
+    ? Number((unreadQ.data.data as any)?.unread_count ?? 0)
+    : 0;
+  const balance = walletQ.data?.ok
+    ? (walletQ.data.data as any)?.balance ?? (walletQ.data.data as any)?.available_balance
+    : null;
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -63,90 +66,95 @@ function Dashboard() {
             <p className="mt-1 text-muted-foreground">Manage your tasks and applications.</p>
           </div>
           <Link to="/post-task" className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90">
-            Post a task
+            <Plus className="h-4 w-4" /> Post a task
           </Link>
         </div>
 
-        {/* Tabs */}
-        <div className="mt-8 flex gap-1 rounded-full border border-border bg-card p-1 w-full max-w-md">
-          <TabBtn icon={ClipboardList} label="My tasks" active={tab === "posted"} onClick={() => setTab("posted")} />
-          <TabBtn icon={Briefcase} label="Applications" active={tab === "applications"} onClick={() => setTab("applications")} />
-          <TabBtn icon={User} label="Profile" active={tab === "profile"} onClick={() => setTab("profile")} />
+        {/* Stat cards */}
+        <div className="mt-6 grid gap-4 sm:grid-cols-3">
+          <StatCard
+            icon={Bell}
+            label="Unread notifications"
+            value={String(unreadN)}
+            href="/notifications"
+          />
+          <StatCard
+            icon={Wallet}
+            label="Wallet balance"
+            value={balance != null ? `₦${Number(balance).toLocaleString()}` : "—"}
+            href="/dashboard"
+          />
+          <StatCard
+            icon={Briefcase}
+            label="Browse open tasks"
+            value="Explore"
+            href="/tasks/browse"
+          />
         </div>
 
-        <section className="mt-6">
-          {tab === "posted" && <Panel q={postedQ} emptyCta="Post your first task" emptyHref="/post-task" />}
-          {tab === "applications" && <Panel q={appsQ} emptyCta="Browse tasks" emptyHref="/tasks/browse" />}
-          {tab === "profile" && (
-            <div className="rounded-2xl border border-border bg-card p-6">
-              <h2 className="text-lg font-semibold">Account</h2>
-              <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
-                {Object.entries((user ?? {}) as Record<string, unknown>).map(([k, v]) => (
-                  <div key={k} className="border-b border-border/60 pb-2">
-                    <dt className="text-xs uppercase tracking-wide text-muted-foreground">{k}</dt>
-                    <dd className="font-medium break-all">{String(v ?? "—")}</dd>
-                  </div>
-                ))}
-              </dl>
-              <button onClick={logout} className="mt-6 rounded-full border border-border px-4 py-2 text-sm font-medium hover:bg-muted">
-                Log out
-              </button>
-            </div>
-          )}
+        {/* Recent tasks */}
+        <section className="mt-10">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold">Recent open tasks</h2>
+            <Link to="/tasks/browse" className="text-sm font-medium text-primary hover:underline">
+              View all →
+            </Link>
+          </div>
+          <div className="mt-4">
+            {recentQ.isFetching ? (
+              <div className="flex items-center gap-2 text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" />Loading…</div>
+            ) : recent.length === 0 ? (
+              <div className="rounded-2xl border border-dashed border-border p-10 text-center text-muted-foreground">
+                No tasks yet. <Link to="/post-task" className="text-primary font-medium">Post your first task</Link>
+              </div>
+            ) : (
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {recent.map((t) => <TaskCard key={t.task_id ?? t.id} task={toCardData(t)} />)}
+              </div>
+            )}
+          </div>
+        </section>
+
+        {/* Account */}
+        <section className="mt-10 rounded-2xl border border-border bg-card p-6">
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="text-lg font-semibold">Account</h2>
+            <Link to="/messages" className="text-sm font-medium text-primary hover:underline inline-flex items-center gap-1">
+              <MessageSquare className="h-4 w-4" /> Messages
+            </Link>
+          </div>
+          <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
+            {Object.entries((user ?? {}) as Record<string, unknown>).map(([k, v]) => (
+              <div key={k} className="border-b border-border/60 pb-2">
+                <dt className="text-xs uppercase tracking-wide text-muted-foreground">{k.replace(/_/g, " ")}</dt>
+                <dd className="font-medium break-all">{String(v ?? "—")}</dd>
+              </div>
+            ))}
+          </dl>
+          <button onClick={logout} className="mt-6 rounded-full border border-border px-4 py-2 text-sm font-medium hover:bg-muted">
+            Log out
+          </button>
         </section>
       </main>
     </div>
   );
 }
 
-function TabBtn({ icon: Icon, label, active, onClick }: {
-  icon: React.ComponentType<{ className?: string }>;
-  label: string; active: boolean; onClick: () => void;
-}) {
+function StatCard({
+  icon: Icon, label, value, href,
+}: { icon: React.ComponentType<{ className?: string }>; label: string; value: string; href: string }) {
   return (
-    <button
-      onClick={onClick}
-      className={`flex-1 inline-flex items-center justify-center gap-1.5 rounded-full px-3 py-2 text-sm font-medium transition-colors ${
-        active ? "bg-foreground text-background" : "text-muted-foreground hover:text-foreground"
-      }`}
+    <Link
+      to={href as any}
+      className="rounded-2xl border border-border bg-card p-5 hover:border-primary hover:shadow-md transition-all flex items-center gap-4"
     >
-      <Icon className="h-4 w-4" /> {label}
-    </button>
-  );
-}
-
-function Panel({ q, emptyCta, emptyHref }: {
-  q: { data: any; isFetching: boolean };
-  emptyCta: string; emptyHref: string;
-}) {
-  if (q.isFetching) {
-    return <div className="flex items-center gap-2 text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" />Loading…</div>;
-  }
-  if (q.data && !q.data.ok) {
-    return <div className="rounded-xl border border-destructive/40 bg-destructive/10 p-4 text-sm text-destructive">{q.data.error}</div>;
-  }
-  const list = extractList(q.data?.data);
-  if (list.length === 0) {
-    return (
-      <div className="rounded-2xl border border-dashed border-border p-10 text-center text-muted-foreground">
-        Nothing here yet. <Link to={emptyHref as any} className="text-primary font-medium">{emptyCta}</Link>
+      <span className="grid h-10 w-10 place-items-center rounded-xl bg-primary/10 text-primary">
+        <Icon className="h-5 w-5" />
+      </span>
+      <div className="min-w-0">
+        <div className="text-xs uppercase tracking-wide text-muted-foreground">{label}</div>
+        <div className="mt-0.5 text-lg font-bold truncate">{value}</div>
       </div>
-    );
-  }
-  return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-      {list.map((t: any, i) => (
-        <TaskCard key={t.task_id ?? t.id ?? i} task={{
-          id: t.task_id ?? t.id ?? i,
-          title: t.title ?? "Untitled",
-          description: t.description,
-          budget: t.budget,
-          location: t.location,
-          category: t.category,
-          deadline: t.deadline,
-          status: t.status,
-        }} />
-      ))}
-    </div>
+    </Link>
   );
 }

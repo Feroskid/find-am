@@ -46,24 +46,23 @@ async function call<T = any>(
 }
 
 const Token = z.string().min(8).max(4096);
-const TaskId = z.string().min(1).max(64);
+// API task IDs are integers; accept numeric strings too.
+const TaskId = z.union([z.number().int().positive(), z.string().regex(/^\d+$/)]);
+const TaskerId = z.union([z.number().int().positive(), z.string().min(1).max(64)]);
 
 // --- Categories ----------------------------------------------------------
 export const getCategories = createServerFn({ method: "GET" }).handler(
   async () => call("/task/categories"),
 );
 
-// --- Browse tasks --------------------------------------------------------
+// --- Browse / search tasks ----------------------------------------------
 const BrowseSchema = z.object({
   q: z.string().max(200).optional(),
-  category: z.string().max(80).optional(),
-  level: z.string().max(40).optional(),
+  category_id: z.number().int().positive().optional(),
   location: z.string().max(160).optional(),
-  min_price: z.number().min(0).max(100_000_000).optional(),
-  max_price: z.number().min(0).max(100_000_000).optional(),
-  sort: z.enum(["newest", "price_asc", "price_desc", "deadline"]).optional(),
+  is_remote: z.union([z.literal(0), z.literal(1)]).optional(),
   page: z.number().int().min(1).max(500).optional(),
-  per_page: z.number().int().min(1).max(50).optional(),
+  limit: z.number().int().min(1).max(50).optional(),
 });
 export const listTasks = createServerFn({ method: "POST" })
   .inputValidator((i: unknown) => BrowseSchema.parse(i))
@@ -73,89 +72,76 @@ export const listTasks = createServerFn({ method: "POST" })
       if (v !== undefined && v !== "" && v !== null) params.set(k, String(v));
     });
     const qs = params.toString();
-    return call(`/task${qs ? `?${qs}` : ""}`);
+    return call(`/task/search${qs ? `?${qs}` : ""}`);
   });
 
 // --- Get task ------------------------------------------------------------
 export const getTask = createServerFn({ method: "POST" })
   .inputValidator((i: unknown) => z.object({ taskId: TaskId }).parse(i))
-  .handler(async ({ data }) => call(`/task/${encodeURIComponent(data.taskId)}`));
+  .handler(async ({ data }) => call(`/task/${data.taskId}`));
 
 // --- Create task ---------------------------------------------------------
 const CreateTaskSchema = z.object({
   title: z.string().min(4).max(140),
   description: z.string().min(10).max(4000),
   budget: z.number().positive().max(100_000_000),
-  location: z.string().min(2).max(160),
+  location_text: z.string().min(2).max(160).optional(),
+  is_remote: z.union([z.literal(0), z.literal(1)]).optional(),
   deadline: z.string().max(64).optional(),
-  category: z.string().max(80).optional(),
-  level: z.string().max(40).optional(),
+  quantity: z.number().int().min(1).max(99).optional(),
   token: Token,
 });
 export const createTask = createServerFn({ method: "POST" })
   .inputValidator((i: unknown) => CreateTaskSchema.parse(i))
   .handler(async ({ data }) => {
     const { token, ...body } = data;
-    return call("/task", { method: "POST", body, token });
+    return call("/task/post", { method: "POST", body, token });
   });
-
-// --- My tasks / applications --------------------------------------------
-export const myTasks = createServerFn({ method: "POST" })
-  .inputValidator((i: unknown) => z.object({ token: Token }).parse(i))
-  .handler(async ({ data }) => call("/task/mine", { token: data.token }));
-
-export const myApplications = createServerFn({ method: "POST" })
-  .inputValidator((i: unknown) => z.object({ token: Token }).parse(i))
-  .handler(async ({ data }) => call("/task/applications/mine", { token: data.token }));
 
 // --- Apply to a task -----------------------------------------------------
 export const applyToTask = createServerFn({ method: "POST" })
   .inputValidator((i: unknown) =>
     z.object({
       taskId: TaskId,
-      cover: z.string().min(2).max(2000).optional(),
-      bid: z.number().min(0).max(100_000_000).optional(),
+      message: z.string().min(2).max(2000).optional(),
       token: Token,
     }).parse(i),
   )
-  .handler(async ({ data }) => {
-    const { taskId, token, ...body } = data;
-    return call(`/task/${encodeURIComponent(taskId)}/apply`, { method: "POST", body, token });
-  });
+  .handler(async ({ data }) =>
+    call(`/task/${data.taskId}/apply`, {
+      method: "POST",
+      body: { message: data.message ?? "" },
+      token: data.token,
+    }),
+  );
 
 // --- List applications for a task (poster) -------------------------------
 export const listTaskApplications = createServerFn({ method: "POST" })
   .inputValidator((i: unknown) => z.object({ taskId: TaskId, token: Token }).parse(i))
   .handler(async ({ data }) =>
-    call(`/task/${encodeURIComponent(data.taskId)}/applications`, { token: data.token }),
+    call(`/task/${data.taskId}/applications`, { token: data.token }),
   );
 
-// --- Accept an applicant (starts escrow) ---------------------------------
+// --- Accept a tasker (PUT /task/{id}/accept/{tasker_id}) -----------------
 export const acceptApplicant = createServerFn({ method: "POST" })
   .inputValidator((i: unknown) =>
-    z.object({
-      taskId: TaskId,
-      applicantId: z.string().min(1).max(64),
-      token: Token,
-    }).parse(i),
+    z.object({ taskId: TaskId, taskerId: TaskerId, token: Token }).parse(i),
   )
-  .handler(async ({ data }) => {
-    const { taskId, applicantId, token } = data;
-    return call(`/task/${encodeURIComponent(taskId)}/accept`, {
-      method: "POST",
-      body: { applicant_id: applicantId, tasker_id: applicantId },
-      token,
-    });
-  });
+  .handler(async ({ data }) =>
+    call(`/task/${data.taskId}/accept/${data.taskerId}`, {
+      method: "PUT",
+      token: data.token,
+    }),
+  );
 
-// --- Complete a task -----------------------------------------------------
+// --- Complete ------------------------------------------------------------
 export const completeTask = createServerFn({ method: "POST" })
   .inputValidator((i: unknown) => z.object({ taskId: TaskId, token: Token }).parse(i))
   .handler(async ({ data }) =>
-    call(`/task/${encodeURIComponent(data.taskId)}/complete`, { method: "POST", token: data.token }),
+    call(`/task/${data.taskId}/complete`, { method: "POST", token: data.token }),
   );
 
-// --- Dispute --------------------------------------------------------------
+// --- Dispute -------------------------------------------------------------
 export const disputeTask = createServerFn({ method: "POST" })
   .inputValidator((i: unknown) =>
     z.object({
@@ -164,75 +150,81 @@ export const disputeTask = createServerFn({ method: "POST" })
       token: Token,
     }).parse(i),
   )
-  .handler(async ({ data }) => {
-    const { taskId, token, reason } = data;
-    return call(`/task/${encodeURIComponent(taskId)}/dispute`, {
+  .handler(async ({ data }) =>
+    call(`/task/${data.taskId}/dispute`, {
       method: "POST",
-      body: { reason },
-      token,
-    });
-  });
+      body: { reason: data.reason },
+      token: data.token,
+    }),
+  );
 
-// --- Rate -----------------------------------------------------------------
+// --- Rate ----------------------------------------------------------------
 export const rateTask = createServerFn({ method: "POST" })
   .inputValidator((i: unknown) =>
     z.object({
       taskId: TaskId,
-      rating: z.number().min(1).max(5),
-      review: z.string().max(2000).optional(),
+      rating: z.number().int().min(1).max(5),
+      review_text: z.string().max(2000).optional(),
       token: Token,
     }).parse(i),
   )
-  .handler(async ({ data }) => {
-    const { taskId, token, ...body } = data;
-    return call(`/task/${encodeURIComponent(taskId)}/rate`, { method: "POST", body, token });
-  });
+  .handler(async ({ data }) =>
+    call(`/task/${data.taskId}/rate`, {
+      method: "POST",
+      body: { rating: data.rating, review_text: data.review_text ?? null },
+      token: data.token,
+    }),
+  );
 
-// --- Tasker profile data --------------------------------------------------
-export const getTaskerRatings = createServerFn({ method: "POST" })
-  .inputValidator((i: unknown) => z.object({ taskerId: z.string().min(1).max(64) }).parse(i))
-  .handler(async ({ data }) => call(`/tasker/${encodeURIComponent(data.taskerId)}/ratings`));
-
-export const getTaskerBadges = createServerFn({ method: "POST" })
-  .inputValidator((i: unknown) => z.object({ taskerId: z.string().min(1).max(64) }).parse(i))
-  .handler(async ({ data }) => call(`/tasker/${encodeURIComponent(data.taskerId)}/badges`));
-
-// --- Messages -------------------------------------------------------------
+// --- Messages ------------------------------------------------------------
 export const listMessages = createServerFn({ method: "POST" })
   .inputValidator((i: unknown) => z.object({ taskId: TaskId, token: Token }).parse(i))
   .handler(async ({ data }) =>
-    call(`/task/${encodeURIComponent(data.taskId)}/messages`, { token: data.token }),
+    call(`/task/${data.taskId}/messages`, { token: data.token }),
   );
 
 export const sendMessage = createServerFn({ method: "POST" })
   .inputValidator((i: unknown) =>
     z.object({
       taskId: TaskId,
-      body: z.string().min(1).max(4000),
+      message_text: z.string().min(1).max(4000),
       token: Token,
     }).parse(i),
   )
-  .handler(async ({ data }) => {
-    const { taskId, token, body } = data;
-    return call(`/task/${encodeURIComponent(taskId)}/message`, {
+  .handler(async ({ data }) =>
+    call(`/task/${data.taskId}/message`, {
       method: "POST",
-      body: { body, message: body, text: body },
-      token,
-    });
-  });
+      body: { message_text: data.message_text },
+      token: data.token,
+    }),
+  );
 
-// --- Notifications --------------------------------------------------------
+// --- Notifications -------------------------------------------------------
 export const listNotifications = createServerFn({ method: "POST" })
   .inputValidator((i: unknown) => z.object({ token: Token }).parse(i))
   .handler(async ({ data }) => call(`/notifications`, { token: data.token }));
 
+export const unreadCount = createServerFn({ method: "POST" })
+  .inputValidator((i: unknown) => z.object({ token: Token }).parse(i))
+  .handler(async ({ data }) =>
+    call(`/notifications/unread-count`, { token: data.token }),
+  );
+
 export const markNotificationRead = createServerFn({ method: "POST" })
   .inputValidator((i: unknown) =>
-    z.object({ id: z.string().min(1).max(64), token: Token }).parse(i),
+    z.object({ id: z.union([z.string(), z.number()]), token: Token }).parse(i),
   )
   .handler(async ({ data }) =>
-    call(`/notifications/${encodeURIComponent(data.id)}/read`, {
-      method: "POST",
-      token: data.token,
-    }),
+    call(`/notifications/${data.id}/read`, { method: "POST", token: data.token }),
   );
+
+export const markAllNotificationsRead = createServerFn({ method: "POST" })
+  .inputValidator((i: unknown) => z.object({ token: Token }).parse(i))
+  .handler(async ({ data }) =>
+    call(`/notifications/read-all`, { method: "POST", token: data.token }),
+  );
+
+// --- Wallet --------------------------------------------------------------
+export const walletBalance = createServerFn({ method: "POST" })
+  .inputValidator((i: unknown) => z.object({ token: Token }).parse(i))
+  .handler(async ({ data }) => call(`/wallet/balance`, { token: data.token }));
