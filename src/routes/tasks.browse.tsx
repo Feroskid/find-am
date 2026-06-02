@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
@@ -24,6 +24,7 @@ export const Route = createFileRoute("/tasks/browse")({
 
 function BrowseTasks() {
   const { q, category } = Route.useSearch();
+  const navigate = useNavigate();
   const [query, setQuery] = useState(q);
   const list = useServerFn(listTasks);
 
@@ -62,7 +63,7 @@ function BrowseTasks() {
         <form
           onSubmit={(e) => {
             e.preventDefault();
-            Route.router?.navigate({ to: "/tasks/browse", search: { q: query, category } });
+            navigate({ to: "/tasks/browse", search: { q: query, category } });
             refetch();
           }}
           className="mt-6 flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2.5"
