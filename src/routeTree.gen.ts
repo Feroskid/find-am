@@ -12,8 +12,13 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as TasksRouteImport } from './routes/tasks'
 import { Route as SearchRouteImport } from './routes/search'
 import { Route as RegisterRouteImport } from './routes/register'
+import { Route as PostTaskRouteImport } from './routes/post-task'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as TasksCategoriesRouteImport } from './routes/tasks.categories'
+import { Route as TasksBrowseRouteImport } from './routes/tasks.browse'
+import { Route as TasksTaskIdRouteImport } from './routes/tasks.$taskId'
 import { Route as ApiPublicSearchRouteImport } from './routes/api/public/search'
 
 const TasksRoute = TasksRouteImport.update({
@@ -31,15 +36,40 @@ const RegisterRoute = RegisterRouteImport.update({
   path: '/register',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PostTaskRoute = PostTaskRouteImport.update({
+  id: '/post-task',
+  path: '/post-task',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardRoute = DashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const TasksCategoriesRoute = TasksCategoriesRouteImport.update({
+  id: '/categories',
+  path: '/categories',
+  getParentRoute: () => TasksRoute,
+} as any)
+const TasksBrowseRoute = TasksBrowseRouteImport.update({
+  id: '/browse',
+  path: '/browse',
+  getParentRoute: () => TasksRoute,
+} as any)
+const TasksTaskIdRoute = TasksTaskIdRouteImport.update({
+  id: '/$taskId',
+  path: '/$taskId',
+  getParentRoute: () => TasksRoute,
 } as any)
 const ApiPublicSearchRoute = ApiPublicSearchRouteImport.update({
   id: '/api/public/search',
@@ -49,56 +79,94 @@ const ApiPublicSearchRoute = ApiPublicSearchRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
+  '/post-task': typeof PostTaskRoute
   '/register': typeof RegisterRoute
   '/search': typeof SearchRoute
-  '/tasks': typeof TasksRoute
+  '/tasks': typeof TasksRouteWithChildren
+  '/tasks/$taskId': typeof TasksTaskIdRoute
+  '/tasks/browse': typeof TasksBrowseRoute
+  '/tasks/categories': typeof TasksCategoriesRoute
   '/api/public/search': typeof ApiPublicSearchRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
+  '/post-task': typeof PostTaskRoute
   '/register': typeof RegisterRoute
   '/search': typeof SearchRoute
-  '/tasks': typeof TasksRoute
+  '/tasks': typeof TasksRouteWithChildren
+  '/tasks/$taskId': typeof TasksTaskIdRoute
+  '/tasks/browse': typeof TasksBrowseRoute
+  '/tasks/categories': typeof TasksCategoriesRoute
   '/api/public/search': typeof ApiPublicSearchRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
+  '/post-task': typeof PostTaskRoute
   '/register': typeof RegisterRoute
   '/search': typeof SearchRoute
-  '/tasks': typeof TasksRoute
+  '/tasks': typeof TasksRouteWithChildren
+  '/tasks/$taskId': typeof TasksTaskIdRoute
+  '/tasks/browse': typeof TasksBrowseRoute
+  '/tasks/categories': typeof TasksCategoriesRoute
   '/api/public/search': typeof ApiPublicSearchRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/dashboard'
     | '/login'
+    | '/post-task'
     | '/register'
     | '/search'
     | '/tasks'
+    | '/tasks/$taskId'
+    | '/tasks/browse'
+    | '/tasks/categories'
     | '/api/public/search'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/login' | '/register' | '/search' | '/tasks' | '/api/public/search'
+  to:
+    | '/'
+    | '/dashboard'
+    | '/login'
+    | '/post-task'
+    | '/register'
+    | '/search'
+    | '/tasks'
+    | '/tasks/$taskId'
+    | '/tasks/browse'
+    | '/tasks/categories'
+    | '/api/public/search'
   id:
     | '__root__'
     | '/'
+    | '/dashboard'
     | '/login'
+    | '/post-task'
     | '/register'
     | '/search'
     | '/tasks'
+    | '/tasks/$taskId'
+    | '/tasks/browse'
+    | '/tasks/categories'
     | '/api/public/search'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  DashboardRoute: typeof DashboardRoute
   LoginRoute: typeof LoginRoute
+  PostTaskRoute: typeof PostTaskRoute
   RegisterRoute: typeof RegisterRoute
   SearchRoute: typeof SearchRoute
-  TasksRoute: typeof TasksRoute
+  TasksRoute: typeof TasksRouteWithChildren
   ApiPublicSearchRoute: typeof ApiPublicSearchRoute
 }
 
@@ -125,11 +193,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RegisterRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/post-task': {
+      id: '/post-task'
+      path: '/post-task'
+      fullPath: '/post-task'
+      preLoaderRoute: typeof PostTaskRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/login': {
       id: '/login'
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard': {
+      id: '/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof DashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -138,6 +220,27 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/tasks/categories': {
+      id: '/tasks/categories'
+      path: '/categories'
+      fullPath: '/tasks/categories'
+      preLoaderRoute: typeof TasksCategoriesRouteImport
+      parentRoute: typeof TasksRoute
+    }
+    '/tasks/browse': {
+      id: '/tasks/browse'
+      path: '/browse'
+      fullPath: '/tasks/browse'
+      preLoaderRoute: typeof TasksBrowseRouteImport
+      parentRoute: typeof TasksRoute
+    }
+    '/tasks/$taskId': {
+      id: '/tasks/$taskId'
+      path: '/$taskId'
+      fullPath: '/tasks/$taskId'
+      preLoaderRoute: typeof TasksTaskIdRouteImport
+      parentRoute: typeof TasksRoute
     }
     '/api/public/search': {
       id: '/api/public/search'
@@ -149,12 +252,28 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface TasksRouteChildren {
+  TasksTaskIdRoute: typeof TasksTaskIdRoute
+  TasksBrowseRoute: typeof TasksBrowseRoute
+  TasksCategoriesRoute: typeof TasksCategoriesRoute
+}
+
+const TasksRouteChildren: TasksRouteChildren = {
+  TasksTaskIdRoute: TasksTaskIdRoute,
+  TasksBrowseRoute: TasksBrowseRoute,
+  TasksCategoriesRoute: TasksCategoriesRoute,
+}
+
+const TasksRouteWithChildren = TasksRoute._addFileChildren(TasksRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  DashboardRoute: DashboardRoute,
   LoginRoute: LoginRoute,
+  PostTaskRoute: PostTaskRoute,
   RegisterRoute: RegisterRoute,
   SearchRoute: SearchRoute,
-  TasksRoute: TasksRoute,
+  TasksRoute: TasksRouteWithChildren,
   ApiPublicSearchRoute: ApiPublicSearchRoute,
 }
 export const routeTree = rootRouteImport
