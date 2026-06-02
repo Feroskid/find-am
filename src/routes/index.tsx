@@ -114,18 +114,18 @@ function Home() {
       )}
 
       <div className="relative flex-1 flex flex-col">
-        <header className="flex items-center justify-between px-4 sm:px-6 py-4 gap-3">
-          <Link to="/" className="shrink-0">
-            <FindAmLogo size="text-xl sm:text-2xl" />
-          </Link>
-          <div className="flex-1 flex justify-center">
-            <div className="inline-flex items-center gap-1 rounded-full bg-foreground text-background p-0.5 sm:p-1 shadow-lg">
+        <header className="relative flex items-center justify-end px-4 sm:px-6 py-4 gap-3">
+          <div className="pointer-events-none absolute inset-x-0 top-4 flex justify-center">
+            <div className="pointer-events-auto inline-flex items-center gap-1 rounded-full bg-foreground text-background p-0.5 sm:p-1 shadow-lg">
               <button className="inline-flex items-center gap-1.5 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full bg-primary text-primary-foreground text-xs sm:text-sm font-medium">
                 <Search className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> {t.search}
               </button>
-              <button className="inline-flex items-center gap-1.5 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full text-xs sm:text-sm font-medium opacity-80 hover:opacity-100">
+              <Link
+                to="/tasks"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full text-xs sm:text-sm font-medium opacity-80 hover:opacity-100"
+              >
                 <Briefcase className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> {t.jobs}
-              </button>
+              </Link>
             </div>
           </div>
           <div className="flex items-center gap-2">
