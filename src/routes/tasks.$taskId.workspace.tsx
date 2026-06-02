@@ -1,0 +1,210 @@
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { useEffect, useRef, useState } from "react";
+import { Loader2, ArrowLeft, Send, CheckCircle2, AlertTriangle, Star, Banknote } from "lucide-react";
+import { toast } from "sonner";
+import { TaskHeader } from "@/components/TaskHeader";
+import { useAuth } from "@/lib/auth";
+import {
+  getTask, listMessages, sendMessage, completeTask, disputeTask, rateTask,
+} from "@/lib/findtask.functions";
+
+export const Route = createFileRoute("/tasks/$taskId/workspace")({
+  head: () => ({ meta: [{ title: "Task workspace — Find-task" }] }),
+  component: WorkspacePage,
+});
+
+function extractMsgs(d: any): any[] {
+  if (!d) return [];
+  if (Array.isArray(d)) return d;
+  return d.messages ?? d.data ?? d.results ?? [];
+}
+
+function WorkspacePage() {
+  const { taskId } = Route.useParams();
+  const { token, user } = useAuth();
+  const navigate = useNavigate();
+  useEffect(() => {
+    if (!token) navigate({ to: "/login", search: { redirect: `/tasks/${taskId}/workspace` } as any });
+  }, [token, taskId, navigate]);
+
+  const tFn = useServerFn(getTask);
+  const mFn = useServerFn(listMessages);
+  const sFn = useServerFn(sendMessage);
+  const cFn = useServerFn(completeTask);
+  const dFn = useServerFn(disputeTask);
+  const rFn = useServerFn(rateTask);
+
+  const taskQ = useQuery({ queryKey: ["task", taskId], queryFn: () => tFn({ data: { taskId } }) });
+  const msgsQ = useQuery({
+    queryKey: ["task", taskId, "messages", token],
+    enabled: !!token,
+    queryFn: () => mFn({ data: { taskId, token: token! } }),
+    refetchInterval: 8000,
+  });
+
+  const [draft, setDraft] = useState("");
+  const [rating, setRating] = useState(5);
+  const [review, setReview] = useState("");
+  const [disputeReason, setDisputeReason] = useState("");
+  const [showDispute, setShowDispute] = useState(false);
+  const [showRate, setShowRate] = useState(false);
+  const scrollerRef = useRef<HTMLDivElement | null>(null);
+
+  const sendM = useMutation({
+    mutationFn: () => sFn({ data: { taskId, body: draft.trim(), token: token! } }),
+    onSuccess: (r) => {
+      if (r.ok) { setDraft(""); msgsQ.refetch(); } else toast.error(r.error);
+    },
+  });
+  const completeM = useMutation({
+    mutationFn: () => cFn({ data: { taskId, token: token! } }),
+    onSuccess: (r) => r.ok ? (toast.success("Task marked complete."), setShowRate(true), taskQ.refetch()) : toast.error(r.error),
+  });
+  const disputeM = useMutation({
+    mutationFn: () => dFn({ data: { taskId, reason: disputeReason.trim(), token: token! } }),
+    onSuccess: (r) => r.ok ? (toast.success("Dispute filed."), setShowDispute(false), taskQ.refetch()) : toast.error(r.error),
+  });
+  const rateM = useMutation({
+    mutationFn: () => rFn({ data: { taskId, rating, review: review.trim() || undefined, token: token! } }),
+    onSuccess: (r) => r.ok ? (toast.success("Rating submitted."), setShowRate(false)) : toast.error(r.error),
+  });
+
+  useEffect(() => {
+    if (scrollerRef.current) scrollerRef.current.scrollTop = scrollerRef.current.scrollHeight;
+  }, [msgsQ.data]);
+
+  if (!token) return null;
+  const task: any = taskQ.data?.ok ? ((taskQ.data.data as any)?.task ?? taskQ.data.data) : null;
+  const messages = msgsQ.data?.ok ? extractMsgs(msgsQ.data.data) : [];
+  const myId = (user as any)?.id ?? (user as any)?.user_id;
+  const status = String(task?.status ?? "").toLowerCase();
+  const isPoster = task && (task.poster_id ?? task.user_id ?? task.owner_id) === myId;
+
+  return (
+    <div className="min-h-screen flex flex-col bg-background">
+      <TaskHeader />
+      <main className="mx-auto w-full max-w-5xl px-4 sm:px-6 py-6 flex-1 grid gap-6 md:grid-cols-[1fr_300px]">
+        <section className="flex flex-col rounded-2xl border border-border bg-card overflow-hidden h-[70vh]">
+          <header className="border-b border-border p-4 flex items-center justify-between">
+            <Link to="/tasks/$taskId" params={{ taskId }} className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+              <ArrowLeft className="h-4 w-4" /> {task?.title ?? "Task"}
+            </Link>
+            {status && (
+              <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary capitalize">{status}</span>
+            )}
+          </header>
+
+          <div ref={scrollerRef} className="flex-1 overflow-y-auto p-4 space-y-2 bg-muted/30">
+            {msgsQ.isFetching && messages.length === 0 ? (
+              <div className="text-sm text-muted-foreground inline-flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" />Loading…</div>
+            ) : messages.length === 0 ? (
+              <div className="text-center text-sm text-muted-foreground py-10">Say hello to start the conversation.</div>
+            ) : messages.map((m: any, i: number) => {
+              const mine = (m.sender_id ?? m.user_id ?? m.from) === myId;
+              return (
+                <div key={m.id ?? i} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
+                  <div className={`max-w-[75%] rounded-2xl px-3.5 py-2 text-sm ${mine ? "bg-primary text-primary-foreground" : "bg-background border border-border"}`}>
+                    <div className="whitespace-pre-wrap break-words">{m.body ?? m.message ?? m.text}</div>
+                    {m.created_at && <div className={`mt-0.5 text-[10px] ${mine ? "text-primary-foreground/70" : "text-muted-foreground"}`}>{new Date(m.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</div>}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          <form
+            onSubmit={(e) => { e.preventDefault(); if (draft.trim()) sendM.mutate(); }}
+            className="border-t border-border p-3 flex items-center gap-2"
+          >
+            <input
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              placeholder="Type a message…"
+              className="flex-1 rounded-full border border-border bg-background px-4 py-2 text-sm outline-none focus:border-primary"
+            />
+            <button type="submit" disabled={!draft.trim() || sendM.isPending} className="inline-flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-50">
+              {sendM.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />} Send
+            </button>
+          </form>
+        </section>
+
+        <aside className="space-y-4">
+          {task && (
+            <div className="rounded-2xl border border-border bg-card p-5">
+              <div className="text-xs text-muted-foreground">Budget (escrow)</div>
+              <div className="mt-1 flex items-center gap-2 text-2xl font-bold">
+                <Banknote className="h-5 w-5 text-primary" /> ₦{Number(task.budget ?? 0).toLocaleString()}
+              </div>
+              {task.location && <div className="mt-3 text-sm text-muted-foreground">{task.location}</div>}
+            </div>
+          )}
+
+          <div className="rounded-2xl border border-border bg-card p-5 space-y-2">
+            <h3 className="font-semibold">Actions</h3>
+            {isPoster && status !== "completed" && (
+              <button onClick={() => completeM.mutate()} disabled={completeM.isPending} className="w-full inline-flex items-center justify-center gap-1.5 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-50">
+                {completeM.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />} Mark complete & release
+              </button>
+            )}
+            {status === "completed" && (
+              <button onClick={() => setShowRate(true)} className="w-full inline-flex items-center justify-center gap-1.5 rounded-full border border-border px-4 py-2 text-sm font-semibold hover:bg-muted">
+                <Star className="h-4 w-4" /> Leave a rating
+              </button>
+            )}
+            <button onClick={() => setShowDispute((s) => !s)} className="w-full inline-flex items-center justify-center gap-1.5 rounded-full border border-destructive/40 text-destructive px-4 py-2 text-sm font-semibold hover:bg-destructive/10">
+              <AlertTriangle className="h-4 w-4" /> Raise a dispute
+            </button>
+
+            {showDispute && (
+              <div className="mt-2 space-y-2">
+                <textarea
+                  value={disputeReason}
+                  onChange={(e) => setDisputeReason(e.target.value)}
+                  rows={3}
+                  placeholder="Describe the issue…"
+                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
+                />
+                <button
+                  onClick={() => disputeReason.trim().length >= 5 && disputeM.mutate()}
+                  disabled={disputeM.isPending || disputeReason.trim().length < 5}
+                  className="w-full rounded-full bg-destructive text-destructive-foreground px-4 py-2 text-sm font-semibold disabled:opacity-50"
+                >
+                  Submit dispute
+                </button>
+              </div>
+            )}
+          </div>
+
+          {showRate && (
+            <div className="rounded-2xl border border-border bg-card p-5 space-y-3">
+              <h3 className="font-semibold">Rate this task</h3>
+              <div className="flex gap-1">
+                {[1, 2, 3, 4, 5].map((n) => (
+                  <button key={n} onClick={() => setRating(n)} aria-label={`${n} stars`}>
+                    <Star className={`h-7 w-7 ${n <= rating ? "fill-amber-400 text-amber-400" : "text-muted-foreground"}`} />
+                  </button>
+                ))}
+              </div>
+              <textarea
+                value={review}
+                onChange={(e) => setReview(e.target.value)}
+                rows={3}
+                placeholder="Share your experience (optional)"
+                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
+              />
+              <button
+                onClick={() => rateM.mutate()}
+                disabled={rateM.isPending}
+                className="w-full rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-50"
+              >
+                {rateM.isPending ? "Submitting…" : "Submit rating"}
+              </button>
+            </div>
+          )}
+        </aside>
+      </main>
+    </div>
+  );
+}
