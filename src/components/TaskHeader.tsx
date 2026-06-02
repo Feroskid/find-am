@@ -82,8 +82,11 @@ export function TaskHeader() {
             {token ? (
               <>
                 <Link to="/dashboard" onClick={() => setOpen(false)}>Dashboard</Link>
+                <Link to="/messages" onClick={() => setOpen(false)}>Messages</Link>
+                <Link to="/notifications" onClick={() => setOpen(false)}>Notifications</Link>
                 <button onClick={() => { logout(); setOpen(false); }} className="text-left">Log out</button>
               </>
+
             ) : (
               <>
                 <Link to="/login" onClick={() => setOpen(false)}>Log in</Link>
