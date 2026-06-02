@@ -1,7 +1,9 @@
 import { Link } from "@tanstack/react-router";
-import { Menu, X, LayoutDashboard, Plus } from "lucide-react";
+import { Menu, X, LayoutDashboard, Plus, MessageSquare } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/lib/auth";
+import { NotificationsBell } from "@/components/NotificationsBell";
+
 
 export function TaskHeader() {
   const [open, setOpen] = useState(false);
@@ -25,6 +27,10 @@ export function TaskHeader() {
         <div className="hidden md:flex items-center gap-3">
           {token ? (
             <>
+              <NotificationsBell />
+              <Link to="/messages" className="inline-flex items-center gap-1.5 text-sm font-medium text-foreground/80 hover:text-foreground">
+                <MessageSquare className="h-4 w-4" /> Messages
+              </Link>
               <Link
                 to="/dashboard"
                 className="inline-flex items-center gap-1.5 text-sm font-medium text-foreground/80 hover:text-foreground"
