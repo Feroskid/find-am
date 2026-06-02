@@ -114,8 +114,11 @@ function Home() {
       )}
 
       <div className="relative flex-1 flex flex-col">
-        <header className="relative flex items-center justify-end px-4 sm:px-6 py-4 gap-3">
-          <div className="pointer-events-none absolute inset-x-0 top-4 flex justify-center">
+        <header className="relative flex items-center justify-between px-4 sm:px-6 py-4 gap-3">
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+          </div>
+          <div className="pointer-events-none absolute inset-x-0 top-4 hidden sm:flex justify-center">
             <div className="pointer-events-auto inline-flex items-center gap-1 rounded-full bg-foreground text-background p-0.5 sm:p-1 shadow-lg">
               <button className="inline-flex items-center gap-1.5 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full bg-primary text-primary-foreground text-xs sm:text-sm font-medium">
                 <Search className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> {t.search}
@@ -129,10 +132,22 @@ function Home() {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <ThemeToggle />
             <LanguageMenu />
           </div>
         </header>
+        <div className="sm:hidden flex justify-center -mt-2 mb-2 px-4">
+          <div className="inline-flex items-center gap-1 rounded-full bg-foreground text-background p-0.5 shadow-lg">
+            <button className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary text-primary-foreground text-xs font-medium">
+              <Search className="h-3.5 w-3.5" /> {t.search}
+            </button>
+            <Link
+              to="/tasks"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium opacity-80 hover:opacity-100"
+            >
+              <Briefcase className="h-3.5 w-3.5" /> {t.jobs}
+            </Link>
+          </div>
+        </div>
 
         <main className="flex-1 flex flex-col items-center px-4 pt-12 sm:pt-16">
           <FindAmLogo size="text-6xl md:text-7xl" />
