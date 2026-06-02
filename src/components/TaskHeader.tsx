@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Menu, X } from "lucide-react";
+import { Menu, X, LayoutDashboard, Plus } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/lib/auth";
 
@@ -15,35 +15,44 @@ export function TaskHeader() {
             Find-task
           </Link>
           <nav className="hidden md:flex items-center gap-5 text-sm font-medium text-foreground/80">
-            <Link to="/tasks" className="hover:text-foreground">Post a task</Link>
-            <a href="#categories" className="hover:text-foreground">Categories</a>
+            <Link to="/tasks/browse" className="hover:text-foreground">Browse tasks</Link>
+            <Link to="/tasks/categories" className="hover:text-foreground">Categories</Link>
+            <Link to="/post-task" className="hover:text-foreground">Post a task</Link>
             <a href="#how" className="hover:text-foreground">How it works</a>
           </nav>
         </div>
 
         <div className="hidden md:flex items-center gap-3">
           {token ? (
-            <button
-              onClick={logout}
-              className="text-sm font-medium text-foreground/80 hover:text-foreground"
-            >
-              Log out
-            </button>
+            <>
+              <Link
+                to="/dashboard"
+                className="inline-flex items-center gap-1.5 text-sm font-medium text-foreground/80 hover:text-foreground"
+              >
+                <LayoutDashboard className="h-4 w-4" /> Dashboard
+              </Link>
+              <button
+                onClick={logout}
+                className="text-sm font-medium text-foreground/80 hover:text-foreground"
+              >
+                Log out
+              </button>
+            </>
           ) : (
             <>
-              <Link to="/register" className="text-sm font-medium text-foreground/80 hover:text-foreground">
-                Sign up
-              </Link>
               <Link to="/login" className="text-sm font-medium text-foreground/80 hover:text-foreground">
                 Log in
+              </Link>
+              <Link to="/register" className="text-sm font-medium text-foreground/80 hover:text-foreground">
+                Sign up
               </Link>
             </>
           )}
           <Link
-            to="/register"
-            className="inline-flex items-center rounded-full border border-primary px-4 py-1.5 text-sm font-semibold text-primary hover:bg-primary hover:text-primary-foreground transition-colors"
+            to="/post-task"
+            className="inline-flex items-center gap-1.5 rounded-full bg-primary px-4 py-1.5 text-sm font-semibold text-primary-foreground hover:opacity-90 transition-opacity"
           >
-            Become a Tasker
+            <Plus className="h-4 w-4" /> Post a task
           </Link>
         </div>
 
@@ -59,12 +68,16 @@ export function TaskHeader() {
       {open && (
         <div className="md:hidden border-t border-border bg-background">
           <div className="px-4 py-3 flex flex-col gap-3 text-sm">
-            <Link to="/tasks" onClick={() => setOpen(false)}>Post a task</Link>
-            <a href="#categories" onClick={() => setOpen(false)}>Categories</a>
+            <Link to="/tasks/browse" onClick={() => setOpen(false)}>Browse tasks</Link>
+            <Link to="/tasks/categories" onClick={() => setOpen(false)}>Categories</Link>
+            <Link to="/post-task" onClick={() => setOpen(false)}>Post a task</Link>
             <a href="#how" onClick={() => setOpen(false)}>How it works</a>
             <div className="h-px bg-border" />
             {token ? (
-              <button onClick={() => { logout(); setOpen(false); }} className="text-left">Log out</button>
+              <>
+                <Link to="/dashboard" onClick={() => setOpen(false)}>Dashboard</Link>
+                <button onClick={() => { logout(); setOpen(false); }} className="text-left">Log out</button>
+              </>
             ) : (
               <>
                 <Link to="/login" onClick={() => setOpen(false)}>Log in</Link>
