@@ -43,12 +43,12 @@ export function useAuth() {
   return c;
 }
 
-/** Extract token from various possible API response shapes. */
+/** Extract token from various API response shapes. */
 export function pickToken(data: Record<string, unknown> | null | undefined): string | null {
   if (!data) return null;
   const candidates = [
-    (data as any).access_token,
     (data as any).token,
+    (data as any).access_token,
     (data as any).accessToken,
     (data as any).data?.access_token,
     (data as any).data?.token,
@@ -57,7 +57,17 @@ export function pickToken(data: Record<string, unknown> | null | undefined): str
   return null;
 }
 
-export function pickUser(data: Record<string, unknown> | null | undefined): Record<string, unknown> | null {
+/** Build a user object from the API response (Find-am returns user fields at root). */
+export function pickUser(
+  data: Record<string, unknown> | null | undefined,
+): Record<string, unknown> | null {
   if (!data) return null;
-  return ((data as any).user || (data as any).data?.user || null) as any;
+  const d: any = data;
+  if (d.user) return d.user;
+  if (d.data?.user) return d.data.user;
+  const fromRoot: Record<string, unknown> = {};
+  for (const k of ["user_id", "id", "name", "full_name", "email", "phone", "account_type"]) {
+    if (d[k] !== undefined) fromRoot[k] = d[k];
+  }
+  return Object.keys(fromRoot).length ? fromRoot : null;
 }

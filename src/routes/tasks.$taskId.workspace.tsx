@@ -18,7 +18,7 @@ export const Route = createFileRoute("/tasks/$taskId/workspace")({
 function extractMsgs(d: any): any[] {
   if (!d) return [];
   if (Array.isArray(d)) return d;
-  return d.messages ?? d.data ?? d.results ?? [];
+  return d.messages ?? d.results ?? d.data ?? [];
 }
 
 function WorkspacePage() {
@@ -53,7 +53,7 @@ function WorkspacePage() {
   const scrollerRef = useRef<HTMLDivElement | null>(null);
 
   const sendM = useMutation({
-    mutationFn: () => sFn({ data: { taskId, body: draft.trim(), token: token! } }),
+    mutationFn: () => sFn({ data: { taskId, message_text: draft.trim(), token: token! } }),
     onSuccess: (r) => {
       if (r.ok) { setDraft(""); msgsQ.refetch(); } else toast.error(r.error);
     },
@@ -67,7 +67,7 @@ function WorkspacePage() {
     onSuccess: (r) => r.ok ? (toast.success("Dispute filed."), setShowDispute(false), taskQ.refetch()) : toast.error(r.error),
   });
   const rateM = useMutation({
-    mutationFn: () => rFn({ data: { taskId, rating, review: review.trim() || undefined, token: token! } }),
+    mutationFn: () => rFn({ data: { taskId, rating, review_text: review.trim() || undefined, token: token! } }),
     onSuccess: (r) => r.ok ? (toast.success("Rating submitted."), setShowRate(false)) : toast.error(r.error),
   });
 
@@ -78,9 +78,10 @@ function WorkspacePage() {
   if (!token) return null;
   const task: any = taskQ.data?.ok ? ((taskQ.data.data as any)?.task ?? taskQ.data.data) : null;
   const messages = msgsQ.data?.ok ? extractMsgs(msgsQ.data.data) : [];
-  const myId = (user as any)?.id ?? (user as any)?.user_id;
+  const myId = (user as any)?.user_id ?? (user as any)?.id;
   const status = String(task?.status ?? "").toLowerCase();
-  const isPoster = task && (task.poster_id ?? task.user_id ?? task.owner_id) === myId;
+  const isPoster = task && (task.poster_id ?? task.user_id ?? task.owner_id) !== undefined
+    && String(task.poster_id ?? task.user_id ?? task.owner_id) === String(myId);
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -102,11 +103,13 @@ function WorkspacePage() {
             ) : messages.length === 0 ? (
               <div className="text-center text-sm text-muted-foreground py-10">Say hello to start the conversation.</div>
             ) : messages.map((m: any, i: number) => {
-              const mine = (m.sender_id ?? m.user_id ?? m.from) === myId;
+              const senderId = m.sender_id ?? m.user_id ?? m.from;
+              const mine = senderId !== undefined && String(senderId) === String(myId);
+              const text = m.message_text ?? m.body ?? m.message ?? m.text;
               return (
-                <div key={m.id ?? i} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
+                <div key={m.message_id ?? m.id ?? i} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
                   <div className={`max-w-[75%] rounded-2xl px-3.5 py-2 text-sm ${mine ? "bg-primary text-primary-foreground" : "bg-background border border-border"}`}>
-                    <div className="whitespace-pre-wrap break-words">{m.body ?? m.message ?? m.text}</div>
+                    <div className="whitespace-pre-wrap break-words">{text}</div>
                     {m.created_at && <div className={`mt-0.5 text-[10px] ${mine ? "text-primary-foreground/70" : "text-muted-foreground"}`}>{new Date(m.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</div>}
                   </div>
                 </div>
@@ -137,7 +140,9 @@ function WorkspacePage() {
               <div className="mt-1 flex items-center gap-2 text-2xl font-bold">
                 <Banknote className="h-5 w-5 text-primary" /> ₦{Number(task.budget ?? 0).toLocaleString()}
               </div>
-              {task.location && <div className="mt-3 text-sm text-muted-foreground">{task.location}</div>}
+              {(task.location_text ?? task.location) && (
+                <div className="mt-3 text-sm text-muted-foreground">{task.location_text ?? task.location}</div>
+              )}
             </div>
           )}
 

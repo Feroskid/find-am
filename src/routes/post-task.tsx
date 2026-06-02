@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { TaskHeader } from "@/components/TaskHeader";
 import { createTask } from "@/lib/findtask.functions";
-import { FALLBACK_CATEGORIES } from "@/lib/findtask-categories";
 import { useAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/post-task")({
@@ -26,9 +25,9 @@ function PostTask() {
     title: "",
     description: "",
     budget: "",
-    location: "",
+    location_text: "",
     deadline: "",
-    category: "",
+    is_remote: false,
   });
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -36,9 +35,6 @@ function PostTask() {
   useEffect(() => {
     if (!token) navigate({ to: "/login", search: { redirect: "/post-task" } as any });
   }, [token, navigate]);
-
-  const onChange = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
-    setForm({ ...form, [k]: e.target.value });
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,14 +46,16 @@ function PostTask() {
       return;
     }
     setSubmitting(true);
+    // Convert YYYY-MM-DD to ISO datetime expected by FastAPI
+    const deadlineIso = form.deadline ? new Date(`${form.deadline}T18:00:00`).toISOString() : undefined;
     const res = await create({
       data: {
         title: form.title.trim(),
         description: form.description.trim(),
         budget: budgetNum,
-        location: form.location.trim(),
-        deadline: form.deadline || undefined,
-        category: form.category || undefined,
+        location_text: form.location_text.trim() || undefined,
+        is_remote: form.is_remote ? 1 : 0,
+        deadline: deadlineIso,
         token,
       },
     });
@@ -66,8 +64,9 @@ function PostTask() {
       setError(res.error);
       return;
     }
-    const id = (res.data as any)?.task_id ?? (res.data as any)?.id ?? (res.data as any)?.task?.id;
-    if (id) navigate({ to: "/tasks/$taskId", params: { taskId: String(id) } });
+    const d: any = res.data;
+    const id = d?.task_id ?? d?.id ?? d?.task?.task_id ?? d?.task?.id;
+    if (id !== undefined) navigate({ to: "/tasks/$taskId", params: { taskId: String(id) } });
     else navigate({ to: "/dashboard" });
   };
 
@@ -82,7 +81,8 @@ function PostTask() {
           <Field label="Task title" hint="e.g. 'Fix leaking kitchen sink'">
             <input
               required minLength={4} maxLength={140}
-              value={form.title} onChange={onChange("title")}
+              value={form.title}
+              onChange={(e) => setForm({ ...form, title: e.target.value })}
               className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
             />
           </Field>
@@ -90,7 +90,8 @@ function PostTask() {
           <Field label="Describe what you need done">
             <textarea
               required minLength={10} maxLength={4000} rows={5}
-              value={form.description} onChange={onChange("description")}
+              value={form.description}
+              onChange={(e) => setForm({ ...form, description: e.target.value })}
               className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary resize-y"
             />
           </Field>
@@ -99,38 +100,39 @@ function PostTask() {
             <Field label="Budget (₦)">
               <input
                 required type="number" min={500} step={100}
-                value={form.budget} onChange={onChange("budget")}
+                value={form.budget}
+                onChange={(e) => setForm({ ...form, budget: e.target.value })}
                 className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
               />
             </Field>
-            <Field label="Location">
+            <Field label={form.is_remote ? "Location (remote)" : "Location"}>
               <input
-                required maxLength={160}
+                disabled={form.is_remote} maxLength={160}
                 placeholder="e.g. Lekki, Lagos"
-                value={form.location} onChange={onChange("location")}
-                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
+                value={form.location_text}
+                onChange={(e) => setForm({ ...form, location_text: e.target.value })}
+                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary disabled:opacity-50"
               />
             </Field>
           </div>
 
           <div className="grid gap-5 sm:grid-cols-2">
-            <Field label="Category (optional)">
-              <select
-                value={form.category} onChange={onChange("category")}
-                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
-              >
-                <option value="">Auto-detect</option>
-                {FALLBACK_CATEGORIES.map((c) => (
-                  <option key={c.slug} value={c.slug}>{c.label}</option>
-                ))}
-              </select>
-            </Field>
             <Field label="Deadline (optional)">
               <input
-                type="date" value={form.deadline} onChange={onChange("deadline")}
+                type="date"
+                value={form.deadline}
+                onChange={(e) => setForm({ ...form, deadline: e.target.value })}
                 className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
               />
             </Field>
+            <label className="self-end inline-flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={form.is_remote}
+                onChange={(e) => setForm({ ...form, is_remote: e.target.checked })}
+              />
+              This task can be done remotely
+            </label>
           </div>
 
           {error && (

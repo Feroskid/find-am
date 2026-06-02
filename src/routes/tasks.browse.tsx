@@ -4,29 +4,25 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { Search, Loader2, SlidersHorizontal, ChevronLeft, ChevronRight } from "lucide-react";
 import { TaskHeader } from "@/components/TaskHeader";
-import { TaskCard, type TaskCardData } from "@/components/TaskCard";
-import { listTasks } from "@/lib/findtask.functions";
-import { FALLBACK_CATEGORIES } from "@/lib/findtask-categories";
-
-type Sort = "newest" | "price_asc" | "price_desc" | "deadline";
-const SORTS: { v: Sort; label: string }[] = [
-  { v: "newest", label: "Newest" },
-  { v: "price_desc", label: "Price: High to low" },
-  { v: "price_asc", label: "Price: Low to high" },
-  { v: "deadline", label: "Deadline" },
-];
-const LEVELS = ["any", "entry", "intermediate", "expert"];
+import { TaskCard, toCardData } from "@/components/TaskCard";
+import { listTasks, getCategories } from "@/lib/findtask.functions";
 
 export const Route = createFileRoute("/tasks/browse")({
   validateSearch: (s: Record<string, unknown>) => ({
     q: typeof s.q === "string" ? s.q : "",
-    category: typeof s.category === "string" ? s.category : "",
-    level: typeof s.level === "string" ? s.level : "",
+    category_id:
+      typeof s.category_id === "string" || typeof s.category_id === "number"
+        ? Number(s.category_id) || 0
+        : 0,
     location: typeof s.location === "string" ? s.location : "",
-    min_price: typeof s.min_price === "string" || typeof s.min_price === "number" ? Number(s.min_price) || 0 : 0,
-    max_price: typeof s.max_price === "string" || typeof s.max_price === "number" ? Number(s.max_price) || 0 : 0,
-    sort: (typeof s.sort === "string" ? s.sort : "newest") as Sort,
-    page: typeof s.page === "string" || typeof s.page === "number" ? Math.max(1, Number(s.page) || 1) : 1,
+    is_remote:
+      typeof s.is_remote === "string" || typeof s.is_remote === "number"
+        ? Number(s.is_remote) === 1 ? 1 : 0
+        : 0,
+    page:
+      typeof s.page === "string" || typeof s.page === "number"
+        ? Math.max(1, Number(s.page) || 1)
+        : 1,
   }),
   head: () => ({
     meta: [
@@ -42,35 +38,41 @@ function BrowseTasks() {
   const navigate = useNavigate();
   const [query, setQuery] = useState(search.q);
   const [showFilters, setShowFilters] = useState(false);
-  const list = useServerFn(listTasks);
 
-  const per_page = 12;
+  const list = useServerFn(listTasks);
+  const cats = useServerFn(getCategories);
+
+  const limit = 12;
   const { data, isFetching } = useQuery({
-    queryKey: ["tasks", "list", search],
-    queryFn: () => list({ data: {
-      q: search.q || undefined,
-      category: search.category || undefined,
-      level: search.level && search.level !== "any" ? search.level : undefined,
-      location: search.location || undefined,
-      min_price: search.min_price || undefined,
-      max_price: search.max_price || undefined,
-      sort: search.sort || undefined,
-      page: search.page,
-      per_page,
-    } }),
+    queryKey: ["tasks", "search", search],
+    queryFn: () =>
+      list({
+        data: {
+          q: search.q || undefined,
+          category_id: search.category_id || undefined,
+          location: search.location || undefined,
+          is_remote: search.is_remote ? 1 : undefined,
+          page: search.page,
+          limit,
+        },
+      }),
   });
 
-  const tasks: TaskCardData[] = (() => {
-    if (!data || !data.ok) return [];
+  const catsQ = useQuery({
+    queryKey: ["categories"],
+    queryFn: () => cats({}),
+    staleTime: 5 * 60_000,
+  });
+  const categories: { category_id: number; category_name: string }[] =
+    catsQ.data?.ok ? (catsQ.data.data as any)?.categories ?? [] : [];
+
+  const rows: any[] = (() => {
+    if (!data?.ok) return [];
     const d: any = data.data;
-    if (Array.isArray(d)) return d;
-    return d?.tasks ?? d?.data ?? d?.results ?? [];
+    return d?.results ?? d?.tasks ?? (Array.isArray(d) ? d : []);
   })();
-  const total: number = (() => {
-    const d: any = data?.ok ? data.data : null;
-    return d?.total ?? d?.count ?? d?.pagination?.total ?? tasks.length;
-  })();
-  const hasMore = tasks.length === per_page;
+  const total: number = data?.ok ? (data.data as any)?.total ?? rows.length : 0;
+  const hasMore = rows.length === limit;
 
   const setSearch = (patch: Partial<typeof search>) =>
     navigate({ to: "/tasks/browse", search: { ...search, ...patch, page: patch.page ?? 1 } });
@@ -107,7 +109,7 @@ function BrowseTasks() {
         </form>
 
         {showFilters && (
-          <div className="mt-3 grid gap-3 rounded-2xl border border-border bg-card p-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="mt-3 grid gap-3 rounded-2xl border border-border bg-card p-4 sm:grid-cols-2 lg:grid-cols-3">
             <label className="text-xs font-medium">
               Location
               <input
@@ -118,47 +120,30 @@ function BrowseTasks() {
               />
             </label>
             <label className="text-xs font-medium">
-              Min budget (₦)
-              <input
-                type="number" min={0}
-                defaultValue={search.min_price || ""}
-                onBlur={(e) => setSearch({ min_price: Number(e.target.value) || 0 })}
-                className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
-              />
-            </label>
-            <label className="text-xs font-medium">
-              Max budget (₦)
-              <input
-                type="number" min={0}
-                defaultValue={search.max_price || ""}
-                onBlur={(e) => setSearch({ max_price: Number(e.target.value) || 0 })}
-                className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
-              />
-            </label>
-            <label className="text-xs font-medium">
-              Level
+              Category
               <select
-                value={search.level || "any"}
-                onChange={(e) => setSearch({ level: e.target.value })}
-                className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm capitalize"
-              >
-                {LEVELS.map((l) => <option key={l} value={l}>{l}</option>)}
-              </select>
-            </label>
-            <label className="text-xs font-medium sm:col-span-2 lg:col-span-1">
-              Sort by
-              <select
-                value={search.sort}
-                onChange={(e) => setSearch({ sort: e.target.value as Sort })}
+                value={search.category_id || 0}
+                onChange={(e) => setSearch({ category_id: Number(e.target.value) || 0 })}
                 className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
               >
-                {SORTS.map((s) => <option key={s.v} value={s.v}>{s.label}</option>)}
+                <option value={0}>All categories</option>
+                {categories.map((c) => (
+                  <option key={c.category_id} value={c.category_id}>{c.category_name}</option>
+                ))}
               </select>
+            </label>
+            <label className="text-xs font-medium inline-flex items-center gap-2 self-end">
+              <input
+                type="checkbox"
+                checked={!!search.is_remote}
+                onChange={(e) => setSearch({ is_remote: e.target.checked ? 1 : 0 })}
+              />
+              Remote only
             </label>
             <button
               type="button"
-              onClick={() => navigate({ to: "/tasks/browse", search: { q: "", category: "", level: "", location: "", min_price: 0, max_price: 0, sort: "newest", page: 1 } })}
-              className="self-end text-xs font-medium text-muted-foreground hover:text-foreground text-left"
+              onClick={() => navigate({ to: "/tasks/browse", search: { q: "", category_id: 0, location: "", is_remote: 0, page: 1 } })}
+              className="text-xs font-medium text-muted-foreground hover:text-foreground text-left"
             >
               Clear all filters
             </button>
@@ -167,15 +152,15 @@ function BrowseTasks() {
 
         <div className="mt-4 flex flex-wrap gap-2">
           <button
-            onClick={() => setSearch({ category: "" })}
-            className={`rounded-full border px-3 py-1 text-xs font-medium ${!search.category ? "bg-foreground text-background border-foreground" : "border-border hover:border-foreground"}`}
+            onClick={() => setSearch({ category_id: 0 })}
+            className={`rounded-full border px-3 py-1 text-xs font-medium ${!search.category_id ? "bg-foreground text-background border-foreground" : "border-border hover:border-foreground"}`}
           >All</button>
-          {FALLBACK_CATEGORIES.map((c) => (
+          {categories.slice(0, 12).map((c) => (
             <button
-              key={c.slug}
-              onClick={() => setSearch({ category: c.slug })}
-              className={`rounded-full border px-3 py-1 text-xs font-medium ${search.category === c.slug ? "bg-foreground text-background border-foreground" : "border-border hover:border-foreground"}`}
-            >{c.label}</button>
+              key={c.category_id}
+              onClick={() => setSearch({ category_id: c.category_id })}
+              className={`rounded-full border px-3 py-1 text-xs font-medium ${search.category_id === c.category_id ? "bg-foreground text-background border-foreground" : "border-border hover:border-foreground"}`}
+            >{c.category_name}</button>
           ))}
         </div>
 
@@ -184,24 +169,15 @@ function BrowseTasks() {
             <div className="flex items-center gap-2 text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" /> Loading tasks…</div>
           ) : data && !data.ok ? (
             <div className="rounded-xl border border-destructive/40 bg-destructive/10 p-4 text-sm text-destructive">Couldn't load tasks: {data.error}</div>
-          ) : tasks.length === 0 ? (
+          ) : rows.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-border p-10 text-center text-muted-foreground">
               No tasks match those filters. <Link to="/post-task" className="text-primary font-medium">Post one</Link>.
             </div>
           ) : (
             <>
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {tasks.map((t: any, i) => (
-                  <TaskCard key={t.task_id ?? t.id ?? i} task={{
-                    id: t.task_id ?? t.id ?? i,
-                    title: t.title ?? "Untitled task",
-                    description: t.description,
-                    budget: t.budget,
-                    location: t.location,
-                    category: t.category,
-                    deadline: t.deadline,
-                    status: t.status,
-                  }} />
+                {rows.map((t) => (
+                  <TaskCard key={t.task_id ?? t.id} task={toCardData(t)} />
                 ))}
               </div>
               <div className="mt-8 flex items-center justify-between">

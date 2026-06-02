@@ -1,14 +1,12 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { Loader2, ArrowLeft, CheckCircle2, AlertTriangle, Star } from "lucide-react";
 import { toast } from "sonner";
 import { TaskHeader } from "@/components/TaskHeader";
 import { useAuth } from "@/lib/auth";
-import {
-  getTask, listTaskApplications, acceptApplicant,
-} from "@/lib/findtask.functions";
+import { getTask, listTaskApplications, acceptApplicant } from "@/lib/findtask.functions";
 
 export const Route = createFileRoute("/tasks/$taskId/applications")({
   head: () => ({ meta: [{ title: "Applications — Find-task" }] }),
@@ -18,7 +16,7 @@ export const Route = createFileRoute("/tasks/$taskId/applications")({
 function extract(d: any): any[] {
   if (!d) return [];
   if (Array.isArray(d)) return d;
-  return d.applications ?? d.applicants ?? d.data ?? d.results ?? [];
+  return d.applications ?? d.applicants ?? d.results ?? d.data ?? [];
 }
 
 function ApplicationsPage() {
@@ -41,10 +39,10 @@ function ApplicationsPage() {
   });
 
   const acceptM = useMutation({
-    mutationFn: (applicantId: string) => acc({ data: { taskId, applicantId, token: token! } }),
+    mutationFn: (taskerId: string) => acc({ data: { taskId, taskerId, token: token! } }),
     onSuccess: (r) => {
       if (r.ok) {
-        toast.success("Applicant accepted. Escrow initialised.");
+        toast.success("Tasker accepted. Escrow initialised.");
         navigate({ to: "/tasks/$taskId/workspace", params: { taskId } });
       } else toast.error(r.error);
     },
@@ -73,35 +71,45 @@ function ApplicationsPage() {
             <div className="rounded-2xl border border-dashed border-border p-10 text-center text-muted-foreground">No applications yet.</div>
           ) : (
             apps.map((a: any, i: number) => {
-              const aid = String(a.applicant_id ?? a.tasker_id ?? a.user_id ?? a.id ?? i);
-              const name = a.applicant?.name ?? a.tasker?.name ?? a.name ?? "Applicant";
-              const rating = a.rating ?? a.applicant?.rating;
+              const aid = String(a.tasker_id ?? a.applicant_id ?? a.user_id ?? a.id ?? i);
+              const name = a.tasker_name ?? a.applicant?.name ?? a.name ?? "Tasker";
+              const rating = a.rating ?? a.tasker_rating;
+              const status = String(a.status ?? "pending").toLowerCase();
+              const isAccepted = status === "accepted";
               return (
                 <div key={aid} className="rounded-xl border border-border bg-card p-4 flex items-start gap-4">
                   <div className="h-10 w-10 rounded-full bg-primary/10 text-primary inline-flex items-center justify-center font-semibold">
                     {String(name).charAt(0).toUpperCase()}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <div className="font-medium">{name}</div>
                       {rating && (
                         <span className="text-xs text-muted-foreground inline-flex items-center gap-0.5">
                           <Star className="h-3 w-3 fill-amber-400 text-amber-400" /> {Number(rating).toFixed(1)}
                         </span>
                       )}
+                      <span className={`text-[10px] uppercase tracking-wide rounded-full px-2 py-0.5 ${isAccepted ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground"}`}>
+                        {status}
+                      </span>
                     </div>
-                    {a.cover || a.message ? (
-                      <p className="mt-1 text-sm text-foreground/80 whitespace-pre-wrap">{a.cover ?? a.message}</p>
-                    ) : null}
-                    {a.bid && <div className="mt-2 text-sm font-semibold">Bid: ₦{Number(a.bid).toLocaleString()}</div>}
+                    {a.message && (
+                      <p className="mt-1 text-sm text-foreground/80 whitespace-pre-wrap">{a.message}</p>
+                    )}
                   </div>
-                  <button
-                    disabled={acceptM.isPending}
-                    onClick={() => acceptM.mutate(aid)}
-                    className="rounded-full bg-primary px-4 py-1.5 text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-50 inline-flex items-center gap-1"
-                  >
-                    {acceptM.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />} Accept
-                  </button>
+                  {isAccepted ? (
+                    <Link to="/tasks/$taskId/workspace" params={{ taskId }} className="rounded-full border border-border px-4 py-1.5 text-sm font-semibold hover:bg-muted">
+                      Workspace
+                    </Link>
+                  ) : (
+                    <button
+                      disabled={acceptM.isPending}
+                      onClick={() => acceptM.mutate(aid)}
+                      className="rounded-full bg-primary px-4 py-1.5 text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-50 inline-flex items-center gap-1"
+                    >
+                      {acceptM.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />} Accept
+                    </button>
+                  )}
                 </div>
               );
             })
@@ -110,7 +118,7 @@ function ApplicationsPage() {
 
         <div className="mt-8 rounded-xl border border-amber-500/40 bg-amber-500/5 p-4 text-sm text-foreground/80 flex gap-3">
           <AlertTriangle className="h-5 w-5 text-amber-500 shrink-0" />
-          <span>Accepting an applicant locks the budget in escrow via Flutterwave. Funds release after you mark the task complete.</span>
+          <span>Accepting a tasker locks the budget in escrow via Flutterwave. Funds release after you mark the task complete.</span>
         </div>
       </main>
     </div>
