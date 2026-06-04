@@ -228,3 +228,79 @@ export const markAllNotificationsRead = createServerFn({ method: "POST" })
 export const walletBalance = createServerFn({ method: "POST" })
   .inputValidator((i: unknown) => z.object({ token: Token }).parse(i))
   .handler(async ({ data }) => call(`/wallet/balance`, { token: data.token }));
+
+export const walletTransactions = createServerFn({ method: "POST" })
+  .inputValidator((i: unknown) => z.object({ token: Token }).parse(i))
+  .handler(async ({ data }) => call(`/wallet/transactions`, { token: data.token }));
+
+export const withdrawFunds = createServerFn({ method: "POST" })
+  .inputValidator((i: unknown) =>
+    z.object({
+      amount: z.number().positive().max(100_000_000),
+      bank_code: z.string().min(2).max(20).optional(),
+      account_number: z.string().min(5).max(20).optional(),
+      token: Token,
+    }).parse(i),
+  )
+  .handler(async ({ data }) => {
+    const { token, ...body } = data;
+    return call(`/wallet/withdraw`, { method: "POST", body, token });
+  });
+
+// --- Profile (self) ------------------------------------------------------
+export const getMe = createServerFn({ method: "POST" })
+  .inputValidator((i: unknown) => z.object({ token: Token }).parse(i))
+  .handler(async ({ data }) => call(`/auth/me`, { token: data.token }));
+
+const ProfileSchema = z.object({
+  name: z.string().min(2).max(120).optional(),
+  photo_url: z.string().url().max(2048).optional(),
+  location: z.string().max(160).optional(),
+  state: z.string().max(80).optional(),
+  city: z.string().max(80).optional(),
+  tagline: z.string().max(200).optional(),
+  about: z.string().max(2000).optional(),
+  categories: z.array(z.number().int().positive()).max(20).optional(),
+  token: Token,
+});
+export const updateProfile = createServerFn({ method: "POST" })
+  .inputValidator((i: unknown) => ProfileSchema.parse(i))
+  .handler(async ({ data }) => {
+    const { token, ...body } = data;
+    return call(`/auth/profile`, { method: "PUT", body, token });
+  });
+
+// --- Public user --------------------------------------------------------
+const UserId = z.union([z.number().int().positive(), z.string().min(1).max(64)]);
+export const getPublicUser = createServerFn({ method: "POST" })
+  .inputValidator((i: unknown) => z.object({ userId: UserId }).parse(i))
+  .handler(async ({ data }) => call(`/user/${data.userId}`));
+
+export const getUserRatings = createServerFn({ method: "POST" })
+  .inputValidator((i: unknown) => z.object({ userId: UserId }).parse(i))
+  .handler(async ({ data }) => call(`/user/${data.userId}/ratings`));
+
+export const getUserTasks = createServerFn({ method: "POST" })
+  .inputValidator((i: unknown) => z.object({ userId: UserId }).parse(i))
+  .handler(async ({ data }) => call(`/user/${data.userId}/tasks`));
+
+// --- Payments (Paystack) ------------------------------------------------
+export const initiateEscrow = createServerFn({ method: "POST" })
+  .inputValidator((i: unknown) => z.object({ taskId: TaskId, token: Token }).parse(i))
+  .handler(async ({ data }) =>
+    call(`/payments/escrow/${data.taskId}`, { method: "POST", token: data.token }),
+  );
+
+export const verifyPayment = createServerFn({ method: "POST" })
+  .inputValidator((i: unknown) =>
+    z.object({ reference: z.string().min(4).max(200), token: Token }).parse(i),
+  )
+  .handler(async ({ data }) =>
+    call(`/payments/verify/${data.reference}`, { token: data.token }),
+  );
+
+export const releaseEscrow = createServerFn({ method: "POST" })
+  .inputValidator((i: unknown) => z.object({ taskId: TaskId, token: Token }).parse(i))
+  .handler(async ({ data }) =>
+    call(`/task/${data.taskId}/release`, { method: "POST", token: data.token }),
+  );
