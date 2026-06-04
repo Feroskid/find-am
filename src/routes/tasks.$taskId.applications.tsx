@@ -118,7 +118,7 @@ function ApplicationsPage() {
 
         <div className="mt-8 rounded-xl border border-amber-500/40 bg-amber-500/5 p-4 text-sm text-foreground/80 flex gap-3">
           <AlertTriangle className="h-5 w-5 text-amber-500 shrink-0" />
-          <span>Accepting a tasker locks the budget in escrow via Flutterwave. Funds release after you mark the task complete.</span>
+          <span>Accepting a tasker locks the budget in Paystack escrow. Funds release to the tasker after you mark the task complete.</span>
         </div>
       </main>
     </div>

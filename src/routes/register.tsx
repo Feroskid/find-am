@@ -10,7 +10,7 @@ export const Route = createFileRoute("/register")({
   head: () => ({
     meta: [
       { title: "Sign up — Find-task" },
-      { name: "description", content: "Create your free Find-task account and start posting tasks today." },
+      { name: "description", content: "Create your free Find-task account. One account works for both posting tasks and earning as a tasker." },
     ],
   }),
   component: RegisterPage,
@@ -27,7 +27,6 @@ function RegisterPage() {
     email: "",
     phone: "",
     password: "",
-    account_type: "individual" as "individual" | "business",
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -40,17 +39,18 @@ function RegisterPage() {
     setError(null);
     setLoading(true);
     try {
-      const res = await reg({ data: form });
+      // Backend still expects account_type — every Find-task user is both poster + tasker,
+      // so we default to "individual" without exposing the choice to the user.
+      const res = await reg({ data: { ...form, account_type: "individual" } });
       if (!res.ok) {
         setError(res.error);
         return;
       }
-      // Auto-login after register
       const loginRes = await login({ data: { email: form.email, password: form.password } });
       if (loginRes.ok) {
         setAuth({ token: pickToken(loginRes.data), user: pickUser(loginRes.data) });
       }
-      navigate({ to: "/tasks" });
+      navigate({ to: "/dashboard" });
     } catch (err: any) {
       setError(err?.message || "Something went wrong");
     } finally {
@@ -64,7 +64,9 @@ function RegisterPage() {
       <main className="flex-1 flex items-center justify-center px-4 py-10">
         <div className="w-full max-w-md rounded-2xl border border-border bg-card p-6 sm:p-8 shadow-sm">
           <h1 className="text-2xl font-bold tracking-tight">Create your account</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Join Find-task and get anything done.</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            One account, two modes. Post tasks <em>and</em> earn as a tasker.
+          </p>
 
           <form onSubmit={onSubmit} className="mt-6 space-y-4">
             <Field label="Full name">
@@ -103,16 +105,6 @@ function RegisterPage() {
                 className="input"
                 autoComplete="new-password"
               />
-            </Field>
-            <Field label="Account type">
-              <select
-                value={form.account_type}
-                onChange={(e) => update("account_type", e.target.value as any)}
-                className="input"
-              >
-                <option value="individual">Individual</option>
-                <option value="business">Business</option>
-              </select>
             </Field>
 
             {error && (
