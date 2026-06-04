@@ -1,10 +1,13 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
+import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { TaskHeader } from "@/components/TaskHeader";
-import { createTask } from "@/lib/findtask.functions";
+import { FeeBreakdown } from "@/components/FeeBreakdown";
+import { createTask, getCategories } from "@/lib/findtask.functions";
 import { useAuth } from "@/lib/auth";
+import { MIN_TASK_BUDGET } from "@/lib/fees";
 
 export const Route = createFileRoute("/post-task")({
   head: () => ({

@@ -1,9 +1,9 @@
 import { Link } from "@tanstack/react-router";
-import { Menu, X, LayoutDashboard, Plus, MessageSquare } from "lucide-react";
+import { Menu, X, LayoutDashboard, Plus, MessageSquare, Wallet, User } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/lib/auth";
 import { NotificationsBell } from "@/components/NotificationsBell";
-
+import { ModeSwitcher } from "@/components/ModeSwitcher";
 
 export function TaskHeader() {
   const [open, setOpen] = useState(false);
@@ -27,9 +27,16 @@ export function TaskHeader() {
         <div className="hidden md:flex items-center gap-3">
           {token ? (
             <>
+              <ModeSwitcher />
               <NotificationsBell />
-              <Link to="/messages" className="inline-flex items-center gap-1.5 text-sm font-medium text-foreground/80 hover:text-foreground">
-                <MessageSquare className="h-4 w-4" /> Messages
+              <Link to="/messages" className="inline-flex items-center gap-1.5 text-sm font-medium text-foreground/80 hover:text-foreground" aria-label="Messages">
+                <MessageSquare className="h-4 w-4" />
+              </Link>
+              <Link to="/wallet" className="inline-flex items-center gap-1.5 text-sm font-medium text-foreground/80 hover:text-foreground" aria-label="Wallet">
+                <Wallet className="h-4 w-4" />
+              </Link>
+              <Link to="/profile" className="inline-flex items-center gap-1.5 text-sm font-medium text-foreground/80 hover:text-foreground" aria-label="Profile">
+                <User className="h-4 w-4" />
               </Link>
               <Link
                 to="/dashboard"
@@ -74,6 +81,7 @@ export function TaskHeader() {
       {open && (
         <div className="md:hidden border-t border-border bg-background">
           <div className="px-4 py-3 flex flex-col gap-3 text-sm">
+            {token && <div className="pb-2"><ModeSwitcher /></div>}
             <Link to="/tasks/browse" onClick={() => setOpen(false)}>Browse tasks</Link>
             <Link to="/tasks/categories" onClick={() => setOpen(false)}>Categories</Link>
             <Link to="/post-task" onClick={() => setOpen(false)}>Post a task</Link>
@@ -82,11 +90,12 @@ export function TaskHeader() {
             {token ? (
               <>
                 <Link to="/dashboard" onClick={() => setOpen(false)}>Dashboard</Link>
+                <Link to="/profile" onClick={() => setOpen(false)}>Profile</Link>
+                <Link to="/wallet" onClick={() => setOpen(false)}>Wallet</Link>
                 <Link to="/messages" onClick={() => setOpen(false)}>Messages</Link>
                 <Link to="/notifications" onClick={() => setOpen(false)}>Notifications</Link>
                 <button onClick={() => { logout(); setOpen(false); }} className="text-left">Log out</button>
               </>
-
             ) : (
               <>
                 <Link to="/login" onClick={() => setOpen(false)}>Log in</Link>
