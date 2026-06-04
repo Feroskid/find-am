@@ -31,21 +31,26 @@ function PostTask() {
     location_text: "",
     deadline: "",
     is_remote: false,
+    category_id: 0,
   });
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const catsFn = useServerFn(getCategories);
+  const catsQ = useQuery({ queryKey: ["categories"], queryFn: () => catsFn({}), staleTime: 5 * 60_000 });
+  const categories: any[] = catsQ.data?.ok ? (catsQ.data.data as any)?.categories ?? [] : [];
 
   useEffect(() => {
     if (!token) navigate({ to: "/login", search: { redirect: "/post-task" } as any });
   }, [token, navigate]);
 
+  const budgetNum = Number(form.budget);
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     if (!token) return;
-    const budgetNum = Number(form.budget);
-    if (!Number.isFinite(budgetNum) || budgetNum <= 0) {
-      setError("Enter a valid budget in Naira.");
+    if (!Number.isFinite(budgetNum) || budgetNum < MIN_TASK_BUDGET) {
+      setError(`Minimum task budget is ₦${MIN_TASK_BUDGET.toLocaleString()}.`);
       return;
     }
     setSubmitting(true);
