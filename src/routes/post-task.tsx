@@ -105,14 +105,36 @@ function PostTask() {
           </Field>
 
           <div className="grid gap-5 sm:grid-cols-2">
-            <Field label="Budget (₦)">
+            <Field label={`Budget (₦) — min ₦${MIN_TASK_BUDGET.toLocaleString()}`}>
               <input
-                required type="number" min={500} step={100}
+                required type="number" min={MIN_TASK_BUDGET} step={100}
                 value={form.budget}
                 onChange={(e) => setForm({ ...form, budget: e.target.value })}
                 className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
               />
             </Field>
+            <Field label="Category">
+              <select
+                value={form.category_id || 0}
+                onChange={(e) => setForm({ ...form, category_id: Number(e.target.value) || 0 })}
+                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
+              >
+                <option value={0}>Auto-detect from description</option>
+                {categories.flatMap((c: any) => {
+                  const subs = c.subcategories ?? [];
+                  return subs.length
+                    ? subs.map((s: any) => (
+                        <option key={s.category_id} value={s.category_id}>
+                          {c.category_name} → {s.category_name}
+                        </option>
+                      ))
+                    : [<option key={c.category_id} value={c.category_id}>{c.category_name}</option>];
+                })}
+              </select>
+            </Field>
+          </div>
+
+          <div className="grid gap-5 sm:grid-cols-2">
             <Field label={form.is_remote ? "Location (remote)" : "Location"}>
               <input
                 disabled={form.is_remote} maxLength={160}
@@ -122,9 +144,6 @@ function PostTask() {
                 className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary disabled:opacity-50"
               />
             </Field>
-          </div>
-
-          <div className="grid gap-5 sm:grid-cols-2">
             <Field label="Deadline (optional)">
               <input
                 type="date"
@@ -133,15 +152,18 @@ function PostTask() {
                 className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
               />
             </Field>
-            <label className="self-end inline-flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={form.is_remote}
-                onChange={(e) => setForm({ ...form, is_remote: e.target.checked })}
-              />
-              This task can be done remotely
-            </label>
           </div>
+
+          <label className="inline-flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={form.is_remote}
+              onChange={(e) => setForm({ ...form, is_remote: e.target.checked })}
+            />
+            This task can be done remotely
+          </label>
+
+          {budgetNum >= MIN_TASK_BUDGET && <FeeBreakdown budget={budgetNum} />}
 
           {error && (
             <div className="rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">{error}</div>
