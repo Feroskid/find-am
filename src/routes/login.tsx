@@ -35,7 +35,7 @@ function LoginPage() {
         return;
       }
       setAuth({ token: pickToken(res.data), user: pickUser(res.data) });
-      navigate({ to: "/tasks" });
+      navigate({ to: "/dashboard" });
     } catch (err: any) {
       setError(err?.message || "Login failed");
     } finally {
