@@ -9,15 +9,18 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as WalletRouteImport } from './routes/wallet'
 import { Route as TasksRouteImport } from './routes/tasks'
 import { Route as SearchRouteImport } from './routes/search'
 import { Route as RegisterRouteImport } from './routes/register'
+import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as PostTaskRouteImport } from './routes/post-task'
 import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as MessagesRouteImport } from './routes/messages'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as UUserIdRouteImport } from './routes/u.$userId'
 import { Route as TasksCategoriesRouteImport } from './routes/tasks.categories'
 import { Route as TasksBrowseRouteImport } from './routes/tasks.browse'
 import { Route as TasksTaskIdRouteImport } from './routes/tasks.$taskId'
@@ -25,6 +28,11 @@ import { Route as TasksTaskIdWorkspaceRouteImport } from './routes/tasks.$taskId
 import { Route as TasksTaskIdApplicationsRouteImport } from './routes/tasks.$taskId.applications'
 import { Route as ApiPublicSearchRouteImport } from './routes/api/public/search'
 
+const WalletRoute = WalletRouteImport.update({
+  id: '/wallet',
+  path: '/wallet',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TasksRoute = TasksRouteImport.update({
   id: '/tasks',
   path: '/tasks',
@@ -38,6 +46,11 @@ const SearchRoute = SearchRouteImport.update({
 const RegisterRoute = RegisterRouteImport.update({
   id: '/register',
   path: '/register',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProfileRoute = ProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PostTaskRoute = PostTaskRouteImport.update({
@@ -68,6 +81,11 @@ const DashboardRoute = DashboardRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const UUserIdRoute = UUserIdRouteImport.update({
+  id: '/u/$userId',
+  path: '/u/$userId',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TasksCategoriesRoute = TasksCategoriesRouteImport.update({
@@ -108,12 +126,15 @@ export interface FileRoutesByFullPath {
   '/messages': typeof MessagesRoute
   '/notifications': typeof NotificationsRoute
   '/post-task': typeof PostTaskRoute
+  '/profile': typeof ProfileRoute
   '/register': typeof RegisterRoute
   '/search': typeof SearchRoute
   '/tasks': typeof TasksRouteWithChildren
+  '/wallet': typeof WalletRoute
   '/tasks/$taskId': typeof TasksTaskIdRouteWithChildren
   '/tasks/browse': typeof TasksBrowseRoute
   '/tasks/categories': typeof TasksCategoriesRoute
+  '/u/$userId': typeof UUserIdRoute
   '/api/public/search': typeof ApiPublicSearchRoute
   '/tasks/$taskId/applications': typeof TasksTaskIdApplicationsRoute
   '/tasks/$taskId/workspace': typeof TasksTaskIdWorkspaceRoute
@@ -125,12 +146,15 @@ export interface FileRoutesByTo {
   '/messages': typeof MessagesRoute
   '/notifications': typeof NotificationsRoute
   '/post-task': typeof PostTaskRoute
+  '/profile': typeof ProfileRoute
   '/register': typeof RegisterRoute
   '/search': typeof SearchRoute
   '/tasks': typeof TasksRouteWithChildren
+  '/wallet': typeof WalletRoute
   '/tasks/$taskId': typeof TasksTaskIdRouteWithChildren
   '/tasks/browse': typeof TasksBrowseRoute
   '/tasks/categories': typeof TasksCategoriesRoute
+  '/u/$userId': typeof UUserIdRoute
   '/api/public/search': typeof ApiPublicSearchRoute
   '/tasks/$taskId/applications': typeof TasksTaskIdApplicationsRoute
   '/tasks/$taskId/workspace': typeof TasksTaskIdWorkspaceRoute
@@ -143,12 +167,15 @@ export interface FileRoutesById {
   '/messages': typeof MessagesRoute
   '/notifications': typeof NotificationsRoute
   '/post-task': typeof PostTaskRoute
+  '/profile': typeof ProfileRoute
   '/register': typeof RegisterRoute
   '/search': typeof SearchRoute
   '/tasks': typeof TasksRouteWithChildren
+  '/wallet': typeof WalletRoute
   '/tasks/$taskId': typeof TasksTaskIdRouteWithChildren
   '/tasks/browse': typeof TasksBrowseRoute
   '/tasks/categories': typeof TasksCategoriesRoute
+  '/u/$userId': typeof UUserIdRoute
   '/api/public/search': typeof ApiPublicSearchRoute
   '/tasks/$taskId/applications': typeof TasksTaskIdApplicationsRoute
   '/tasks/$taskId/workspace': typeof TasksTaskIdWorkspaceRoute
@@ -162,12 +189,15 @@ export interface FileRouteTypes {
     | '/messages'
     | '/notifications'
     | '/post-task'
+    | '/profile'
     | '/register'
     | '/search'
     | '/tasks'
+    | '/wallet'
     | '/tasks/$taskId'
     | '/tasks/browse'
     | '/tasks/categories'
+    | '/u/$userId'
     | '/api/public/search'
     | '/tasks/$taskId/applications'
     | '/tasks/$taskId/workspace'
@@ -179,12 +209,15 @@ export interface FileRouteTypes {
     | '/messages'
     | '/notifications'
     | '/post-task'
+    | '/profile'
     | '/register'
     | '/search'
     | '/tasks'
+    | '/wallet'
     | '/tasks/$taskId'
     | '/tasks/browse'
     | '/tasks/categories'
+    | '/u/$userId'
     | '/api/public/search'
     | '/tasks/$taskId/applications'
     | '/tasks/$taskId/workspace'
@@ -196,12 +229,15 @@ export interface FileRouteTypes {
     | '/messages'
     | '/notifications'
     | '/post-task'
+    | '/profile'
     | '/register'
     | '/search'
     | '/tasks'
+    | '/wallet'
     | '/tasks/$taskId'
     | '/tasks/browse'
     | '/tasks/categories'
+    | '/u/$userId'
     | '/api/public/search'
     | '/tasks/$taskId/applications'
     | '/tasks/$taskId/workspace'
@@ -214,14 +250,24 @@ export interface RootRouteChildren {
   MessagesRoute: typeof MessagesRoute
   NotificationsRoute: typeof NotificationsRoute
   PostTaskRoute: typeof PostTaskRoute
+  ProfileRoute: typeof ProfileRoute
   RegisterRoute: typeof RegisterRoute
   SearchRoute: typeof SearchRoute
   TasksRoute: typeof TasksRouteWithChildren
+  WalletRoute: typeof WalletRoute
+  UUserIdRoute: typeof UUserIdRoute
   ApiPublicSearchRoute: typeof ApiPublicSearchRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/wallet': {
+      id: '/wallet'
+      path: '/wallet'
+      fullPath: '/wallet'
+      preLoaderRoute: typeof WalletRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/tasks': {
       id: '/tasks'
       path: '/tasks'
@@ -241,6 +287,13 @@ declare module '@tanstack/react-router' {
       path: '/register'
       fullPath: '/register'
       preLoaderRoute: typeof RegisterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/profile': {
+      id: '/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof ProfileRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/post-task': {
@@ -283,6 +336,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/u/$userId': {
+      id: '/u/$userId'
+      path: '/u/$userId'
+      fullPath: '/u/$userId'
+      preLoaderRoute: typeof UUserIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/tasks/categories': {
@@ -365,9 +425,12 @@ const rootRouteChildren: RootRouteChildren = {
   MessagesRoute: MessagesRoute,
   NotificationsRoute: NotificationsRoute,
   PostTaskRoute: PostTaskRoute,
+  ProfileRoute: ProfileRoute,
   RegisterRoute: RegisterRoute,
   SearchRoute: SearchRoute,
   TasksRoute: TasksRouteWithChildren,
+  WalletRoute: WalletRoute,
+  UUserIdRoute: UUserIdRoute,
   ApiPublicSearchRoute: ApiPublicSearchRoute,
 }
 export const routeTree = rootRouteImport
