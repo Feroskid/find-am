@@ -1,40 +1,55 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 
-type StoredAuth = { token: string | null; user: Record<string, unknown> | null };
+export type AppMode = "poster" | "tasker";
 
-interface AuthCtx extends StoredAuth {
-  setAuth: (a: StoredAuth) => void;
+type StoredAuth = { token: string | null; user: Record<string, unknown> | null; mode?: AppMode };
+
+interface AuthCtx {
+  token: string | null;
+  user: Record<string, unknown> | null;
+  mode: AppMode;
+  setAuth: (a: { token: string | null; user: Record<string, unknown> | null }) => void;
+  setMode: (m: AppMode) => void;
   logout: () => void;
 }
 
 const KEY = "findam:auth";
+const MODE_KEY = "findam:mode";
 const Ctx = createContext<AuthCtx | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<StoredAuth>({ token: null, user: null });
+  const [mode, setModeState] = useState<AppMode>("poster");
 
   useEffect(() => {
     try {
       const raw = localStorage.getItem(KEY);
       if (raw) setState(JSON.parse(raw));
+      const m = localStorage.getItem(MODE_KEY) as AppMode | null;
+      if (m === "poster" || m === "tasker") setModeState(m);
     } catch {}
   }, []);
 
-  const setAuth = (a: StoredAuth) => {
+  const setAuth = (a: { token: string | null; user: Record<string, unknown> | null }) => {
     setState(a);
-    try {
-      localStorage.setItem(KEY, JSON.stringify(a));
-    } catch {}
+    try { localStorage.setItem(KEY, JSON.stringify(a)); } catch {}
+  };
+
+  const setMode = (m: AppMode) => {
+    setModeState(m);
+    try { localStorage.setItem(MODE_KEY, m); } catch {}
   };
 
   const logout = () => {
     setState({ token: null, user: null });
-    try {
-      localStorage.removeItem(KEY);
-    } catch {}
+    try { localStorage.removeItem(KEY); } catch {}
   };
 
-  return <Ctx.Provider value={{ ...state, setAuth, logout }}>{children}</Ctx.Provider>;
+  return (
+    <Ctx.Provider value={{ token: state.token, user: state.user, mode, setAuth, setMode, logout }}>
+      {children}
+    </Ctx.Provider>
+  );
 }
 
 export function useAuth() {
@@ -66,7 +81,7 @@ export function pickUser(
   if (d.user) return d.user;
   if (d.data?.user) return d.data.user;
   const fromRoot: Record<string, unknown> = {};
-  for (const k of ["user_id", "id", "name", "full_name", "email", "phone", "account_type"]) {
+  for (const k of ["user_id", "id", "name", "full_name", "email", "phone", "account_type", "photo_url", "location", "tagline", "about"]) {
     if (d[k] !== undefined) fromRoot[k] = d[k];
   }
   return Object.keys(fromRoot).length ? fromRoot : null;
