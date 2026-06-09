@@ -85,10 +85,16 @@ const CreateTaskSchema = z.object({
   title: z.string().min(4).max(140),
   description: z.string().min(10).max(4000),
   budget: z.number().positive().max(100_000_000),
+  category_id: z.number().int().positive().optional(),
   location_text: z.string().min(2).max(160).optional(),
+  state: z.string().max(80).optional(),
+  city: z.string().max(80).optional(),
+  latitude: z.number().min(-90).max(90).optional(),
+  longitude: z.number().min(-180).max(180).optional(),
   is_remote: z.union([z.literal(0), z.literal(1)]).optional(),
   deadline: z.string().max(64).optional(),
   quantity: z.number().int().min(1).max(99).optional(),
+  urgency: z.enum(["low", "normal", "high", "urgent"]).optional(),
   token: Token,
 });
 export const createTask = createServerFn({ method: "POST" })
