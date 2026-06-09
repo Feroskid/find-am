@@ -1,9 +1,11 @@
 import { Link } from "@tanstack/react-router";
-import { Menu, X, LayoutDashboard, Plus, MessageSquare, Wallet, User } from "lucide-react";
+import { Menu, X, LayoutDashboard, Plus, MessageSquare, Wallet, User, Compass } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/lib/auth";
 import { NotificationsBell } from "@/components/NotificationsBell";
 import { ModeSwitcher } from "@/components/ModeSwitcher";
+import { FindAmIsland } from "@/components/FindAmIsland";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 export function TaskHeader() {
   const [open, setOpen] = useState(false);
