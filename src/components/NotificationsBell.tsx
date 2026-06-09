@@ -3,26 +3,26 @@ import { useQuery } from "@tanstack/react-query";
 import { Bell } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth";
-import { listNotifications } from "@/lib/findtask.functions";
+import { unreadCount } from "@/lib/findtask.functions";
 
-function extract(d: any): any[] {
-  if (!d) return [];
-  if (Array.isArray(d)) return d;
-  return d.notifications ?? d.data ?? d.results ?? [];
+function readCount(d: any): number {
+  if (d == null) return 0;
+  if (typeof d === "number") return d;
+  return Number(d.count ?? d.unread ?? d.unread_count ?? d.total ?? 0) || 0;
 }
 
 export function NotificationsBell() {
   const { token } = useAuth();
-  const fn = useServerFn(listNotifications);
+  const fn = useServerFn(unreadCount);
   const { data } = useQuery({
-    queryKey: ["notifications", token],
+    queryKey: ["notifications", "unread", token],
     enabled: !!token,
     queryFn: () => fn({ data: { token: token! } }),
-    refetchInterval: 60_000,
+    refetchInterval: 20_000,
+    refetchOnWindowFocus: true,
   });
   if (!token) return null;
-  const items = data?.ok ? extract(data.data) : [];
-  const unread = items.filter((n: any) => !n.read && !n.read_at).length;
+  const unread = data?.ok ? readCount(data.data) : 0;
   return (
     <Link
       to="/notifications"
