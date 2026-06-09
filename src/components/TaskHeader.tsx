@@ -89,11 +89,12 @@ export function TaskHeader() {
       {open && (
         <div className="md:hidden border-t border-border bg-background">
           <div className="px-4 py-3 flex flex-col gap-3 text-sm">
+            <div className="flex justify-center pb-2"><FindAmIsland /></div>
             {token && <div className="pb-2"><ModeSwitcher /></div>}
             <Link to="/tasks/browse" onClick={() => setOpen(false)}>Browse tasks</Link>
+            <Link to="/explore" onClick={() => setOpen(false)}>Explore</Link>
             <Link to="/tasks/categories" onClick={() => setOpen(false)}>Categories</Link>
             <Link to="/post-task" onClick={() => setOpen(false)}>Post a task</Link>
-            <a href="#how" onClick={() => setOpen(false)}>How it works</a>
             <div className="h-px bg-border" />
             {token ? (
               <>
