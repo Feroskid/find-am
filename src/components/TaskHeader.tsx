@@ -13,17 +13,23 @@ export function TaskHeader() {
 
   return (
     <header className="sticky top-0 z-30 w-full border-b border-border bg-background/90 backdrop-blur">
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-4 sm:px-6 py-3">
-        <div className="flex items-center gap-6">
-          <Link to="/tasks" className="font-extrabold text-2xl tracking-tight text-primary">
+      <div className="mx-auto flex max-w-7xl items-center justify-between px-4 sm:px-6 py-3 gap-3">
+        <div className="flex items-center gap-3 sm:gap-6 min-w-0">
+          <ThemeToggle />
+          <Link to="/tasks" className="font-extrabold text-xl sm:text-2xl tracking-tight text-primary shrink-0">
             Find-task
           </Link>
           <nav className="hidden md:flex items-center gap-5 text-sm font-medium text-foreground/80">
             <Link to="/tasks/browse" className="hover:text-foreground">Browse tasks</Link>
+            <Link to="/explore" className="hover:text-foreground inline-flex items-center gap-1"><Compass className="h-4 w-4" />Explore</Link>
             <Link to="/tasks/categories" className="hover:text-foreground">Categories</Link>
             <Link to="/post-task" className="hover:text-foreground">Post a task</Link>
-            <a href="#how" className="hover:text-foreground">How it works</a>
           </nav>
+        </div>
+
+        {/* Find-Am island — switch back to the search engine */}
+        <div className="hidden sm:flex items-center justify-center absolute left-1/2 -translate-x-1/2 top-3">
+          <FindAmIsland />
         </div>
 
         <div className="hidden md:flex items-center gap-3">
