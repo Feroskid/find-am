@@ -55,6 +55,43 @@ export const getCategories = createServerFn({ method: "GET" }).handler(
   async () => call("/task/categories"),
 );
 
+export const getSubCategories = createServerFn({ method: "POST" })
+  .inputValidator((i: unknown) => z.object({ parentId: z.number().int().positive() }).parse(i))
+  .handler(async ({ data }) => call(`/task/categories?parent=${data.parentId}`));
+
+// --- Auth helpers --------------------------------------------------------
+export const verifyEmail = createServerFn({ method: "POST" })
+  .inputValidator((i: unknown) => z.object({ token: z.string().min(4).max(512) }).parse(i))
+  .handler(async ({ data }) =>
+    call(`/auth/verify-email`, { method: "POST", body: { token: data.token } }),
+  );
+
+export const resendVerification = createServerFn({ method: "POST" })
+  .inputValidator((i: unknown) => z.object({ email: z.string().email().max(200) }).parse(i))
+  .handler(async ({ data }) =>
+    call(`/auth/resend-verification`, { method: "POST", body: { email: data.email } }),
+  );
+
+export const forgotPassword = createServerFn({ method: "POST" })
+  .inputValidator((i: unknown) => z.object({ email: z.string().email().max(200) }).parse(i))
+  .handler(async ({ data }) =>
+    call(`/auth/forgot-password`, { method: "POST", body: { email: data.email } }),
+  );
+
+export const resetPassword = createServerFn({ method: "POST" })
+  .inputValidator((i: unknown) =>
+    z.object({
+      token: z.string().min(4).max(512),
+      new_password: z.string().min(6).max(200),
+    }).parse(i),
+  )
+  .handler(async ({ data }) =>
+    call(`/auth/reset-password`, {
+      method: "POST",
+      body: { token: data.token, new_password: data.new_password },
+    }),
+  );
+
 // --- Browse / search tasks ----------------------------------------------
 const BrowseSchema = z.object({
   q: z.string().max(200).optional(),
@@ -63,6 +100,10 @@ const BrowseSchema = z.object({
   is_remote: z.union([z.literal(0), z.literal(1)]).optional(),
   page: z.number().int().min(1).max(500).optional(),
   limit: z.number().int().min(1).max(50).optional(),
+  min_budget: z.number().int().nonnegative().optional(),
+  max_budget: z.number().int().positive().optional(),
+  sort: z.enum(["recent", "budget_desc", "budget_asc", "random"]).optional(),
+  since_days: z.number().int().min(1).max(365).optional(),
 });
 export const listTasks = createServerFn({ method: "POST" })
   .inputValidator((i: unknown) => BrowseSchema.parse(i))
@@ -100,7 +141,18 @@ const CreateTaskSchema = z.object({
 export const createTask = createServerFn({ method: "POST" })
   .inputValidator((i: unknown) => CreateTaskSchema.parse(i))
   .handler(async ({ data }) => {
-    const { token, ...body } = data;
+    const { token, latitude, longitude, ...rest } = data;
+    // Backend stores GPS as location_lat / location_lng. Send both shapes so
+    // either column name works, then strip undefined.
+    const body: Record<string, unknown> = { ...rest };
+    if (latitude !== undefined) {
+      body.latitude = latitude;
+      body.location_lat = latitude;
+    }
+    if (longitude !== undefined) {
+      body.longitude = longitude;
+      body.location_lng = longitude;
+    }
     return call("/task/post", { method: "POST", body, token });
   });
 
@@ -120,6 +172,8 @@ export const applyToTask = createServerFn({ method: "POST" })
       token: data.token,
     }),
   );
+
+
 
 // --- List applications for a task (poster) -------------------------------
 export const listTaskApplications = createServerFn({ method: "POST" })
