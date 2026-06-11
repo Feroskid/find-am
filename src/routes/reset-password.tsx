@@ -68,16 +68,14 @@ function ResetPassword() {
             <form onSubmit={(e) => { e.preventDefault(); if (pw.length >= 6 && pw === pw2) resetM.mutate(); else setErr("Passwords must match and be at least 6 characters."); }} className="mt-6 space-y-3">
               <label className="block">
                 <span className="text-sm font-medium">New password</span>
-                <div className="mt-1 flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-2">
-                  <Lock className="h-4 w-4 text-muted-foreground" />
-                  <PasswordInput value={pw} onChange={setPw} placeholder="At least 6 characters" />
+                <div className="mt-1">
+                  <PasswordInput required minLength={6} value={pw} onChange={(e) => setPw(e.target.value)} placeholder="At least 6 characters" />
                 </div>
               </label>
               <label className="block">
                 <span className="text-sm font-medium">Confirm new password</span>
-                <div className="mt-1 flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-2">
-                  <Lock className="h-4 w-4 text-muted-foreground" />
-                  <PasswordInput value={pw2} onChange={setPw2} placeholder="Repeat password" />
+                <div className="mt-1">
+                  <PasswordInput required minLength={6} value={pw2} onChange={(e) => setPw2(e.target.value)} placeholder="Repeat password" />
                 </div>
               </label>
               <button disabled={resetM.isPending} className="w-full inline-flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground disabled:opacity-50">
