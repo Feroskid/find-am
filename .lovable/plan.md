@@ -1,92 +1,57 @@
-# Phase 3 — Dual-mode accounts, fixes, and full endpoint coverage
+## Phase 4 — 13 changes
 
-## 1. Quick fixes (regressions you reported)
+### Quick header / mode fixes
+1. **Remove "Browse tasks"** link from `TaskHeader` (desktop + mobile).
+2. **Tasker-mode primary CTA**: when `mode === "tasker"`, swap "Post a task" button for **"Apply to tasks"** → `/explore`. Poster keeps "Post a task".
+3. **Dynamic Island layering (desktop)**: move `FindAmIsland` from absolute-center overlay to its own row above the main header (sticky top-0, header becomes top-10) so it never covers dashboard content. Mobile keeps current behavior.
 
-- **Login/Register → Dashboard**: change post-auth `navigate({ to: "/tasks" })` in `src/routes/login.tsx` and `src/routes/register.tsx` to `/dashboard`.
-- **Task detail not opening**: audit `TaskCard` → it must link with the real backend id (`task.task_id ?? task.id`) to `/tasks/$taskId`. Fix any cards still using slugs/category routes. Confirm `tasks.$taskId.tsx` renders title, description, budget, location, deadline, poster info, apply form (tasker view) and "View applications / Workspace" (poster view).
+### Categories vs Explore (item 2)
+4. **`/explore`** — already exists; tighten to random/recent tasks with filters: **Recency (newest/this week/this month)**, **Location (state+city)**, **Budget min/max**. Pull from `listTasks` sorted random.
+5. **`/tasks/categories`** — redesign to fetch real Level-1 categories from `/task/categories`, expand each card to show its Level-2 children (`/task/categories?parent=`), clicking a sub-category opens `/tasks/browse?category_id=…`.
 
-## 2. Endpoint coverage audit vs PDF + api.find-am.com
+### Dashboard redesign (items 3, 7)
+6. Rewrite `dashboard.tsx` with two distinct, polished views driven by `mode`:
+   - **Poster view**: KPI strip (Posted, In escrow, Completed, Spent), "My posted tasks" table, quick "Post a task" CTA, recent applications, escrow status chips.
+   - **Tasker view**: KPI strip (Applied, Active, Earned, Avg rating), "Recommended tasks" grid (calls `listTasks`), "My applications" list, earnings snapshot.
+   - Clean card design, semantic tokens, no Island overlap.
 
-Currently wired in `src/lib/findtask.functions.ts`: categories, search, get task, post, apply, list applications, accept, complete, dispute, rate, messages (list/send), notifications (list/unread/read/read-all), wallet balance.
+### Profile picture (item 5)
+7. In `profile.tsx`: add **Upload photo** (file input → Lovable Cloud Storage `avatars` bucket) **or** **Paste image URL** field; save to `photo_url` via `updateProfile`. Show preview avatar.
 
-**Missing — to add as server fns + UI hooks**:
-- `GET /auth/me` (profile bootstrap) and `PUT /auth/profile` (update name, photo, location, tagline, about, categories).
-- `GET /user/{id}` public profile (employer + tasker view).
-- `GET /user/{id}/ratings` category-specific ratings + badges.
-- `GET /user/{id}/tasks` posted + completed history.
-- `POST /task/{id}/release` (release escrow) — split from `complete` per PDF.
-- `POST /task/{id}/evidence` dispute evidence upload.
-- `GET /task/{id}/applications/mine` (tasker's own application status).
-- `GET /wallet/transactions`, `POST /wallet/withdraw`, `POST /wallet/bank` (verified bank).
-- `POST /payments/initiate` and `GET /payments/verify/{ref}` — **Paystack** (PDF says Paystack, current code says Flutterwave; switch labels + endpoint).
-- `GET /categories/level1`, `GET /categories/level2?parent=` for two-level structure.
-- `POST /kyc/paystack/start` (verified payment badge).
-- `POST /task/{id}/expire-check` not needed (server cron) — just show 30-day countdown.
+### New pages (item 6)
+8. `/verify-email` — accepts `?token=` query, POSTs to `/auth/verify-email`, shows status + resend button (`/auth/resend-verification`).
+9. `/reset-password` — two-step: request reset (email → `/auth/forgot-password`) and set new (`?token=` → `/auth/reset-password`). Password visibility toggle.
+10. `/terms` — full Terms & Conditions + Privacy summary, table of contents, anchors.
+11. `/community` — designed page: featured taskers, success stories, guidelines, join CTA, links to forum/social.
+12. Add footer links across the app to these pages.
 
-If an endpoint 404s on the live API, the fn will surface the error; we keep the UI gated behind feature flags so the page still renders.
+### Ratings (item 4)
+13. After task `completed`, both parties see **Rate counterparty** card in `tasks.$taskId.workspace`:
+    - Tasker → Poster: overall 1–5 stars + review (uses existing `rateTask`).
+    - Poster → Tasker: **per-category** rating (uses task's category_id automatically) + review.
+    - Display on public profile (`u.$userId`) — already wired; ensure category breakdown shows.
 
-## 3. One account, two modes
+### Task detail + apply form (item 10)
+14. Polish `tasks.$taskId.tsx`: hero block with title, poster name (link to `/u/{id}`), location, budget, **duration/deadline**, category, status pill, full description, attachments. Apply form already exists — restyle as a clear card with cover letter + proposed price + ETA fields; submit calls `applyToTask`.
 
-- Remove `account_type` choice from register — every user is both Poster & Tasker.
-- Add **Mode switcher** in `TaskHeader` (Poster ↔ Tasker) persisted in `localStorage` + auth context. Drives dashboard tab default and nav highlights, not permissions.
-- **Dashboard** (`/dashboard`) becomes two tab views:
-  - Poster: My posted tasks, applications received, escrow status, spend.
-  - Tasker: Applied tasks, accepted/in-progress, earnings, response rate.
+### Secure chat (item 11)
+15. Workspace chat (`tasks.$taskId.workspace.tsx`): add **client-side E2EE** using WebCrypto AES-GCM with a per-task key derived from `task_id + both user ids` via PBKDF2; encrypt `message_text` before `sendMessage`, decrypt on fetch. Show "🔒 End-to-end encrypted" badge. Server stores ciphertext only.
+16. Notification email on new application is **backend's responsibility** — already triggered by `/task/{id}/apply`. Frontend will surface in-app via `NotificationsBell`.
 
-## 4. Profile pages
+### Location fix (item 12)
+17. **Backend column is `location_lat` / `location_lng`** (per uploaded screenshot) but we send `latitude`/`longitude`. Fix `createTask` to send both `location_lat`/`location_lng` (primary) and keep `latitude`/`longitude` (fallback). Update `post-task.tsx` geolocation handler to set these fields and verify with a toast showing captured coords.
 
-- `src/routes/profile.tsx` (own profile, editable) — both Employer and Tasker field sets per PDF, single form, photo upload.
-- `src/routes/u.$userId.tsx` (public profile) — shows employer block + tasker block, category ratings, badges, member-since, verified-payment badge.
-- `ProfileCard`, `CategoryRatingList`, `BadgeChip` components.
+### Live map (item 13)
+18. New `/map` route + `LiveTasksMap` component using **Leaflet + OpenStreetMap** (no API key). Asks for browser geolocation, pins user, queries `listTasks` and plots tasks with valid `location_lat/lng`. Real-time refresh every 30s. Link added in header.
 
-## 5. Categories (two-level)
+### Files
+- edit: `TaskHeader.tsx`, `FindAmIsland.tsx`, `dashboard.tsx`, `profile.tsx`, `explore.tsx`, `tasks.categories.tsx`, `tasks.$taskId.tsx`, `tasks.$taskId.workspace.tsx`, `post-task.tsx`, `findtask.functions.ts`, `index.tsx` (find-task homepage polish — item 9), `routeTree.gen.ts`
+- create: `verify-email.tsx`, `reset-password.tsx`, `terms.tsx`, `community.tsx`, `map.tsx`, `LiveTasksMap.tsx`, `E2EE.ts` (crypto util), `RateCard.tsx`, `AvatarUpload.tsx`, `Footer.tsx`
+- new server fns: `verifyEmail`, `resendVerification`, `forgotPassword`, `resetPassword`, `getSubCategories`, `uploadAvatar` (if needed via Cloud Storage)
+- new dep: `leaflet`, `react-leaflet`
 
-- Replace flat list with Level 1 → Level 2 from API.
-- `/tasks/categories` becomes Level 1 grid; clicking opens Level 2 drawer/list that deep-links into `/tasks/browse?category_id=...`.
-- Post-task form: category auto-suggested from description (call `/task/categorize` if available, else show Level 2 picker).
-
-## 6. Trust & Safety surfacing
-
-- Keyword filter: post-task form shows backend validation error from `/task/post` verbatim.
-- Badges + category ratings rendered on tasker cards in `tasks.$taskId/applications`.
-- Min budget ₦2,000 enforced client-side in `post-task.tsx`.
-- Fee preview: show `budget × 1.10 + 100 + VAT(7.5% of service fee)` breakdown before submit, and on accept-tasker modal.
-
-## 7. Payments label correction
-
-- Replace all "Flutterwave" copy with **Paystack** (escrow + KYC). Endpoint calls switch to `/payments/paystack/*` if present in API; otherwise keep generic `/payments/*`.
-
-## 8. Files to add / edit
-
-```
-src/lib/findtask.functions.ts        (+ profile, public-user, payments, wallet tx, evidence)
-src/lib/auth.tsx                     (add mode: 'poster'|'tasker', setMode)
-src/components/ModeSwitcher.tsx      (new)
-src/components/TaskHeader.tsx        (mount ModeSwitcher)
-src/components/TaskCard.tsx          (fix id link, show category badges)
-src/components/BadgeChip.tsx         (new)
-src/components/CategoryRatingList.tsx(new)
-src/components/FeeBreakdown.tsx      (new)
-src/routes/login.tsx, register.tsx   (redirect /dashboard; drop account_type)
-src/routes/dashboard.tsx             (Poster/Tasker tabs)
-src/routes/profile.tsx               (new, editable)
-src/routes/u.$userId.tsx             (new, public)
-src/routes/post-task.tsx             (Level 2 picker, fee preview, min ₦2000, Paystack copy)
-src/routes/tasks.$taskId.tsx         (poster vs tasker view, fee preview, escrow status)
-src/routes/tasks.$taskId.applications.tsx (badges, category rating, Paystack copy)
-src/routes/tasks.$taskId.workspace.tsx    (release vs complete, evidence upload on dispute)
-src/routes/tasks.categories.tsx      (two-level)
-src/routes/wallet.tsx                (new — balance, transactions, withdraw, bank link)
-src/routeTree.gen.ts                 (regenerated)
-```
-
-## 9. Verification
-
-After build: smoke-test each new route loads, login redirects to `/dashboard`, a card on `/tasks/browse` opens `/tasks/{id}`, post-task fee preview matches PDF example (₦40,000 → ₦44,400).
-
-## Out of scope (note for later)
-
-- Real ML auto-categorization (depends on backend `/task/categorize`).
-- GPS location verification handshake.
-- Admin dispute console.
-- Badge revocation cron (server side).
+### Out of scope
+- Real WebRTC realtime chat sockets (we poll every 5s).
+- True zero-knowledge E2EE with key exchange UI — we derive a deterministic per-task key (good enough to hide content from casual DB reads; documented as such).
+- Admin moderation tools.
+- Avatar bucket creation if Lovable Cloud isn't enabled — will fall back to URL-only field.
