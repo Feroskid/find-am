@@ -2,7 +2,7 @@ import { createFileRoute, useSearch, Link, useNavigate } from "@tanstack/react-r
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
-import { Loader2, KeyRound, Mail, Lock } from "lucide-react";
+import { Loader2, KeyRound, Mail } from "lucide-react";
 import { TaskHeader } from "@/components/TaskHeader";
 import { Footer } from "@/components/Footer";
 import { PasswordInput } from "@/components/PasswordInput";
