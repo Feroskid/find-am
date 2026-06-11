@@ -100,6 +100,10 @@ const BrowseSchema = z.object({
   is_remote: z.union([z.literal(0), z.literal(1)]).optional(),
   page: z.number().int().min(1).max(500).optional(),
   limit: z.number().int().min(1).max(50).optional(),
+  min_budget: z.number().int().nonnegative().optional(),
+  max_budget: z.number().int().positive().optional(),
+  sort: z.enum(["recent", "budget_desc", "budget_asc", "random"]).optional(),
+  since_days: z.number().int().min(1).max(365).optional(),
 });
 export const listTasks = createServerFn({ method: "POST" })
   .inputValidator((i: unknown) => BrowseSchema.parse(i))
@@ -137,7 +141,18 @@ const CreateTaskSchema = z.object({
 export const createTask = createServerFn({ method: "POST" })
   .inputValidator((i: unknown) => CreateTaskSchema.parse(i))
   .handler(async ({ data }) => {
-    const { token, ...body } = data;
+    const { token, latitude, longitude, ...rest } = data;
+    // Backend stores GPS as location_lat / location_lng. Send both shapes so
+    // either column name works, then strip undefined.
+    const body: Record<string, unknown> = { ...rest };
+    if (latitude !== undefined) {
+      body.latitude = latitude;
+      body.location_lat = latitude;
+    }
+    if (longitude !== undefined) {
+      body.longitude = longitude;
+      body.location_lng = longitude;
+    }
     return call("/task/post", { method: "POST", body, token });
   });
 
@@ -157,6 +172,8 @@ export const applyToTask = createServerFn({ method: "POST" })
       token: data.token,
     }),
   );
+
+
 
 // --- List applications for a task (poster) -------------------------------
 export const listTaskApplications = createServerFn({ method: "POST" })
