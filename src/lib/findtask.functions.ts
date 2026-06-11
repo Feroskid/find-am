@@ -55,6 +55,43 @@ export const getCategories = createServerFn({ method: "GET" }).handler(
   async () => call("/task/categories"),
 );
 
+export const getSubCategories = createServerFn({ method: "POST" })
+  .inputValidator((i: unknown) => z.object({ parentId: z.number().int().positive() }).parse(i))
+  .handler(async ({ data }) => call(`/task/categories?parent=${data.parentId}`));
+
+// --- Auth helpers --------------------------------------------------------
+export const verifyEmail = createServerFn({ method: "POST" })
+  .inputValidator((i: unknown) => z.object({ token: z.string().min(4).max(512) }).parse(i))
+  .handler(async ({ data }) =>
+    call(`/auth/verify-email`, { method: "POST", body: { token: data.token } }),
+  );
+
+export const resendVerification = createServerFn({ method: "POST" })
+  .inputValidator((i: unknown) => z.object({ email: z.string().email().max(200) }).parse(i))
+  .handler(async ({ data }) =>
+    call(`/auth/resend-verification`, { method: "POST", body: { email: data.email } }),
+  );
+
+export const forgotPassword = createServerFn({ method: "POST" })
+  .inputValidator((i: unknown) => z.object({ email: z.string().email().max(200) }).parse(i))
+  .handler(async ({ data }) =>
+    call(`/auth/forgot-password`, { method: "POST", body: { email: data.email } }),
+  );
+
+export const resetPassword = createServerFn({ method: "POST" })
+  .inputValidator((i: unknown) =>
+    z.object({
+      token: z.string().min(4).max(512),
+      new_password: z.string().min(6).max(200),
+    }).parse(i),
+  )
+  .handler(async ({ data }) =>
+    call(`/auth/reset-password`, {
+      method: "POST",
+      body: { token: data.token, new_password: data.new_password },
+    }),
+  );
+
 // --- Browse / search tasks ----------------------------------------------
 const BrowseSchema = z.object({
   q: z.string().max(200).optional(),
