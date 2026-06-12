@@ -5,6 +5,8 @@ import { useEffect, useState } from "react";
 import { Loader2, User, MapPin, Star, Award, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import { TaskHeader } from "@/components/TaskHeader";
+import { AvatarUpload } from "@/components/AvatarUpload";
+import { Footer } from "@/components/Footer";
 import { useAuth } from "@/lib/auth";
 import { getMe, updateProfile, getCategories } from "@/lib/findtask.functions";
 
