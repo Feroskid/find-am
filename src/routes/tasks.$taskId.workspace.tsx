@@ -1,11 +1,12 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { useEffect, useRef, useState } from "react";
-import { Loader2, ArrowLeft, Send, CheckCircle2, AlertTriangle, Star, Banknote } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Loader2, ArrowLeft, Send, CheckCircle2, AlertTriangle, Star, Banknote, Lock } from "lucide-react";
 import { toast } from "sonner";
 import { TaskHeader } from "@/components/TaskHeader";
 import { useAuth } from "@/lib/auth";
+import { roomSecret, encryptText, decryptText } from "@/lib/e2ee";
 import {
   getTask, listMessages, sendMessage, completeTask, disputeTask, rateTask,
 } from "@/lib/findtask.functions";
