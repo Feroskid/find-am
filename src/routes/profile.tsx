@@ -5,6 +5,8 @@ import { useEffect, useState } from "react";
 import { Loader2, User, MapPin, Star, Award, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import { TaskHeader } from "@/components/TaskHeader";
+import { AvatarUpload } from "@/components/AvatarUpload";
+import { Footer } from "@/components/Footer";
 import { useAuth } from "@/lib/auth";
 import { getMe, updateProfile, getCategories } from "@/lib/findtask.functions";
 
@@ -106,12 +108,16 @@ function ProfilePage() {
             onSubmit={(e) => { e.preventDefault(); save.mutate(); }}
             className="space-y-4 rounded-2xl border border-border bg-card p-6"
           >
+            <Field label="Profile photo">
+              <AvatarUpload
+                value={form.photo_url}
+                name={form.name}
+                onChange={(url) => setForm({ ...form, photo_url: url })}
+              />
+            </Field>
             <div className="grid gap-4 sm:grid-cols-2">
               <Field label="Full name">
                 <input className="input" value={form.name} maxLength={120} onChange={(e) => setForm({ ...form, name: e.target.value })} />
-              </Field>
-              <Field label="Photo URL">
-                <input className="input" value={form.photo_url} maxLength={2048} onChange={(e) => setForm({ ...form, photo_url: e.target.value })} placeholder="https://…" />
               </Field>
               <Field label="State">
                 <input className="input" value={form.state} maxLength={80} onChange={(e) => setForm({ ...form, state: e.target.value })} placeholder="e.g. Lagos" />
@@ -232,6 +238,7 @@ function ProfilePage() {
           </aside>
         </div>
       </main>
+      <Footer />
     </div>
   );
 }

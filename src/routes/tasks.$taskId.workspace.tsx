@@ -1,11 +1,12 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { useEffect, useRef, useState } from "react";
-import { Loader2, ArrowLeft, Send, CheckCircle2, AlertTriangle, Star, Banknote } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Loader2, ArrowLeft, Send, CheckCircle2, AlertTriangle, Star, Banknote, Lock } from "lucide-react";
 import { toast } from "sonner";
 import { TaskHeader } from "@/components/TaskHeader";
 import { useAuth } from "@/lib/auth";
+import { roomSecret, encryptText, decryptText } from "@/lib/e2ee";
 import {
   getTask, listMessages, sendMessage, completeTask, disputeTask, rateTask,
 } from "@/lib/findtask.functions";
@@ -52,8 +53,36 @@ function WorkspacePage() {
   const [showRate, setShowRate] = useState(false);
   const scrollerRef = useRef<HTMLDivElement | null>(null);
 
+  const task: any = taskQ.data?.ok ? ((taskQ.data.data as any)?.task ?? taskQ.data.data) : null;
+  const rawMessages = msgsQ.data?.ok ? extractMsgs(msgsQ.data.data) : [];
+  const myId = (user as any)?.user_id ?? (user as any)?.id;
+  const posterId = task?.poster_id ?? task?.user_id ?? task?.owner_id;
+  const taskerId = task?.tasker_id ?? task?.accepted_tasker_id ?? task?.assigned_to;
+  const secret = useMemo(
+    () => roomSecret(taskId, [posterId, taskerId, myId].filter(Boolean) as any),
+    [taskId, posterId, taskerId, myId],
+  );
+
+  const [decrypted, setDecrypted] = useState<Record<string, string>>({});
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const next: Record<string, string> = {};
+      for (const m of rawMessages) {
+        const k = String(m.message_id ?? m.id ?? `${m.created_at}-${m.sender_id}`);
+        const text = m.message_text ?? m.body ?? m.message ?? m.text ?? "";
+        next[k] = await decryptText(String(text), secret);
+      }
+      if (!cancelled) setDecrypted(next);
+    })();
+    return () => { cancelled = true; };
+  }, [rawMessages, secret]);
+
   const sendM = useMutation({
-    mutationFn: () => sFn({ data: { taskId, message_text: draft.trim(), token: token! } }),
+    mutationFn: async () => {
+      const cipher = await encryptText(draft.trim(), secret);
+      return sFn({ data: { taskId, message_text: cipher, token: token! } });
+    },
     onSuccess: (r) => {
       if (r.ok) { setDraft(""); msgsQ.refetch(); } else toast.error(r.error);
     },
@@ -76,9 +105,6 @@ function WorkspacePage() {
   }, [msgsQ.data]);
 
   if (!token) return null;
-  const task: any = taskQ.data?.ok ? ((taskQ.data.data as any)?.task ?? taskQ.data.data) : null;
-  const messages = msgsQ.data?.ok ? extractMsgs(msgsQ.data.data) : [];
-  const myId = (user as any)?.user_id ?? (user as any)?.id;
   const status = String(task?.status ?? "").toLowerCase();
   const isPoster = task && (task.poster_id ?? task.user_id ?? task.owner_id) !== undefined
     && String(task.poster_id ?? task.user_id ?? task.owner_id) === String(myId);
@@ -92,20 +118,26 @@ function WorkspacePage() {
             <Link to="/tasks/$taskId" params={{ taskId }} className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
               <ArrowLeft className="h-4 w-4" /> {task?.title ?? "Task"}
             </Link>
-            {status && (
-              <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary capitalize">{status}</span>
-            )}
+            <div className="flex items-center gap-2">
+              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 text-[10px] font-semibold">
+                <Lock className="h-3 w-3" /> End-to-end encrypted
+              </span>
+              {status && (
+                <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary capitalize">{status}</span>
+              )}
+            </div>
           </header>
 
           <div ref={scrollerRef} className="flex-1 overflow-y-auto p-4 space-y-2 bg-muted/30">
-            {msgsQ.isFetching && messages.length === 0 ? (
+            {msgsQ.isFetching && rawMessages.length === 0 ? (
               <div className="text-sm text-muted-foreground inline-flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" />Loading…</div>
-            ) : messages.length === 0 ? (
+            ) : rawMessages.length === 0 ? (
               <div className="text-center text-sm text-muted-foreground py-10">Say hello to start the conversation.</div>
-            ) : messages.map((m: any, i: number) => {
+            ) : rawMessages.map((m: any, i: number) => {
               const senderId = m.sender_id ?? m.user_id ?? m.from;
               const mine = senderId !== undefined && String(senderId) === String(myId);
-              const text = m.message_text ?? m.body ?? m.message ?? m.text;
+              const k = String(m.message_id ?? m.id ?? `${m.created_at}-${senderId}`);
+              const text = decrypted[k] ?? "…";
               return (
                 <div key={m.message_id ?? m.id ?? i} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
                   <div className={`max-w-[75%] rounded-2xl px-3.5 py-2 text-sm ${mine ? "bg-primary text-primary-foreground" : "bg-background border border-border"}`}>
