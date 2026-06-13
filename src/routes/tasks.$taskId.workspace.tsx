@@ -24,10 +24,10 @@ function extractMsgs(d: any): any[] {
 
 function WorkspacePage() {
   const { taskId } = Route.useParams();
-  const { token, user } = useAuth();
+  const { token, user, ready } = useAuth();
   const navigate = useNavigate();
   useEffect(() => {
-    if (!token) navigate({ to: "/login", search: { redirect: `/tasks/${taskId}/workspace` } as any });
+    if (ready && !token) navigate({ to: "/login", search: { redirect: `/tasks/${taskId}/workspace` } as any });
   }, [token, taskId, navigate]);
 
   const tFn = useServerFn(getTask);
