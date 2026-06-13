@@ -19,7 +19,7 @@ export const Route = createFileRoute("/dashboard")({
 });
 
 function Dashboard() {
-  const { token, user, mode } = useAuth();
+  const { token, user, mode, ready } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
