@@ -1,57 +1,57 @@
-# Phase 5 — Polish, redesign & end‑to‑end QA
+## Phase 4 — 13 changes
 
-## 0. Pending carry‑over (from Phase 4)
-- Wire `AvatarUpload` into `profile.tsx` save flow if not already saving `photo_url`.
-- Ensure E2EE workspace chat shows a graceful fallback when ciphertext can't decrypt (old plain messages).
-- Verify `location_lat` / `location_lng` reach backend (toast confirmation already wired).
+### Quick header / mode fixes
+1. **Remove "Browse tasks"** link from `TaskHeader` (desktop + mobile).
+2. **Tasker-mode primary CTA**: when `mode === "tasker"`, swap "Post a task" button for **"Apply to tasks"** → `/explore`. Poster keeps "Post a task".
+3. **Dynamic Island layering (desktop)**: move `FindAmIsland` from absolute-center overlay to its own row above the main header (sticky top-0, header becomes top-10) so it never covers dashboard content. Mobile keeps current behavior.
 
-## 1. Task detail page (`/tasks/$taskId`)
-Expand the current minimal layout into a full brief:
-- Hero block: title, status pill, posted‑X‑ago, poster mini‑card (avatar, name, rating, link to `/u/$userId`).
-- Meta strip: budget, location/remote, deadline countdown, category + subcategory, quantity, urgency.
-- Description section with attachments grid (if `task.attachments`).
-- Sidebar (sticky on desktop): budget + escrow info, FeeBreakdown preview, primary CTA (Apply / Manage / Open workspace), share button, report link.
-- Applicants count badge for poster; "X people have applied" social proof for taskers.
-- "Similar tasks" rail below (uses `searchTasks` by category_id).
+### Categories vs Explore (item 2)
+4. **`/explore`** — already exists; tighten to random/recent tasks with filters: **Recency (newest/this week/this month)**, **Location (state+city)**, **Budget min/max**. Pull from `listTasks` sorted random.
+5. **`/tasks/categories`** — redesign to fetch real Level-1 categories from `/task/categories`, expand each card to show its Level-2 children (`/task/categories?parent=`), clicking a sub-category opens `/tasks/browse?category_id=…`.
 
-## 2. Categories page (`/tasks/categories`)
-- Fetch L1 categories; lazy‑expand L2 via `getSubCategories(parentId)` on open.
-- Group as accordion cards with an icon per L1 (mapped from `findtask-categories.ts`).
-- Search filter at top, "popular categories" pinned row, task counts per cat if available.
-- Each subcategory chip links to `/tasks/browse?category_id=<id>`.
+### Dashboard redesign (items 3, 7)
+6. Rewrite `dashboard.tsx` with two distinct, polished views driven by `mode`:
+   - **Poster view**: KPI strip (Posted, In escrow, Completed, Spent), "My posted tasks" table, quick "Post a task" CTA, recent applications, escrow status chips.
+   - **Tasker view**: KPI strip (Applied, Active, Earned, Avg rating), "Recommended tasks" grid (calls `listTasks`), "My applications" list, earnings snapshot.
+   - Clean card design, semantic tokens, no Island overlap.
 
-## 3. Homepage redesign (`/`)
-Keep Find‑Am search identity but make it a true product home:
-- Sticky compact header (logo, language, theme, Login / Get started).
-- Hero: oversized search bar + voice + trending chips, supporting line "Find work or get work done across Nigeria".
-- Dual CTA row: "Find work" → `/explore`, "Post a task" → `/post-task`.
-- Live stats strip (tasks posted, taskers online — from `/analytics/summary` if present, else static copy).
-- "How Find‑task works" 3‑step (Post → Match → Pay via escrow).
-- Featured categories grid (6 tiles → `/tasks/browse?category_id=`).
-- Recent open tasks rail (`searchTasks({ page:1 })`).
-- Trust band (escrow, verified taskers, ratings, 24/7 support).
-- Testimonials (reuse `community` STORIES).
-- Footer (shared `Footer` component).
+### Profile picture (item 5)
+7. In `profile.tsx`: add **Upload photo** (file input → Lovable Cloud Storage `avatars` bucket) **or** **Paste image URL** field; save to `photo_url` via `updateProfile`. Show preview avatar.
 
-## 4. Post‑task redirect fix
-Current `useEffect` redirects to `/login` the instant `token` is falsy — including during the first render before auth hydrates, which causes the "unnecessary redirect" loop.
-- Gate redirect on `useAuth().ready` / hydration flag (add `ready` boolean in `auth.tsx` if missing).
-- Show a brief skeleton while `!ready`.
-- After successful create, only redirect to the new task page; do not bounce through `/dashboard`.
-- Audit `dashboard`, `wallet`, `profile`, `notifications`, `messages`, `tasks.$taskId.workspace` for the same anti‑pattern and apply the same `ready` gate.
+### New pages (item 6)
+8. `/verify-email` — accepts `?token=` query, POSTs to `/auth/verify-email`, shows status + resend button (`/auth/resend-verification`).
+9. `/reset-password` — two-step: request reset (email → `/auth/forgot-password`) and set new (`?token=` → `/auth/reset-password`). Password visibility toggle.
+10. `/terms` — full Terms & Conditions + Privacy summary, table of contents, anchors.
+11. `/community` — designed page: featured taskers, success stories, guidelines, join CTA, links to forum/social.
+12. Add footer links across the app to these pages.
 
-## 5. End‑to‑end route QA
-Walk every route, fix anything broken. Tracked in a checklist file `.lovable/qa-phase5.md`:
-- `/`, `/explore`, `/tasks`, `/tasks/browse`, `/tasks/categories`, `/tasks/$taskId`, `/tasks/$taskId/applications`, `/tasks/$taskId/workspace`
-- `/post-task`, `/dashboard`, `/profile`, `/u/$userId`, `/wallet`, `/messages`, `/notifications`, `/map`, `/search`
-- `/login`, `/register`, `/reset-password`, `/verify-email`, `/terms`, `/community`
-For each: load via Playwright against `localhost:8080`, confirm no console errors, primary CTAs present, links resolve. Fix issues inline.
+### Ratings (item 4)
+13. After task `completed`, both parties see **Rate counterparty** card in `tasks.$taskId.workspace`:
+    - Tasker → Poster: overall 1–5 stars + review (uses existing `rateTask`).
+    - Poster → Tasker: **per-category** rating (uses task's category_id automatically) + review.
+    - Display on public profile (`u.$userId`) — already wired; ensure category breakdown shows.
 
-## Files
-**Edit:** `src/routes/index.tsx`, `src/routes/tasks.$taskId.tsx`, `src/routes/tasks.categories.tsx`, `src/routes/post-task.tsx`, `src/lib/auth.tsx`, `src/routes/profile.tsx` (avatar save), `src/routes/tasks.$taskId.workspace.tsx` (decrypt fallback)
-**Create:** `src/components/TaskMetaStrip.tsx`, `src/components/SimilarTasks.tsx`, `src/components/HomeHero.tsx`, `src/components/HomeHowItWorks.tsx`, `.lovable/qa-phase5.md`
+### Task detail + apply form (item 10)
+14. Polish `tasks.$taskId.tsx`: hero block with title, poster name (link to `/u/{id}`), location, budget, **duration/deadline**, category, status pill, full description, attachments. Apply form already exists — restyle as a clear card with cover letter + proposed price + ETA fields; submit calls `applyToTask`.
 
-## Out of scope
-- Real‑time websocket presence
-- Backend changes
-- New deps
+### Secure chat (item 11)
+15. Workspace chat (`tasks.$taskId.workspace.tsx`): add **client-side E2EE** using WebCrypto AES-GCM with a per-task key derived from `task_id + both user ids` via PBKDF2; encrypt `message_text` before `sendMessage`, decrypt on fetch. Show "🔒 End-to-end encrypted" badge. Server stores ciphertext only.
+16. Notification email on new application is **backend's responsibility** — already triggered by `/task/{id}/apply`. Frontend will surface in-app via `NotificationsBell`.
+
+### Location fix (item 12)
+17. **Backend column is `location_lat` / `location_lng`** (per uploaded screenshot) but we send `latitude`/`longitude`. Fix `createTask` to send both `location_lat`/`location_lng` (primary) and keep `latitude`/`longitude` (fallback). Update `post-task.tsx` geolocation handler to set these fields and verify with a toast showing captured coords.
+
+### Live map (item 13)
+18. New `/map` route + `LiveTasksMap` component using **Leaflet + OpenStreetMap** (no API key). Asks for browser geolocation, pins user, queries `listTasks` and plots tasks with valid `location_lat/lng`. Real-time refresh every 30s. Link added in header.
+
+### Files
+- edit: `TaskHeader.tsx`, `FindAmIsland.tsx`, `dashboard.tsx`, `profile.tsx`, `explore.tsx`, `tasks.categories.tsx`, `tasks.$taskId.tsx`, `tasks.$taskId.workspace.tsx`, `post-task.tsx`, `findtask.functions.ts`, `index.tsx` (find-task homepage polish — item 9), `routeTree.gen.ts`
+- create: `verify-email.tsx`, `reset-password.tsx`, `terms.tsx`, `community.tsx`, `map.tsx`, `LiveTasksMap.tsx`, `E2EE.ts` (crypto util), `RateCard.tsx`, `AvatarUpload.tsx`, `Footer.tsx`
+- new server fns: `verifyEmail`, `resendVerification`, `forgotPassword`, `resetPassword`, `getSubCategories`, `uploadAvatar` (if needed via Cloud Storage)
+- new dep: `leaflet`, `react-leaflet`
+
+### Out of scope
+- Real WebRTC realtime chat sockets (we poll every 5s).
+- True zero-knowledge E2EE with key exchange UI — we derive a deterministic per-task key (good enough to hide content from casual DB reads; documented as such).
+- Admin moderation tools.
+- Avatar bucket creation if Lovable Cloud isn't enabled — will fall back to URL-only field.

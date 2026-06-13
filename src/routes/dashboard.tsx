@@ -19,11 +19,11 @@ export const Route = createFileRoute("/dashboard")({
 });
 
 function Dashboard() {
-  const { token, user, mode, ready } = useAuth();
+  const { token, user, mode } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (ready && !token) navigate({ to: "/login", search: { redirect: "/dashboard" } as any });
+    if (!token) navigate({ to: "/login", search: { redirect: "/dashboard" } as any });
   }, [token, navigate]);
 
   const list = useServerFn(listTasks);

@@ -8,7 +8,6 @@ interface AuthCtx {
   token: string | null;
   user: Record<string, unknown> | null;
   mode: AppMode;
-  ready: boolean;
   setAuth: (a: { token: string | null; user: Record<string, unknown> | null }) => void;
   setMode: (m: AppMode) => void;
   logout: () => void;
@@ -21,7 +20,6 @@ const Ctx = createContext<AuthCtx | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<StoredAuth>({ token: null, user: null });
   const [mode, setModeState] = useState<AppMode>("poster");
-  const [ready, setReady] = useState(false);
 
   useEffect(() => {
     try {
@@ -30,7 +28,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const m = localStorage.getItem(MODE_KEY) as AppMode | null;
       if (m === "poster" || m === "tasker") setModeState(m);
     } catch {}
-    setReady(true);
   }, []);
 
   const setAuth = (a: { token: string | null; user: Record<string, unknown> | null }) => {
@@ -49,7 +46,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <Ctx.Provider value={{ token: state.token, user: state.user, mode, ready, setAuth, setMode, logout }}>
+    <Ctx.Provider value={{ token: state.token, user: state.user, mode, setAuth, setMode, logout }}>
       {children}
     </Ctx.Provider>
   );

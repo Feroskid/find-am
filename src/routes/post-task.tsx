@@ -28,7 +28,7 @@ const NIGERIAN_STATES = [
 
 function PostTask() {
   const navigate = useNavigate();
-  const { token, ready } = useAuth();
+  const { token } = useAuth();
   const create = useServerFn(createTask);
 
   const [form, setForm] = useState({
@@ -56,8 +56,8 @@ function PostTask() {
   const categories: any[] = catsQ.data?.ok ? (catsQ.data.data as any)?.categories ?? [] : [];
 
   useEffect(() => {
-    if (ready && !token) navigate({ to: "/login", search: { redirect: "/post-task" } as any });
-  }, [ready, token, navigate]);
+    if (!token) navigate({ to: "/login", search: { redirect: "/post-task" } as any });
+  }, [token, navigate]);
 
   const captureLocation = () => {
     if (!("geolocation" in navigator)) {
