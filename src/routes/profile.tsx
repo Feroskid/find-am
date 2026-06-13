@@ -19,7 +19,7 @@ function ProfilePage() {
   const { token, user, setAuth } = useAuth();
   const navigate = useNavigate();
   useEffect(() => {
-    if (!token) navigate({ to: "/login", search: { redirect: "/profile" } as any });
+    if (ready && !token) navigate({ to: "/login", search: { redirect: "/profile" } as any });
   }, [token, navigate]);
 
   const meFn = useServerFn(getMe);

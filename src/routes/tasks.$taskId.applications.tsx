@@ -21,10 +21,10 @@ function extract(d: any): any[] {
 
 function ApplicationsPage() {
   const { taskId } = Route.useParams();
-  const { token } = useAuth();
+  const { token, ready } = useAuth();
   const navigate = useNavigate();
   useEffect(() => {
-    if (!token) navigate({ to: "/login", search: { redirect: `/tasks/${taskId}/applications` } as any });
+    if (ready && !token) navigate({ to: "/login", search: { redirect: `/tasks/${taskId}/applications` } as any });
   }, [token, taskId, navigate]);
 
   const tFn = useServerFn(getTask);

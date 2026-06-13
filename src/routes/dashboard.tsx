@@ -23,7 +23,7 @@ function Dashboard() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!token) navigate({ to: "/login", search: { redirect: "/dashboard" } as any });
+    if (ready && !token) navigate({ to: "/login", search: { redirect: "/dashboard" } as any });
   }, [token, navigate]);
 
   const list = useServerFn(listTasks);

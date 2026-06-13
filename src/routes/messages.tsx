@@ -10,10 +10,10 @@ export const Route = createFileRoute("/messages")({
 });
 
 function MessagesPage() {
-  const { token } = useAuth();
+  const { token, ready } = useAuth();
   const navigate = useNavigate();
   useEffect(() => {
-    if (!token) navigate({ to: "/login", search: { redirect: "/messages" } as any });
+    if (ready && !token) navigate({ to: "/login", search: { redirect: "/messages" } as any });
   }, [token, navigate]);
   if (!token) return null;
 
