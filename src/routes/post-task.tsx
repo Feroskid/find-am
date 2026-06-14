@@ -297,7 +297,9 @@ function PostTask() {
           <div className="rounded-xl border border-dashed border-border p-4 space-y-3">
             <div className="flex items-center justify-between gap-2">
               <div className="text-sm font-medium inline-flex items-center gap-1.5">
-                <MapPin className="h-4 w-4 text-primary" /> Where is this task?
+                <MapPin className="h-4 w-4 text-primary" />
+                Where is this task?
+                {!form.is_remote && <span className="text-destructive">*</span>}
               </div>
               <label className="inline-flex items-center gap-2 text-xs">
                 <input type="checkbox" checked={form.is_remote}
@@ -306,8 +308,15 @@ function PostTask() {
               </label>
             </div>
 
-            {!form.is_remote && (
+            {form.is_remote ? (
+              <div className="text-xs text-muted-foreground">
+                Remote task — location is optional. You can still add a city if it matters.
+              </div>
+            ) : (
               <>
+                <div className="text-xs text-muted-foreground">
+                  On-site tasks need a location so nearby taskers can find you. Capture GPS or fill in state + city/address.
+                </div>
                 <button type="button" onClick={captureLocation}
                   disabled={geoStatus === "loading"}
                   className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-3 py-1.5 text-xs font-medium hover:bg-muted disabled:opacity-60">
@@ -319,16 +328,16 @@ function PostTask() {
                 )}
 
                 <div className="grid gap-3 sm:grid-cols-2">
-                  <Field label="State">
-                    <select value={form.state}
+                  <Field label="State *">
+                    <select required={!form.is_remote} value={form.state}
                       onChange={(e) => setForm({ ...form, state: e.target.value })}
                       className="input">
                       <option value="">Select state</option>
                       {NIGERIAN_STATES.map((s) => <option key={s} value={s}>{s}</option>)}
                     </select>
                   </Field>
-                  <Field label="City / Area">
-                    <input maxLength={80} value={form.city}
+                  <Field label="City / Area *">
+                    <input required={!form.is_remote} maxLength={80} value={form.city}
                       onChange={(e) => setForm({ ...form, city: e.target.value })}
                       className="input" placeholder="e.g. Lekki Phase 1" />
                   </Field>
@@ -342,7 +351,7 @@ function PostTask() {
 
                 {form.latitude !== undefined && (
                   <div className="text-[11px] text-muted-foreground">
-                    GPS: {form.latitude.toFixed(4)}, {form.longitude!.toFixed(4)} (will be shared with the accepted tasker only)
+                    GPS: {form.latitude.toFixed(4)}, {form.longitude!.toFixed(4)} (shared with the accepted tasker only)
                   </div>
                 )}
               </>
