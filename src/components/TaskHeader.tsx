@@ -6,6 +6,7 @@ import { NotificationsBell } from "@/components/NotificationsBell";
 import { ModeSwitcher } from "@/components/ModeSwitcher";
 import { FindAmIsland } from "@/components/FindAmIsland";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { VerifyEmailBanner } from "@/components/VerifyEmailBanner";
 
 export function TaskHeader() {
   const [open, setOpen] = useState(false);
@@ -14,6 +15,7 @@ export function TaskHeader() {
 
   return (
     <div className="sticky top-0 z-30 w-full">
+      <VerifyEmailBanner />
       {/* Dynamic Island row — sits ABOVE the header on desktop so it never covers content */}
       <div className="hidden md:flex justify-center bg-background/95 backdrop-blur border-b border-border/60 py-1.5">
         <FindAmIsland />

@@ -136,14 +136,16 @@ const CreateTaskSchema = z.object({
   deadline: z.string().max(64).optional(),
   quantity: z.number().int().min(1).max(99).optional(),
   urgency: z.enum(["low", "normal", "high", "urgent"]).optional(),
+  milestones: z
+    .array(z.object({ title: z.string().min(1).max(140), amount: z.number().positive() }))
+    .max(20)
+    .optional(),
   token: Token,
 });
 export const createTask = createServerFn({ method: "POST" })
   .inputValidator((i: unknown) => CreateTaskSchema.parse(i))
   .handler(async ({ data }) => {
-    const { token, latitude, longitude, ...rest } = data;
-    // Backend stores GPS as location_lat / location_lng. Send both shapes so
-    // either column name works, then strip undefined.
+    const { token, latitude, longitude, milestones, ...rest } = data;
     const body: Record<string, unknown> = { ...rest };
     if (latitude !== undefined) {
       body.latitude = latitude;
@@ -152,6 +154,11 @@ export const createTask = createServerFn({ method: "POST" })
     if (longitude !== undefined) {
       body.longitude = longitude;
       body.location_lng = longitude;
+    }
+    if (milestones && milestones.length > 0) {
+      body.milestones = milestones;
+      body.has_milestones = 1;
+      body.quantity = 1; // milestone tasks are single-tasker only
     }
     return call("/task/post", { method: "POST", body, token });
   });

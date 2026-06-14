@@ -50,6 +50,10 @@ function PostTask() {
   const [error, setError] = useState<string | null>(null);
   const [geoStatus, setGeoStatus] = useState<"idle" | "loading" | "ok" | "error">("idle");
   const [geoMsg, setGeoMsg] = useState<string | null>(null);
+  const [useMilestones, setUseMilestones] = useState(false);
+  const [milestones, setMilestones] = useState<{ title: string; amount: string }[]>([
+    { title: "", amount: "" },
+  ]);
 
   const catsFn = useServerFn(getCategories);
   const catsQ = useQuery({ queryKey: ["categories"], queryFn: () => catsFn({}), staleTime: 5 * 60_000 });
@@ -103,6 +107,13 @@ function PostTask() {
   };
 
   const budgetNum = Number(form.budget);
+  const parsedMilestones = useMilestones
+    ? milestones
+        .map((m) => ({ title: m.title.trim(), amount: Number(m.amount) }))
+        .filter((m) => m.title.length > 0 && Number.isFinite(m.amount) && m.amount > 0)
+    : [];
+  const milestonesTotal = parsedMilestones.reduce((s, m) => s + m.amount, 0);
+
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -110,6 +121,25 @@ function PostTask() {
     if (!Number.isFinite(budgetNum) || budgetNum < MIN_TASK_BUDGET) {
       setError(`Minimum task budget is ₦${MIN_TASK_BUDGET.toLocaleString()}.`);
       return;
+    }
+    // On-site tasks must have a location.
+    if (!form.is_remote) {
+      const hasLoc = form.state && (form.city.trim() || form.location_text.trim());
+      const hasGps = form.latitude !== undefined && form.longitude !== undefined;
+      if (!hasLoc && !hasGps) {
+        setError("On-site tasks require a location. Use 'Use my current location' or enter the state and city/address.");
+        return;
+      }
+    }
+    if (useMilestones) {
+      if (parsedMilestones.length < 1) {
+        setError("Add at least one milestone with a title and amount.");
+        return;
+      }
+      if (Math.abs(milestonesTotal - budgetNum) > 0.5) {
+        setError(`Milestones must sum to your budget (₦${budgetNum.toLocaleString()}). Current sum: ₦${milestonesTotal.toLocaleString()}.`);
+        return;
+      }
     }
     setSubmitting(true);
     const deadlineIso = form.deadline ? new Date(`${form.deadline}T18:00:00`).toISOString() : undefined;
@@ -126,8 +156,9 @@ function PostTask() {
         longitude: form.longitude,
         is_remote: form.is_remote ? 1 : 0,
         deadline: deadlineIso,
-        quantity: form.quantity > 1 ? form.quantity : undefined,
+        quantity: useMilestones ? 1 : (form.quantity > 1 ? form.quantity : undefined),
         urgency: form.urgency !== "normal" ? form.urgency : undefined,
+        milestones: useMilestones ? parsedMilestones : undefined,
         token,
       },
     });
@@ -190,11 +221,12 @@ function PostTask() {
           </div>
 
           <div className="grid gap-5 sm:grid-cols-2">
-            <Field label="Quantity (taskers needed)">
+            <Field label="Quantity (taskers needed)" hint={useMilestones ? "Locked to 1 — milestones support one tasker only." : undefined}>
               <input type="number" min={1} max={99}
-                value={form.quantity}
+                value={useMilestones ? 1 : form.quantity}
+                disabled={useMilestones}
                 onChange={(e) => setForm({ ...form, quantity: Math.max(1, Number(e.target.value) || 1) })}
-                className="input" />
+                className="input disabled:opacity-60" />
             </Field>
             <Field label="Urgency">
               <select value={form.urgency}
@@ -208,11 +240,66 @@ function PostTask() {
             </Field>
           </div>
 
+          {/* Milestones */}
+          <div className="rounded-xl border border-dashed border-border p-4 space-y-3">
+            <label className="flex items-start gap-2 text-sm">
+              <input type="checkbox" className="mt-1" checked={useMilestones}
+                onChange={(e) => setUseMilestones(e.target.checked)} />
+              <span>
+                <span className="font-medium">Break the budget into milestones</span>
+                <span className="block text-xs text-muted-foreground">
+                  Pay the tasker in stages as parts of the work are completed. Milestone tasks are limited to one tasker.
+                </span>
+              </span>
+            </label>
+
+            {useMilestones && (
+              <div className="space-y-2">
+                {milestones.map((m, i) => (
+                  <div key={i} className="grid grid-cols-[1fr_140px_auto] gap-2 items-center">
+                    <input
+                      value={m.title}
+                      onChange={(e) => setMilestones((arr) => arr.map((x, j) => j === i ? { ...x, title: e.target.value } : x))}
+                      placeholder={`Milestone ${i + 1} — e.g. Wireframes delivered`}
+                      maxLength={140}
+                      className="input"
+                    />
+                    <input
+                      type="number" min={0} step={100}
+                      value={m.amount}
+                      onChange={(e) => setMilestones((arr) => arr.map((x, j) => j === i ? { ...x, amount: e.target.value } : x))}
+                      placeholder="Amount ₦"
+                      className="input"
+                    />
+                    <button type="button"
+                      onClick={() => setMilestones((arr) => arr.length > 1 ? arr.filter((_, j) => j !== i) : arr)}
+                      disabled={milestones.length <= 1}
+                      className="text-xs px-2 py-1 rounded border border-border text-muted-foreground hover:text-destructive disabled:opacity-40">
+                      Remove
+                    </button>
+                  </div>
+                ))}
+                <div className="flex items-center justify-between text-xs">
+                  <button type="button"
+                    onClick={() => setMilestones((arr) => [...arr, { title: "", amount: "" }])}
+                    className="font-medium text-primary hover:underline">
+                    + Add milestone
+                  </button>
+                  <span className={`tabular-nums ${Math.abs(milestonesTotal - budgetNum) > 0.5 ? "text-destructive" : "text-muted-foreground"}`}>
+                    Total: ₦{milestonesTotal.toLocaleString()} / ₦{(Number.isFinite(budgetNum) ? budgetNum : 0).toLocaleString()}
+                  </span>
+                </div>
+              </div>
+            )}
+          </div>
+
           {/* Location block */}
           <div className="rounded-xl border border-dashed border-border p-4 space-y-3">
             <div className="flex items-center justify-between gap-2">
               <div className="text-sm font-medium inline-flex items-center gap-1.5">
-                <MapPin className="h-4 w-4 text-primary" /> Where is this task?
+                <MapPin className="h-4 w-4 text-primary" />
+                Where is this task?
+                {!form.is_remote && <span className="text-destructive">*</span>}
               </div>
               <label className="inline-flex items-center gap-2 text-xs">
                 <input type="checkbox" checked={form.is_remote}
@@ -221,8 +308,15 @@ function PostTask() {
               </label>
             </div>
 
-            {!form.is_remote && (
+            {form.is_remote ? (
+              <div className="text-xs text-muted-foreground">
+                Remote task — location is optional. You can still add a city if it matters.
+              </div>
+            ) : (
               <>
+                <div className="text-xs text-muted-foreground">
+                  On-site tasks need a location so nearby taskers can find you. Capture GPS or fill in state + city/address.
+                </div>
                 <button type="button" onClick={captureLocation}
                   disabled={geoStatus === "loading"}
                   className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-3 py-1.5 text-xs font-medium hover:bg-muted disabled:opacity-60">
@@ -234,16 +328,16 @@ function PostTask() {
                 )}
 
                 <div className="grid gap-3 sm:grid-cols-2">
-                  <Field label="State">
-                    <select value={form.state}
+                  <Field label="State *">
+                    <select required={!form.is_remote} value={form.state}
                       onChange={(e) => setForm({ ...form, state: e.target.value })}
                       className="input">
                       <option value="">Select state</option>
                       {NIGERIAN_STATES.map((s) => <option key={s} value={s}>{s}</option>)}
                     </select>
                   </Field>
-                  <Field label="City / Area">
-                    <input maxLength={80} value={form.city}
+                  <Field label="City / Area *">
+                    <input required={!form.is_remote} maxLength={80} value={form.city}
                       onChange={(e) => setForm({ ...form, city: e.target.value })}
                       className="input" placeholder="e.g. Lekki Phase 1" />
                   </Field>
@@ -257,7 +351,7 @@ function PostTask() {
 
                 {form.latitude !== undefined && (
                   <div className="text-[11px] text-muted-foreground">
-                    GPS: {form.latitude.toFixed(4)}, {form.longitude!.toFixed(4)} (will be shared with the accepted tasker only)
+                    GPS: {form.latitude.toFixed(4)}, {form.longitude!.toFixed(4)} (shared with the accepted tasker only)
                   </div>
                 )}
               </>

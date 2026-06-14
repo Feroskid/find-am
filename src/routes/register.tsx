@@ -27,7 +27,7 @@ function RegisterPage() {
     if (token) navigate({ to: "/dashboard", replace: true });
   }, [token, navigate]);
 
-  const [form, setForm] = useState({ name: "", email: "", phone: "", password: "" });
+  const [form, setForm] = useState({ name: "", email: "", phone: "", password: "", confirm: "" });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -37,9 +37,14 @@ function RegisterPage() {
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    if (form.password !== form.confirm) {
+      setError("Passwords don't match. Please re-enter to confirm.");
+      return;
+    }
     setLoading(true);
     try {
-      const res = await reg({ data: { ...form, account_type: "individual" } });
+      const { confirm: _c, ...payload } = form;
+      const res = await reg({ data: { ...payload, account_type: "individual" } });
       if (!res.ok) { setError(res.error); return; }
       const loginRes = await login({ data: { email: form.email, password: form.password } });
       if (loginRes.ok) setAuth({ token: pickToken(loginRes.data), user: pickUser(loginRes.data) });
@@ -86,6 +91,15 @@ function RegisterPage() {
                 <PasswordInput required minLength={6} maxLength={128} value={form.password}
                   onChange={(e) => update("password", e.target.value)}
                   autoComplete="new-password" placeholder="At least 6 characters" />
+              </label>
+              <label className="block">
+                <span className="block text-sm font-medium mb-1.5">Confirm password</span>
+                <PasswordInput required minLength={6} maxLength={128} value={form.confirm}
+                  onChange={(e) => update("confirm", e.target.value)}
+                  autoComplete="new-password" placeholder="Re-enter your password" />
+                {form.confirm && form.password !== form.confirm && (
+                  <span className="mt-1 block text-xs text-destructive">Passwords don't match yet.</span>
+                )}
               </label>
 
               {error && (

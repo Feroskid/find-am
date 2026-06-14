@@ -101,6 +101,12 @@ function LoginPage() {
               </button>
             </form>
 
+            <div className="mt-4 text-right">
+              <Link to="/reset-password" className="text-xs font-medium text-primary hover:underline">
+                Forgot your password?
+              </Link>
+            </div>
+
             <p className="mt-6 text-center text-sm text-muted-foreground">
               New to Find-task?{" "}
               <Link to="/register" className="font-medium text-primary hover:underline">Create an account</Link>
