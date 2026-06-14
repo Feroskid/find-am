@@ -27,7 +27,7 @@ function RegisterPage() {
     if (token) navigate({ to: "/dashboard", replace: true });
   }, [token, navigate]);
 
-  const [form, setForm] = useState({ name: "", email: "", phone: "", password: "" });
+  const [form, setForm] = useState({ name: "", email: "", phone: "", password: "", confirm: "" });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -37,9 +37,14 @@ function RegisterPage() {
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    if (form.password !== form.confirm) {
+      setError("Passwords don't match. Please re-enter to confirm.");
+      return;
+    }
     setLoading(true);
     try {
-      const res = await reg({ data: { ...form, account_type: "individual" } });
+      const { confirm: _c, ...payload } = form;
+      const res = await reg({ data: { ...payload, account_type: "individual" } });
       if (!res.ok) { setError(res.error); return; }
       const loginRes = await login({ data: { email: form.email, password: form.password } });
       if (loginRes.ok) setAuth({ token: pickToken(loginRes.data), user: pickUser(loginRes.data) });
