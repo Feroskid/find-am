@@ -15,6 +15,7 @@ export function TaskHeader() {
 
   return (
     <div className="sticky top-0 z-30 w-full">
+      <VerifyEmailBanner />
       {/* Dynamic Island row — sits ABOVE the header on desktop so it never covers content */}
       <div className="hidden md:flex justify-center bg-background/95 backdrop-blur border-b border-border/60 py-1.5">
         <FindAmIsland />
