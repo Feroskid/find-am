@@ -50,6 +50,10 @@ function PostTask() {
   const [error, setError] = useState<string | null>(null);
   const [geoStatus, setGeoStatus] = useState<"idle" | "loading" | "ok" | "error">("idle");
   const [geoMsg, setGeoMsg] = useState<string | null>(null);
+  const [useMilestones, setUseMilestones] = useState(false);
+  const [milestones, setMilestones] = useState<{ title: string; amount: string }[]>([
+    { title: "", amount: "" },
+  ]);
 
   const catsFn = useServerFn(getCategories);
   const catsQ = useQuery({ queryKey: ["categories"], queryFn: () => catsFn({}), staleTime: 5 * 60_000 });
