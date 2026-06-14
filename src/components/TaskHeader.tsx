@@ -6,6 +6,7 @@ import { NotificationsBell } from "@/components/NotificationsBell";
 import { ModeSwitcher } from "@/components/ModeSwitcher";
 import { FindAmIsland } from "@/components/FindAmIsland";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { VerifyEmailBanner } from "@/components/VerifyEmailBanner";
 
 export function TaskHeader() {
   const [open, setOpen] = useState(false);
