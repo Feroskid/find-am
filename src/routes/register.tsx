@@ -92,6 +92,15 @@ function RegisterPage() {
                   onChange={(e) => update("password", e.target.value)}
                   autoComplete="new-password" placeholder="At least 6 characters" />
               </label>
+              <label className="block">
+                <span className="block text-sm font-medium mb-1.5">Confirm password</span>
+                <PasswordInput required minLength={6} maxLength={128} value={form.confirm}
+                  onChange={(e) => update("confirm", e.target.value)}
+                  autoComplete="new-password" placeholder="Re-enter your password" />
+                {form.confirm && form.password !== form.confirm && (
+                  <span className="mt-1 block text-xs text-destructive">Passwords don't match yet.</span>
+                )}
+              </label>
 
               {error && (
                 <div className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</div>
