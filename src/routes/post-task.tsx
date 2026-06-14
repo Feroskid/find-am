@@ -221,11 +221,12 @@ function PostTask() {
           </div>
 
           <div className="grid gap-5 sm:grid-cols-2">
-            <Field label="Quantity (taskers needed)">
+            <Field label="Quantity (taskers needed)" hint={useMilestones ? "Locked to 1 — milestones support one tasker only." : undefined}>
               <input type="number" min={1} max={99}
-                value={form.quantity}
+                value={useMilestones ? 1 : form.quantity}
+                disabled={useMilestones}
                 onChange={(e) => setForm({ ...form, quantity: Math.max(1, Number(e.target.value) || 1) })}
-                className="input" />
+                className="input disabled:opacity-60" />
             </Field>
             <Field label="Urgency">
               <select value={form.urgency}
@@ -237,6 +238,59 @@ function PostTask() {
                 <option value="urgent">Urgent</option>
               </select>
             </Field>
+          </div>
+
+          {/* Milestones */}
+          <div className="rounded-xl border border-dashed border-border p-4 space-y-3">
+            <label className="flex items-start gap-2 text-sm">
+              <input type="checkbox" className="mt-1" checked={useMilestones}
+                onChange={(e) => setUseMilestones(e.target.checked)} />
+              <span>
+                <span className="font-medium">Break the budget into milestones</span>
+                <span className="block text-xs text-muted-foreground">
+                  Pay the tasker in stages as parts of the work are completed. Milestone tasks are limited to one tasker.
+                </span>
+              </span>
+            </label>
+
+            {useMilestones && (
+              <div className="space-y-2">
+                {milestones.map((m, i) => (
+                  <div key={i} className="grid grid-cols-[1fr_140px_auto] gap-2 items-center">
+                    <input
+                      value={m.title}
+                      onChange={(e) => setMilestones((arr) => arr.map((x, j) => j === i ? { ...x, title: e.target.value } : x))}
+                      placeholder={`Milestone ${i + 1} — e.g. Wireframes delivered`}
+                      maxLength={140}
+                      className="input"
+                    />
+                    <input
+                      type="number" min={0} step={100}
+                      value={m.amount}
+                      onChange={(e) => setMilestones((arr) => arr.map((x, j) => j === i ? { ...x, amount: e.target.value } : x))}
+                      placeholder="Amount ₦"
+                      className="input"
+                    />
+                    <button type="button"
+                      onClick={() => setMilestones((arr) => arr.length > 1 ? arr.filter((_, j) => j !== i) : arr)}
+                      disabled={milestones.length <= 1}
+                      className="text-xs px-2 py-1 rounded border border-border text-muted-foreground hover:text-destructive disabled:opacity-40">
+                      Remove
+                    </button>
+                  </div>
+                ))}
+                <div className="flex items-center justify-between text-xs">
+                  <button type="button"
+                    onClick={() => setMilestones((arr) => [...arr, { title: "", amount: "" }])}
+                    className="font-medium text-primary hover:underline">
+                    + Add milestone
+                  </button>
+                  <span className={`tabular-nums ${Math.abs(milestonesTotal - budgetNum) > 0.5 ? "text-destructive" : "text-muted-foreground"}`}>
+                    Total: ₦{milestonesTotal.toLocaleString()} / ₦{(Number.isFinite(budgetNum) ? budgetNum : 0).toLocaleString()}
+                  </span>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Location block */}
