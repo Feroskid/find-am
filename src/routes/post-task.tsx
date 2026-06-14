@@ -107,6 +107,13 @@ function PostTask() {
   };
 
   const budgetNum = Number(form.budget);
+  const parsedMilestones = useMilestones
+    ? milestones
+        .map((m) => ({ title: m.title.trim(), amount: Number(m.amount) }))
+        .filter((m) => m.title.length > 0 && Number.isFinite(m.amount) && m.amount > 0)
+    : [];
+  const milestonesTotal = parsedMilestones.reduce((s, m) => s + m.amount, 0);
+
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -114,6 +121,25 @@ function PostTask() {
     if (!Number.isFinite(budgetNum) || budgetNum < MIN_TASK_BUDGET) {
       setError(`Minimum task budget is ₦${MIN_TASK_BUDGET.toLocaleString()}.`);
       return;
+    }
+    // On-site tasks must have a location.
+    if (!form.is_remote) {
+      const hasLoc = form.state && (form.city.trim() || form.location_text.trim());
+      const hasGps = form.latitude !== undefined && form.longitude !== undefined;
+      if (!hasLoc && !hasGps) {
+        setError("On-site tasks require a location. Use 'Use my current location' or enter the state and city/address.");
+        return;
+      }
+    }
+    if (useMilestones) {
+      if (parsedMilestones.length < 1) {
+        setError("Add at least one milestone with a title and amount.");
+        return;
+      }
+      if (Math.abs(milestonesTotal - budgetNum) > 0.5) {
+        setError(`Milestones must sum to your budget (₦${budgetNum.toLocaleString()}). Current sum: ₦${milestonesTotal.toLocaleString()}.`);
+        return;
+      }
     }
     setSubmitting(true);
     const deadlineIso = form.deadline ? new Date(`${form.deadline}T18:00:00`).toISOString() : undefined;
@@ -130,8 +156,9 @@ function PostTask() {
         longitude: form.longitude,
         is_remote: form.is_remote ? 1 : 0,
         deadline: deadlineIso,
-        quantity: form.quantity > 1 ? form.quantity : undefined,
+        quantity: useMilestones ? 1 : (form.quantity > 1 ? form.quantity : undefined),
         urgency: form.urgency !== "normal" ? form.urgency : undefined,
+        milestones: useMilestones ? parsedMilestones : undefined,
         token,
       },
     });
