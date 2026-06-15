@@ -10,6 +10,7 @@ import { TaskHeader } from "@/components/TaskHeader";
 import { TaskCard, toCardData } from "@/components/TaskCard";
 import { ModeSwitcher } from "@/components/ModeSwitcher";
 import { Footer } from "@/components/Footer";
+import { TierProgress } from "@/components/TierProgress";
 import { useAuth } from "@/lib/auth";
 import { listTasks, unreadCount, walletBalance, getUserTasks } from "@/lib/findtask.functions";
 
