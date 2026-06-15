@@ -1,6 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, ShieldCheck, Users, Star, Sparkles, Hammer, Truck, Brush, Wrench, Laptop, ClipboardList } from "lucide-react";
+import { useState } from "react";
+import {
+  ArrowRight, ShieldCheck, Users, Star, Sparkles, Hammer, Truck, Brush, Wrench, Laptop,
+  ClipboardList, Scissors, Camera, PenTool, Package, TreeDeciduous, PaintBucket, Heart, CheckCircle2, BadgeCheck,
+} from "lucide-react";
 import { TaskHeader } from "@/components/TaskHeader";
+import { Footer } from "@/components/Footer";
 
 export const Route = createFileRoute("/tasks")({
   head: () => ({
@@ -14,118 +19,332 @@ export const Route = createFileRoute("/tasks")({
   component: TasksHome,
 });
 
-const CATEGORIES = [
-  { icon: Hammer, label: "Handyman" },
-  { icon: Truck, label: "Removals" },
-  { icon: Brush, label: "Cleaning" },
-  { icon: Wrench, label: "Repairs" },
-  { icon: Laptop, label: "Tech & IT" },
-  { icon: ClipboardList, label: "Admin" },
+const TOP_CATEGORIES = [
+  { icon: Truck, label: "Removalists", desc: "Packing, wrapping, moving and more!" },
+  { icon: Brush, label: "Home cleaning", desc: "Clean, mop and tidy your house" },
+  { icon: Package, label: "Furniture assembly", desc: "Flatpack assembly and disassembly" },
+  { icon: Hammer, label: "Deliveries", desc: "Urgent deliveries and courier services" },
+  { icon: TreeDeciduous, label: "Gardening & landscaping", desc: "Mulching, weeding and tidying up" },
+  { icon: Wrench, label: "Handyman & repairs", desc: "Fixing things big and small" },
 ];
 
-const STEPS = [
-  { n: "1", title: "Describe your task", body: "Tell us what you need done, when and where it works for you." },
-  { n: "2", title: "Choose the best Tasker", body: "Browse profiles, reviews and quotes — pick who feels right." },
-  { n: "3", title: "Get it done", body: "Pay securely through Find-task only when you're happy." },
-];
+const SHOWCASE_TABS = ["Moving in", "Home maintenance", "Starting a business", "Parties", "Something different"] as const;
+
+const SHOWCASE: Record<typeof SHOWCASE_TABS[number], { category: string; title: string; budget: number }[]> = {
+  "Moving in": [
+    { category: "DELIVERY", title: "Pick up & deliver a medium fridge", budget: 12000 },
+    { category: "DELIVERY", title: "King mattress pickup & delivery", budget: 18000 },
+    { category: "REMOVALS", title: "Help moving house 2-bedroom", budget: 65000 },
+    { category: "ASSEMBLY", title: "Assemble bedroom flatpack", budget: 9500 },
+  ],
+  "Home maintenance": [
+    { category: "PLUMBING", title: "Fix leaking kitchen tap", budget: 8000 },
+    { category: "ELECTRICAL", title: "Install ceiling fan", budget: 7500 },
+    { category: "CLEANING", title: "Deep clean 3-bed apartment", budget: 25000 },
+    { category: "GARDENING", title: "Mow lawn & trim hedges", budget: 6000 },
+  ],
+  "Starting a business": [
+    { category: "DESIGN", title: "Logo & business card design", budget: 35000 },
+    { category: "WEB", title: "Build a one-page site", budget: 80000 },
+    { category: "WRITING", title: "Write brand About page", budget: 15000 },
+    { category: "PHOTO", title: "Product photoshoot (10 items)", budget: 45000 },
+  ],
+  "Parties": [
+    { category: "EVENT", title: "MC for birthday party", budget: 30000 },
+    { category: "DELIVERY", title: "Pick up & deliver party rentals", budget: 12000 },
+    { category: "CLEANING", title: "Post-party cleanup", budget: 14000 },
+    { category: "PHOTO", title: "Event photography 4hrs", budget: 60000 },
+  ],
+  "Something different": [
+    { category: "TUTORING", title: "Maths tutor — JSS3", budget: 8000 },
+    { category: "FITNESS", title: "Personal trainer at home", budget: 10000 },
+    { category: "PET", title: "Dog walking weekday afternoons", budget: 5000 },
+    { category: "TECH", title: "Set up new MacBook", budget: 9000 },
+  ],
+};
 
 function TasksHome() {
+  const [tab, setTab] = useState<(typeof SHOWCASE_TABS)[number]>("Moving in");
+
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground">
       <TaskHeader />
 
       {/* HERO */}
-      <section className="relative overflow-hidden bg-[oklch(0.18_0.08_265)] text-white">
-        <div className="absolute inset-0 opacity-30 [background:radial-gradient(circle_at_20%_20%,oklch(0.55_0.25_265)_0%,transparent_45%),radial-gradient(circle_at_80%_30%,oklch(0.75_0.2_140)_0%,transparent_40%)]" />
+      <section className="relative overflow-hidden bg-surface-soft border-b border-border">
+        <div className="absolute inset-0 opacity-[0.08] [background:radial-gradient(circle_at_15%_20%,var(--color-primary)_0%,transparent_45%),radial-gradient(circle_at_85%_30%,var(--color-primary)_0%,transparent_40%)]" />
         <div className="relative mx-auto max-w-7xl px-4 sm:px-6 py-16 sm:py-24 text-center">
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-xs font-medium backdrop-blur">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
             <Sparkles className="h-3.5 w-3.5" /> Trusted across Nigeria
           </span>
-          <h1 className="mt-6 text-5xl sm:text-7xl md:text-8xl font-black tracking-tight leading-[0.95]">
+          <h1 className="mt-6 font-display text-5xl sm:text-7xl md:text-8xl text-ink leading-[0.95]">
             GET ANYTHING <br />
-            <span className="text-[oklch(0.88_0.18_140)]">DONE</span>
+            <span className="text-primary">DONE</span>
           </h1>
-          <p className="mx-auto mt-6 max-w-xl text-base sm:text-lg text-white/80">
+          <p className="mx-auto mt-6 max-w-xl text-base sm:text-lg text-muted-foreground">
             Post any task. Pick the best person. Get it done — safely paid through Find-task.
           </p>
           <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
-            <Link
-              to="/register"
-              className="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-lg hover:opacity-90"
-            >
+            <Link to="/post-task" className="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-full bg-primary px-7 py-3.5 text-sm font-bold text-primary-foreground shadow-lg hover:opacity-90">
               Post your task for free <ArrowRight className="h-4 w-4" />
             </Link>
-            <Link
-              to="/register"
-              className="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-full bg-white/10 px-6 py-3 text-sm font-semibold text-white ring-1 ring-white/30 hover:bg-white/20"
-            >
+            <Link to="/register" className="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-full border-2 border-ink/80 px-7 py-3.5 text-sm font-bold text-ink hover:bg-ink hover:text-background">
               Earn money as a Tasker
             </Link>
           </div>
-          <div className="mt-10 grid grid-cols-3 max-w-xl mx-auto gap-3 text-xs sm:text-sm text-white/80">
-            <div className="flex flex-col items-center gap-1"><Users className="h-4 w-4" /><span>1M+ customers</span></div>
-            <div className="flex flex-col items-center gap-1"><ShieldCheck className="h-4 w-4" /><span>Secure payments</span></div>
-            <div className="flex flex-col items-center gap-1"><Star className="h-4 w-4" /><span>4.0 ‘Great’</span></div>
+          <div className="mt-10 grid grid-cols-3 max-w-xl mx-auto gap-3 text-xs sm:text-sm text-ink/80">
+            <div className="flex flex-col items-center gap-1"><Users className="h-4 w-4 text-primary" /><span className="font-semibold">1M+ customers</span></div>
+            <div className="flex flex-col items-center gap-1"><ShieldCheck className="h-4 w-4 text-primary" /><span className="font-semibold">Secure payments</span></div>
+            <div className="flex flex-col items-center gap-1"><Star className="h-4 w-4 text-primary fill-primary" /><span className="font-semibold">4.0 ‘Great’</span></div>
           </div>
         </div>
       </section>
 
-      {/* CATEGORIES */}
-      <section id="categories" className="mx-auto w-full max-w-7xl px-4 sm:px-6 py-16">
-        <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Popular categories</h2>
-        <p className="mt-2 text-muted-foreground">Whatever you need, there's a Tasker for that.</p>
-        <div className="mt-8 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-          {CATEGORIES.map((c) => (
-            <button
-              key={c.label}
-              className="group flex flex-col items-center justify-center gap-2 rounded-xl border border-border bg-card p-5 text-center transition-all hover:border-primary hover:shadow-md"
-            >
-              <c.icon className="h-6 w-6 text-primary" />
-              <span className="text-sm font-medium">{c.label}</span>
-            </button>
-          ))}
+      {/* MEMBERSHIP BAND */}
+      <section className="bg-surface-warm">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 py-14 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+          <div>
+            <div className="text-xs font-bold uppercase tracking-widest text-primary">Find-task Membership</div>
+            <h2 className="mt-1 font-display text-3xl sm:text-5xl text-ink leading-tight max-w-xl">
+              Unlock ₦0 connection fees all year round.
+            </h2>
+          </div>
+          <Link to="/register" className="inline-flex items-center gap-2 rounded-full bg-ink px-6 py-3 text-sm font-bold text-background hover:opacity-90">
+            Join now <ArrowRight className="h-4 w-4" />
+          </Link>
         </div>
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 pb-4 text-xs text-muted-foreground">Membership ₦12,000/yr. T&Cs apply.</div>
       </section>
 
       {/* HOW IT WORKS */}
-      <section id="how" className="bg-muted/40 py-16">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6">
-          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">How Find-task works</h2>
-          <div className="mt-8 grid gap-4 md:grid-cols-3">
-            {STEPS.map((s) => (
-              <div key={s.n} className="rounded-2xl bg-card border border-border p-6">
-                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-primary-foreground font-bold">
-                  {s.n}
+      <section className="mx-auto w-full max-w-7xl px-4 sm:px-6 py-16">
+        <div className="grid md:grid-cols-2 gap-10 items-center">
+          <div>
+            <h2 className="font-display text-3xl sm:text-4xl text-ink">Post your first task in seconds</h2>
+            <p className="mt-2 text-muted-foreground">Save yourself hours and get your to-do list completed</p>
+            <ol className="mt-6 space-y-4">
+              {[
+                ["1", "Describe what you need done"],
+                ["2", "Set your budget"],
+                ["3", "Receive quotes and pick the best Tasker"],
+              ].map(([n, txt]) => (
+                <li key={n} className="flex items-start gap-3">
+                  <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground font-bold">{n}</span>
+                  <span className="text-base text-ink font-medium pt-1">{txt}</span>
+                </li>
+              ))}
+            </ol>
+            <Link to="/post-task" className="mt-6 inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-bold text-primary-foreground hover:opacity-90">
+              Post your task
+            </Link>
+          </div>
+          <div className="relative">
+            <div className="rounded-3xl border border-border bg-card p-6 shadow-xl">
+              <div className="text-xs font-bold uppercase tracking-wider text-primary">Sample task</div>
+              <h3 className="mt-1 font-display text-2xl text-ink">Help me move a 2-bed apartment</h3>
+              <div className="mt-2 text-sm text-muted-foreground">Lagos, Lekki • Saturday morning</div>
+              <div className="mt-4 flex items-center justify-between border-t border-border pt-4">
+                <div>
+                  <div className="text-xs text-muted-foreground">Task budget</div>
+                  <div className="font-display text-3xl text-ink">₦65,000</div>
                 </div>
-                <h3 className="mt-4 text-lg font-semibold">{s.title}</h3>
-                <p className="mt-2 text-sm text-muted-foreground">{s.body}</p>
+                <span className="rounded-full bg-success/10 px-3 py-1 text-xs font-bold text-success">OPEN • 5 offers</span>
               </div>
+            </div>
+            <div className="absolute -bottom-6 -right-2 rounded-2xl bg-success text-background px-4 py-2 text-xs font-bold shadow-lg rotate-3">
+              <CheckCircle2 className="inline h-3.5 w-3.5 mr-1" /> Payment received!
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* TOP CATEGORIES */}
+      <section className="bg-surface-soft py-16">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6">
+          <div className="flex items-end justify-between flex-wrap gap-3">
+            <h2 className="font-display text-3xl sm:text-4xl text-ink">Popular categories</h2>
+            <Link to="/tasks/categories" className="text-sm font-bold text-primary hover:underline">Learn how Find-task works →</Link>
+          </div>
+          <p className="mt-2 text-muted-foreground">Whatever you need, there's a Tasker for that.</p>
+          <div className="mt-8 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+            {TOP_CATEGORIES.map((c) => (
+              <Link
+                key={c.label}
+                to="/tasks/categories"
+                className="group rounded-2xl border border-border bg-card p-5 text-left hover:border-primary hover:shadow-md transition"
+              >
+                <c.icon className="h-7 w-7 text-primary" />
+                <div className="mt-3 font-bold text-sm text-ink leading-tight">{c.label}</div>
+                <div className="mt-1 text-[11px] text-muted-foreground line-clamp-2">{c.desc}</div>
+              </Link>
             ))}
           </div>
         </div>
       </section>
 
-      {/* CTA */}
-      <section className="bg-[oklch(0.92_0.15_140)] py-14">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-          <div>
-            <p className="text-sm font-semibold text-[oklch(0.25_0.15_265)]">Find-task Membership</p>
-            <h3 className="mt-1 text-3xl sm:text-4xl font-black text-[oklch(0.15_0.08_265)] max-w-lg leading-tight">
-              Unlock zero connection fees all year round.
-            </h3>
+      {/* SHOWCASE TABS */}
+      <section className="mx-auto max-w-7xl w-full px-4 sm:px-6 py-16">
+        <h2 className="font-display text-3xl sm:text-4xl text-ink">See what others are getting done</h2>
+        <div className="mt-6 flex flex-wrap gap-2">
+          {SHOWCASE_TABS.map((t) => (
+            <button
+              key={t}
+              onClick={() => setTab(t)}
+              className={
+                "rounded-full px-4 py-2 text-sm font-semibold transition " +
+                (t === tab
+                  ? "bg-ink text-background"
+                  : "bg-muted text-foreground hover:bg-ink/10")
+              }
+            >
+              {t}
+            </button>
+          ))}
+        </div>
+        <div className="mt-8 grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {SHOWCASE[tab].map((card, i) => (
+            <div key={i} className="rounded-2xl border border-border bg-card p-5 flex flex-col">
+              <div className="text-[10px] font-bold uppercase tracking-widest text-primary">{card.category}</div>
+              <div className="mt-2 font-bold text-ink leading-snug min-h-[3em]">{card.title}</div>
+              <div className="mt-4 inline-flex items-center gap-0.5 text-amber-500">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <Star key={i} className="h-3.5 w-3.5 fill-amber-500" />
+                ))}
+              </div>
+              <div className="mt-auto pt-4 font-display text-2xl text-ink">₦{card.budget.toLocaleString()}</div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* TRUST & SAFETY */}
+      <section className="bg-ink text-background py-16">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6">
+          <h2 className="font-display text-3xl sm:text-4xl">Trust and safety features for your protection</h2>
+          <div className="mt-10 grid gap-8 md:grid-cols-3">
+            {[
+              { icon: ShieldCheck, title: "Secure payments", body: "Only release payment when the task is completed to your satisfaction." },
+              { icon: Star, title: "Trusted ratings & reviews", body: "Pick the right person based on real ratings from other users." },
+              { icon: BadgeCheck, title: "Insurance for peace of mind", body: "We provide liability insurance for Taskers performing most task activities." },
+            ].map((t) => (
+              <div key={t.title}>
+                <span className="grid h-12 w-12 place-items-center rounded-full bg-primary text-primary-foreground">
+                  <t.icon className="h-6 w-6" />
+                </span>
+                <h3 className="mt-4 font-display text-xl">{t.title}</h3>
+                <p className="mt-2 text-sm text-background/80 max-w-xs">{t.body}</p>
+              </div>
+            ))}
           </div>
-          <Link
-            to="/register"
-            className="inline-flex items-center gap-2 rounded-full bg-[oklch(0.25_0.15_265)] px-6 py-3 text-sm font-semibold text-white hover:opacity-90"
-          >
-            Join now <ArrowRight className="h-4 w-4" />
+          <Link to="/post-task" className="mt-10 inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-bold text-primary-foreground hover:opacity-90">
+            Post your task for free
           </Link>
         </div>
       </section>
 
-      <footer className="border-t border-border py-8 text-center text-xs text-muted-foreground">
-        © {new Date().getFullYear()} Find-task. All rights reserved.
-      </footer>
+      {/* BE YOUR OWN BOSS */}
+      <section className="mx-auto max-w-7xl w-full px-4 sm:px-6 py-16">
+        <div className="grid md:grid-cols-2 gap-10 items-center">
+          <div className="order-2 md:order-1 relative">
+            <div className="rounded-3xl bg-surface-soft p-6 shadow-lg">
+              <div className="text-xs font-bold uppercase tracking-wider text-primary">New job alert!</div>
+              <div className="mt-2 font-display text-xl text-ink">Paint chairs · 2h ago</div>
+              <div className="mt-2 font-display text-2xl text-ink">₦17,900</div>
+            </div>
+            <div className="mt-4 rounded-3xl bg-card border border-border p-6">
+              <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Total earnings</div>
+              <div className="mt-1 font-display text-4xl text-ink">₦1,306,600</div>
+              <div className="mt-1 text-xs font-semibold text-success">▲ 20% vs last month</div>
+            </div>
+          </div>
+          <div className="order-1 md:order-2">
+            <h2 className="font-display text-3xl sm:text-4xl text-ink">Be your own boss</h2>
+            <p className="mt-2 text-muted-foreground max-w-md">
+              Whether you're a spreadsheet wizard or a diligent carpenter, find your next job on Find-task.
+            </p>
+            <ul className="mt-6 space-y-3">
+              {[
+                "Free access to thousands of job opportunities",
+                "No subscription or credit fees",
+                "Earn extra income on a flexible schedule",
+                "Grow your business and client base",
+              ].map((b) => (
+                <li key={b} className="flex items-start gap-3 text-base">
+                  <CheckCircle2 className="h-5 w-5 text-success shrink-0 mt-0.5" />
+                  <span>{b}</span>
+                </li>
+              ))}
+            </ul>
+            <Link to="/register" className="mt-7 inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-bold text-primary-foreground hover:opacity-90">
+              Earn money as a Tasker
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* FEATURED TASKERS */}
+      <section className="bg-surface-soft py-16">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6">
+          <h2 className="font-display text-3xl sm:text-4xl text-ink text-center">160,000+ Taskers earning income on Find-task</h2>
+          <div className="mt-10 grid md:grid-cols-2 gap-6">
+            {[
+              { name: "Hassan O.", rating: "5.0", ratings: 73, completion: "97%", speciality: "24/7 emergency plumbing, gas fitting, renovations", quote: "A+++ for Hassan! Highly professional, punctual and he did it all with a friendly smile.", by: "Nic K." },
+              { name: "Philippe A.", rating: "4.9", ratings: 818, completion: "93%", speciality: "Delivery, removals and interstate moves", quote: "On time, very careful with boxes. Wrapped the couch and mattress for us. Highly recommend!", by: "Erin O." },
+            ].map((t) => (
+              <article key={t.name} className="rounded-3xl bg-card border border-border p-6">
+                <div className="flex items-center gap-4">
+                  <div className="grid h-16 w-16 place-items-center rounded-full bg-primary/10 font-display text-2xl text-primary">
+                    {t.name.charAt(0)}
+                  </div>
+                  <div>
+                    <div className="font-display text-xl text-ink inline-flex items-center gap-1.5">{t.name} <BadgeCheck className="h-4 w-4 text-primary" /></div>
+                    <div className="text-xs text-muted-foreground">Verified ID • Payment Method • Mobile</div>
+                  </div>
+                </div>
+                <div className="mt-4 grid grid-cols-2 gap-3">
+                  <div className="rounded-xl bg-surface-soft p-3">
+                    <div className="font-display text-2xl text-ink">{t.rating} <Star className="inline h-4 w-4 fill-amber-500 text-amber-500" /></div>
+                    <div className="text-[11px] text-muted-foreground">{t.ratings} ratings</div>
+                  </div>
+                  <div className="rounded-xl bg-surface-soft p-3">
+                    <div className="font-display text-2xl text-ink">{t.completion}</div>
+                    <div className="text-[11px] text-muted-foreground">Completion rate</div>
+                  </div>
+                </div>
+                <div className="mt-4 text-sm"><span className="font-semibold">Speciality:</span> <span className="text-muted-foreground">{t.speciality}</span></div>
+                <blockquote className="mt-4 rounded-xl bg-surface-soft p-4 text-sm italic text-ink">
+                  "{t.quote}"
+                  <footer className="mt-2 text-xs not-italic text-muted-foreground">— {t.by}</footer>
+                </blockquote>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ARTICLES */}
+      <section className="mx-auto max-w-7xl w-full px-4 sm:px-6 py-16">
+        <h2 className="font-display text-3xl sm:text-4xl text-ink">Articles, stories & more</h2>
+        <div className="mt-8 grid md:grid-cols-3 gap-6">
+          {[
+            { tag: "CASE STUDY", title: "How Edible Blooms scales operations with on-demand support", body: "Built a smarter, leaner staffing approach across every city it serves." },
+            { tag: "GUIDE", title: "Top hay fever hacks for the rainy season", body: "Keep those pesky allergies at bay with these tips." },
+            { tag: "MONEY", title: "How to save on electricity bills", body: "Cost of living going up — keep your energy bills down with these tips." },
+          ].map((a) => (
+            <article key={a.title} className="rounded-2xl border border-border bg-card overflow-hidden hover:shadow-md transition">
+              <div className="h-40 bg-gradient-to-br from-primary/20 via-surface-warm to-surface-soft" />
+              <div className="p-5">
+                <div className="text-[10px] font-bold uppercase tracking-widest text-primary">{a.tag}</div>
+                <h3 className="mt-1 font-display text-lg text-ink leading-snug">{a.title}</h3>
+                <p className="mt-2 text-sm text-muted-foreground line-clamp-2">{a.body}</p>
+                <button className="mt-3 text-sm font-bold text-primary hover:underline">Read more →</button>
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <Footer />
     </div>
   );
 }

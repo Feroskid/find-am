@@ -27,6 +27,7 @@ import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as CommunityRouteImport } from './routes/community'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as UUserIdRouteImport } from './routes/u.$userId'
+import { Route as TasksMineRouteImport } from './routes/tasks.mine'
 import { Route as TasksCategoriesRouteImport } from './routes/tasks.categories'
 import { Route as TasksBrowseRouteImport } from './routes/tasks.browse'
 import { Route as TasksTaskIdRouteImport } from './routes/tasks.$taskId'
@@ -124,6 +125,11 @@ const UUserIdRoute = UUserIdRouteImport.update({
   path: '/u/$userId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TasksMineRoute = TasksMineRouteImport.update({
+  id: '/mine',
+  path: '/mine',
+  getParentRoute: () => TasksRoute,
+} as any)
 const TasksCategoriesRoute = TasksCategoriesRouteImport.update({
   id: '/categories',
   path: '/categories',
@@ -176,6 +182,7 @@ export interface FileRoutesByFullPath {
   '/tasks/$taskId': typeof TasksTaskIdRouteWithChildren
   '/tasks/browse': typeof TasksBrowseRoute
   '/tasks/categories': typeof TasksCategoriesRoute
+  '/tasks/mine': typeof TasksMineRoute
   '/u/$userId': typeof UUserIdRoute
   '/api/public/search': typeof ApiPublicSearchRoute
   '/tasks/$taskId/applications': typeof TasksTaskIdApplicationsRoute
@@ -202,6 +209,7 @@ export interface FileRoutesByTo {
   '/tasks/$taskId': typeof TasksTaskIdRouteWithChildren
   '/tasks/browse': typeof TasksBrowseRoute
   '/tasks/categories': typeof TasksCategoriesRoute
+  '/tasks/mine': typeof TasksMineRoute
   '/u/$userId': typeof UUserIdRoute
   '/api/public/search': typeof ApiPublicSearchRoute
   '/tasks/$taskId/applications': typeof TasksTaskIdApplicationsRoute
@@ -229,6 +237,7 @@ export interface FileRoutesById {
   '/tasks/$taskId': typeof TasksTaskIdRouteWithChildren
   '/tasks/browse': typeof TasksBrowseRoute
   '/tasks/categories': typeof TasksCategoriesRoute
+  '/tasks/mine': typeof TasksMineRoute
   '/u/$userId': typeof UUserIdRoute
   '/api/public/search': typeof ApiPublicSearchRoute
   '/tasks/$taskId/applications': typeof TasksTaskIdApplicationsRoute
@@ -257,6 +266,7 @@ export interface FileRouteTypes {
     | '/tasks/$taskId'
     | '/tasks/browse'
     | '/tasks/categories'
+    | '/tasks/mine'
     | '/u/$userId'
     | '/api/public/search'
     | '/tasks/$taskId/applications'
@@ -283,6 +293,7 @@ export interface FileRouteTypes {
     | '/tasks/$taskId'
     | '/tasks/browse'
     | '/tasks/categories'
+    | '/tasks/mine'
     | '/u/$userId'
     | '/api/public/search'
     | '/tasks/$taskId/applications'
@@ -309,6 +320,7 @@ export interface FileRouteTypes {
     | '/tasks/$taskId'
     | '/tasks/browse'
     | '/tasks/categories'
+    | '/tasks/mine'
     | '/u/$userId'
     | '/api/public/search'
     | '/tasks/$taskId/applications'
@@ -465,6 +477,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof UUserIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/tasks/mine': {
+      id: '/tasks/mine'
+      path: '/mine'
+      fullPath: '/tasks/mine'
+      preLoaderRoute: typeof TasksMineRouteImport
+      parentRoute: typeof TasksRoute
+    }
     '/tasks/categories': {
       id: '/tasks/categories'
       path: '/categories'
@@ -528,12 +547,14 @@ interface TasksRouteChildren {
   TasksTaskIdRoute: typeof TasksTaskIdRouteWithChildren
   TasksBrowseRoute: typeof TasksBrowseRoute
   TasksCategoriesRoute: typeof TasksCategoriesRoute
+  TasksMineRoute: typeof TasksMineRoute
 }
 
 const TasksRouteChildren: TasksRouteChildren = {
   TasksTaskIdRoute: TasksTaskIdRouteWithChildren,
   TasksBrowseRoute: TasksBrowseRoute,
   TasksCategoriesRoute: TasksCategoriesRoute,
+  TasksMineRoute: TasksMineRoute,
 }
 
 const TasksRouteWithChildren = TasksRoute._addFileChildren(TasksRouteChildren)
