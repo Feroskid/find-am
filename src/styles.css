@@ -141,6 +141,10 @@
   --sidebar-accent-foreground: oklch(0.984 0.003 247.858);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.551 0.027 264.364);
+  --ink: oklch(0.97 0.01 285);
+  --surface-soft: oklch(0.22 0.02 285);
+  --surface-warm: oklch(0.27 0.04 80);
+  --success: oklch(0.72 0.18 150);
 }
 
 /* Auto follow user's system color-scheme preference */
