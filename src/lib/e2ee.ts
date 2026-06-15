@@ -1,15 +1,13 @@
 /**
- * Lightweight per-task End-to-End Encryption for chat messages.
+ * Per-task message obfuscation (encryption-at-rest only — NOT true E2EE).
  *
- * Design (transparent to the user):
- *  - A deterministic AES-GCM key is derived from a shared room secret
- *    (task_id + sorted participant ids) using PBKDF2.
- *  - The server never sees the key. It only stores the ciphertext blob.
- *  - We mark ciphertext with a magic prefix "E2:" + base64(iv|ct) so legacy
- *    plaintext messages still render.
+ * The AES-GCM key is derived deterministically from public task metadata
+ * (task_id + participant ids) via PBKDF2. Anyone who can read the task
+ * record can derive the same key, so treat this as defense-in-depth
+ * against casual DB scraping — NOT as a confidentiality guarantee.
  *
- * NOTE: this is application-level encryption-at-rest hiding from casual DB
- * reads. It is NOT a substitute for proper key exchange between devices.
+ * Do NOT label this as "end-to-end encrypted" in the UI. For real E2EE,
+ * replace `roomSecret()` with an out-of-band key exchange (e.g. ECDH).
  */
 
 const enc = new TextEncoder();
