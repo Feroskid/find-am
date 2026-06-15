@@ -3,8 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import {
-  ArrowLeft, MapPin, Clock, Banknote, Tag, Loader2, Users, MessageSquare,
-  Globe, CheckCircle2,
+  ArrowLeft, MapPin, Clock, Loader2, Heart, Flag, ChevronDown, BadgeCheck, Star, Globe,
 } from "lucide-react";
 import { toast } from "sonner";
 import { TaskHeader } from "@/components/TaskHeader";
@@ -15,7 +14,7 @@ export const Route = createFileRoute("/tasks/$taskId")({
   head: () => ({
     meta: [
       { title: "Task — Find-task" },
-      { name: "description", content: "View task details and apply on Find-task." },
+      { name: "description", content: "View task details and make an offer on Find-task." },
     ],
   }),
   component: TaskDetail,
@@ -37,7 +36,6 @@ function TaskDetail() {
   const posterId = task?.poster_id ?? task?.user_id ?? task?.owner_id;
   const isPoster = !!task && posterId !== undefined && String(posterId) === String(myId);
 
-  // Detect existing application from server response (varied shapes)
   const myApplication: any = (() => {
     const t: any = task;
     if (!t) return null;
@@ -46,37 +44,51 @@ function TaskDetail() {
     return apps.find((a) => String(a.applicant_id ?? a.tasker_id ?? a.user_id) === String(myId)) ?? null;
   })();
 
+  const offers: any[] = task?.applications ?? task?.offers ?? [];
+  const questions: any[] = task?.comments ?? task?.questions ?? [];
+
+  const [tab, setTab] = useState<"offers" | "questions">("offers");
   const [showApply, setShowApply] = useState(false);
   const [message, setMessage] = useState("");
+  const [offerAmt, setOfferAmt] = useState("");
+  const [moreOpen, setMoreOpen] = useState(false);
 
   const applyM = useMutation({
     mutationFn: () =>
       apply({ data: { taskId, token: token!, message: message.trim() || undefined } }),
     onSuccess: (r) => {
-      if (r.ok) {
-        toast.success("Application sent!");
-        setShowApply(false); setMessage("");
-        refetch();
-      } else toast.error(r.error);
+      if (r.ok) { toast.success("Offer sent!"); setShowApply(false); setMessage(""); refetch(); }
+      else toast.error(r.error);
     },
   });
 
-  const status = String(task?.status ?? "").toLowerCase();
+  const status = String(task?.status ?? "open").toLowerCase();
   const location = task?.location_text ?? task?.location;
-  const category = task?.category_name ?? task?.category;
+  const remote = !!task?.is_remote;
+  const date = task?.deadline ? new Date(task.deadline) : null;
+  const dateLabel = date
+    ? date.toLocaleDateString(undefined, { weekday: "short", day: "numeric", month: "short" })
+    : "Flexible";
+
+  const StatusPill = ({ name }: { name: "open" | "assigned" | "completed" }) => {
+    const active = status === name || (name === "assigned" && (status === "in_progress" || status === "accepted"));
+    return (
+      <span
+        className={
+          "rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-wider " +
+          (active ? "bg-success/15 text-success" : "text-muted-foreground")
+        }
+      >
+        {name}
+      </span>
+    );
+  };
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <div className="min-h-screen flex flex-col bg-background pb-24 sm:pb-0">
       <TaskHeader />
-      <main className="mx-auto w-full max-w-4xl px-4 sm:px-6 py-8 flex-1">
-        <Link
-          to="/tasks/browse"
-          search={{ q: "", category_id: 0, location: "", is_remote: 0, page: 1 }}
-          className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
-        >
-          <ArrowLeft className="h-4 w-4" /> Back to tasks
-        </Link>
 
+      <main className="mx-auto w-full max-w-6xl px-4 sm:px-6 py-6 flex-1">
         {isFetching && !task ? (
           <div className="mt-8 flex items-center gap-2 text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" /> Loading…</div>
         ) : !data?.ok ? (
@@ -84,101 +96,278 @@ function TaskDetail() {
         ) : !task ? (
           <div className="mt-8 text-muted-foreground">No task data.</div>
         ) : (
-          <article className="mt-6 grid gap-6 md:grid-cols-[1fr_320px]">
-            <div className="rounded-2xl border border-border bg-card p-6">
-              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">{task.title ?? "Untitled task"}</h1>
-              <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5 text-sm text-muted-foreground">
-                {task.is_remote ? (
-                  <span className="inline-flex items-center gap-1"><Globe className="h-4 w-4" />Remote</span>
-                ) : location ? (
-                  <span className="inline-flex items-center gap-1"><MapPin className="h-4 w-4" />{location}</span>
-                ) : null}
-                {task.deadline && (
-                  <span className="inline-flex items-center gap-1"><Clock className="h-4 w-4" />{new Date(task.deadline).toLocaleString()}</span>
-                )}
-                {category && (
-                  <span className="inline-flex items-center gap-1"><Tag className="h-4 w-4" />{category}</span>
-                )}
-                {task.poster_name && (
-                  <span>Posted by <span className="font-medium text-foreground">{task.poster_name}</span></span>
-                )}
+          <div className="grid md:grid-cols-[1fr_340px] gap-6">
+            {/* MAIN COLUMN */}
+            <div>
+              {/* Status row */}
+              <div className="flex items-center justify-between">
+                <div className="flex gap-1">
+                  <StatusPill name="open" />
+                  <StatusPill name="assigned" />
+                  <StatusPill name="completed" />
+                </div>
+                <button className="inline-flex items-center gap-1 text-sm font-semibold text-primary hover:underline">
+                  <Heart className="h-4 w-4" /> Follow
+                </button>
               </div>
-              <div className="mt-6 whitespace-pre-wrap text-foreground/90">
-                {task.description ?? "No description provided."}
-              </div>
+
+              <h1 className="mt-4 font-display text-3xl sm:text-4xl text-ink leading-tight">{task.title ?? "Untitled task"}</h1>
+              <Link
+                to="/tasks/browse"
+                search={{ q: "", category_id: 0, location: "", is_remote: 0, page: 1 }}
+                className="mt-2 inline-flex items-center gap-1 text-sm font-semibold text-primary hover:underline"
+              >
+                <ArrowLeft className="h-4 w-4" /> Return to browse
+              </Link>
+
+              {/* Meta */}
+              <dl className="mt-6 space-y-4 border-t border-border pt-6">
+                <div className="flex items-start gap-3">
+                  <div className="grid h-10 w-10 place-items-center rounded-full bg-primary/10 text-primary font-bold">
+                    {(task.poster_name ?? "U").charAt(0).toUpperCase()}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <dt className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Posted by</dt>
+                    <dd className="font-semibold text-ink">{task.poster_name ?? "Anonymous"}</dd>
+                  </div>
+                  <span className="text-xs text-muted-foreground shrink-0">
+                    {task.created_at ? new Date(task.created_at).toLocaleDateString() : ""}
+                  </span>
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <span className="grid h-10 w-10 place-items-center rounded-full bg-primary/10 text-primary">
+                    {remote ? <Globe className="h-5 w-5" /> : <MapPin className="h-5 w-5" />}
+                  </span>
+                  <div className="flex-1">
+                    <dt className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Location</dt>
+                    <dd className="font-semibold text-ink">{remote ? "Remote" : (location ?? "On-site")}</dd>
+                  </div>
+                  {!remote && (
+                    <Link to="/map" className="text-sm font-semibold text-primary hover:underline shrink-0">View map</Link>
+                  )}
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <span className="grid h-10 w-10 place-items-center rounded-full bg-primary/10 text-primary">
+                    <Clock className="h-5 w-5" />
+                  </span>
+                  <div>
+                    <dt className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">To be done on</dt>
+                    <dd className="font-semibold text-ink">{dateLabel}</dd>
+                    {!date && <div className="text-xs text-muted-foreground">Anytime</div>}
+                  </div>
+                </div>
+              </dl>
+
+              {/* Details */}
+              <section className="mt-8 border-t border-border pt-6">
+                <h2 className="font-display text-2xl text-ink">Details</h2>
+                <p className="mt-3 whitespace-pre-wrap text-sm text-foreground/90">
+                  {task.description ?? "No description provided."}
+                </p>
+              </section>
+
+              {/* Offers / Questions */}
+              <section className="mt-8">
+                <div className="inline-flex w-full sm:w-auto rounded-full bg-muted p-1">
+                  <button
+                    onClick={() => setTab("offers")}
+                    className={
+                      "flex-1 sm:flex-initial rounded-full px-6 py-2 text-sm font-bold transition " +
+                      (tab === "offers" ? "bg-ink text-background" : "text-muted-foreground")
+                    }
+                  >
+                    Offers <span className="ml-1 opacity-70">{offers.length}</span>
+                  </button>
+                  <button
+                    onClick={() => setTab("questions")}
+                    className={
+                      "flex-1 sm:flex-initial rounded-full px-6 py-2 text-sm font-bold transition " +
+                      (tab === "questions" ? "bg-ink text-background" : "text-muted-foreground")
+                    }
+                  >
+                    Questions <span className="ml-1 opacity-70">{questions.length}</span>
+                  </button>
+                </div>
+
+                <div className="mt-6 space-y-5">
+                  {tab === "offers" ? (
+                    offers.length === 0 ? (
+                      <div className="rounded-2xl border border-dashed border-border p-8 text-center text-muted-foreground">No offers yet. Be the first to make one!</div>
+                    ) : (
+                      offers.map((o, i) => <OfferCard key={i} offer={o} />)
+                    )
+                  ) : (
+                    questions.length === 0 ? (
+                      <div className="rounded-2xl border border-dashed border-border p-8 text-center text-muted-foreground">No questions yet.</div>
+                    ) : (
+                      questions.map((q, i) => <OfferCard key={i} offer={q} />)
+                    )
+                  )}
+                </div>
+              </section>
+
+              {/* Cancellation policy */}
+              <section className="mt-10 border-t border-border pt-6">
+                <h3 className="font-display text-xl text-ink">Cancellation policy</h3>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  If you are responsible for cancelling this task, a Cancellation Fee will be deducted from your next payment payout(s).
+                </p>
+                <Link to="/terms" className="mt-2 inline-block text-sm font-bold text-primary hover:underline">Learn more</Link>
+              </section>
             </div>
 
-            <aside className="rounded-2xl border border-border bg-card p-6 h-fit space-y-4">
-              <div>
-                <div className="text-sm text-muted-foreground">Task budget</div>
-                <div className="mt-1 flex items-center gap-2 text-3xl font-bold">
-                  <Banknote className="h-6 w-6 text-primary" />
+            {/* RIGHT SIDEBAR — Budget card */}
+            <aside className="md:sticky md:top-[120px] h-fit space-y-4">
+              <div className="rounded-3xl border border-border bg-card p-6 text-center">
+                <div className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">Task budget</div>
+                <div className="mt-2 font-display text-5xl text-ink">
                   ₦{Number(task.budget ?? 0).toLocaleString()}
                 </div>
-                {status && (
-                  <div className="mt-2 inline-flex rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary capitalize">{status}</div>
+                {isPoster ? (
+                  <div className="mt-5 space-y-2">
+                    <Link to="/tasks/$taskId/applications" params={{ taskId }} className="block w-full rounded-full bg-primary py-3 text-sm font-bold text-primary-foreground hover:opacity-90">
+                      View applications
+                    </Link>
+                    <Link to="/tasks/$taskId/workspace" params={{ taskId }} className="block w-full rounded-full border border-border py-3 text-sm font-bold hover:bg-muted">
+                      Open workspace
+                    </Link>
+                  </div>
+                ) : !token ? (
+                  <Link to="/login" search={{ redirect: `/tasks/${taskId}` } as any} className="mt-5 block w-full rounded-full bg-primary py-3 text-sm font-bold text-primary-foreground hover:opacity-90">
+                    Log in to make an offer
+                  </Link>
+                ) : myApplication ? (
+                  <Link to="/tasks/$taskId/workspace" params={{ taskId }} className="mt-5 block w-full rounded-full border border-primary text-primary py-3 text-sm font-bold hover:bg-primary/5">
+                    Offer sent · Open conversation
+                  </Link>
+                ) : status !== "open" ? (
+                  <div className="mt-5 rounded-xl border border-border bg-muted/40 p-3 text-sm text-muted-foreground capitalize">
+                    Task is {status}
+                  </div>
+                ) : !showApply ? (
+                  <button onClick={() => setShowApply(true)} className="mt-5 w-full rounded-full bg-primary py-3 text-sm font-bold text-primary-foreground hover:opacity-90">
+                    Make an offer
+                  </button>
+                ) : (
+                  <div className="mt-5 space-y-2 text-left">
+                    <input
+                      value={offerAmt}
+                      onChange={(e) => setOfferAmt(e.target.value)}
+                      placeholder="Your offer (₦)"
+                      className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
+                    />
+                    <textarea
+                      value={message}
+                      onChange={(e) => setMessage(e.target.value)}
+                      rows={4}
+                      placeholder="Why are you a great fit?"
+                      className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
+                    />
+                    <button
+                      onClick={() => applyM.mutate()}
+                      disabled={applyM.isPending}
+                      className="w-full rounded-full bg-primary py-2.5 text-sm font-bold text-primary-foreground hover:opacity-90 disabled:opacity-50 inline-flex items-center justify-center gap-2"
+                    >
+                      {applyM.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+                      {applyM.isPending ? "Sending…" : "Submit offer"}
+                    </button>
+                    <button onClick={() => setShowApply(false)} className="w-full text-xs text-muted-foreground hover:text-foreground">Cancel</button>
+                  </div>
                 )}
               </div>
 
-              {isPoster ? (
-                <div className="space-y-2">
-                  <Link to="/tasks/$taskId/applications" params={{ taskId }} className="w-full inline-flex items-center justify-center gap-1.5 rounded-full bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground hover:opacity-90">
-                    <Users className="h-4 w-4" /> View applications
-                  </Link>
-                  <Link to="/tasks/$taskId/workspace" params={{ taskId }} className="w-full inline-flex items-center justify-center gap-1.5 rounded-full border border-border px-4 py-2.5 text-sm font-semibold hover:bg-muted">
-                    <MessageSquare className="h-4 w-4" /> Open workspace
-                  </Link>
-                </div>
-              ) : !token ? (
-                <Link to="/login" search={{ redirect: `/tasks/${taskId}` } as any} className="w-full inline-flex items-center justify-center rounded-full bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground hover:opacity-90">
-                  Log in to apply
-                </Link>
-              ) : myApplication ? (
-                <div className="space-y-2">
-                  <div className="rounded-xl border border-primary/30 bg-primary/5 p-3 text-sm">
-                    <div className="inline-flex items-center gap-1.5 font-semibold text-primary">
-                      <CheckCircle2 className="h-4 w-4" /> Application sent
-                    </div>
-                    <div className="mt-1 text-xs text-muted-foreground capitalize">
-                      Status: {String(myApplication.status ?? "pending")}
-                    </div>
-                  </div>
-                  <Link to="/tasks/$taskId/workspace" params={{ taskId }} className="w-full inline-flex items-center justify-center gap-1.5 rounded-full border border-border px-4 py-2.5 text-sm font-semibold hover:bg-muted">
-                    <MessageSquare className="h-4 w-4" /> Open conversation
-                  </Link>
-                </div>
-              ) : status && status !== "open" ? (
-                <div className="rounded-xl border border-border bg-muted/40 p-3 text-sm text-muted-foreground">
-                  This task is {status} and not accepting new applications.
-                </div>
-              ) : !showApply ? (
-                <button onClick={() => setShowApply(true)} className="w-full rounded-full bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground hover:opacity-90">
-                  Apply for this task
-                </button>
-              ) : (
-                <div className="space-y-2">
-                  <textarea
-                    value={message}
-                    onChange={(e) => setMessage(e.target.value)}
-                    rows={5}
-                    placeholder="Why are you a great fit? Mention experience and how soon you can start."
-                    className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
-                  />
-                  <button
-                    onClick={() => applyM.mutate()}
-                    disabled={applyM.isPending}
-                    className="w-full rounded-full bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-50 inline-flex items-center justify-center gap-2"
-                  >
-                    {applyM.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
-                    {applyM.isPending ? "Submitting…" : "Submit application"}
-                  </button>
-                  <button onClick={() => setShowApply(false)} className="w-full text-xs text-muted-foreground hover:text-foreground">Cancel</button>
+              <button
+                onClick={() => setMoreOpen((v) => !v)}
+                className="w-full rounded-2xl border border-border bg-card px-4 py-3 text-sm font-bold inline-flex items-center justify-between hover:bg-muted"
+              >
+                More Options
+                <ChevronDown className={"h-4 w-4 transition " + (moreOpen ? "rotate-180" : "")} />
+              </button>
+              {moreOpen && (
+                <div className="rounded-2xl border border-border bg-card p-4 text-sm space-y-2">
+                  <button className="w-full text-left hover:text-primary">Share this task</button>
+                  <button className="w-full text-left hover:text-primary">Save for later</button>
+                  <button className="w-full text-left hover:text-primary">Copy task link</button>
                 </div>
               )}
+              <button className="w-full inline-flex items-center justify-center gap-1.5 text-xs text-muted-foreground hover:text-destructive">
+                <Flag className="h-3.5 w-3.5" /> Report this task
+              </button>
             </aside>
-          </article>
+          </div>
         )}
       </main>
+
+      {/* Sticky mobile bottom bar */}
+      {task && (
+        <div className="sm:hidden fixed bottom-0 inset-x-0 z-30 bg-background border-t border-border px-4 py-3 shadow-[0_-8px_24px_-12px_rgba(0,0,0,0.15)]">
+          <div className="flex items-end justify-between mb-2">
+            <div className="min-w-0">
+              <div className="text-sm font-bold truncate">{task.title ?? "Task"}</div>
+              <div className="text-xs text-muted-foreground">{dateLabel} · {remote ? "Remote" : (location ?? "On-site")}</div>
+            </div>
+            <div className="text-right shrink-0">
+              <div className="font-display text-xl text-ink">₦{Number(task.budget ?? 0).toLocaleString()}</div>
+              <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Task Budget</div>
+            </div>
+          </div>
+          {!isPoster && token && status === "open" && !myApplication && (
+            <button onClick={() => setShowApply(true)} className="w-full rounded-full bg-primary py-3 text-sm font-bold text-primary-foreground">
+              Make an offer
+            </button>
+          )}
+          {!token && (
+            <Link to="/login" className="block w-full text-center rounded-full bg-primary py-3 text-sm font-bold text-primary-foreground">
+              Log in to make an offer
+            </Link>
+          )}
+          {myApplication && (
+            <Link to="/tasks/$taskId/workspace" params={{ taskId }} className="block w-full text-center rounded-full border border-primary text-primary py-3 text-sm font-bold">
+              Open conversation
+            </Link>
+          )}
+        </div>
+      )}
     </div>
+  );
+}
+
+function OfferCard({ offer }: { offer: any }) {
+  const name = offer.applicant_name ?? offer.tasker_name ?? offer.user_name ?? offer.name ?? "Tasker";
+  const rating = offer.rating ?? "5.0";
+  const ratings = offer.ratings_count ?? offer.review_count ?? 0;
+  const completion = offer.completion_rate ?? "100%";
+  const msg = offer.message ?? offer.comment ?? offer.body ?? "Hi! I'd love to help with this task.";
+  const time = offer.created_at ? new Date(offer.created_at).toLocaleDateString() : "Recently";
+
+  return (
+    <article className="rounded-2xl border border-border bg-card p-5">
+      <div className="flex items-start gap-3">
+        <div className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-primary/10 font-display text-lg text-primary">
+          {String(name).charAt(0).toUpperCase()}
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="font-bold text-ink inline-flex items-center gap-1.5">
+            {name} <BadgeCheck className="h-4 w-4 text-primary" />
+          </div>
+          <div className="text-sm text-ink flex items-center gap-1.5 mt-0.5">
+            <span className="font-bold">{rating}</span>
+            <Star className="h-3.5 w-3.5 fill-amber-500 text-amber-500" />
+            <span className="text-muted-foreground">({ratings})</span>
+          </div>
+          <div className="text-sm font-semibold text-ink mt-0.5">{completion} Completion rate</div>
+        </div>
+      </div>
+      <div className="mt-3 inline-flex items-center gap-1.5 rounded-md bg-muted px-2.5 py-1 text-[11px] font-semibold text-muted-foreground">
+        ◆ Rebooked 2+ times in 2026
+      </div>
+      <div className="mt-3 rounded-xl bg-muted/60 p-4 text-sm text-ink whitespace-pre-wrap line-clamp-3">{msg}</div>
+      <div className="mt-3 flex items-center justify-between text-xs">
+        <button className="font-bold text-primary hover:underline">↩ View replies</button>
+        <span className="text-muted-foreground">{time}</span>
+      </div>
+    </article>
   );
 }

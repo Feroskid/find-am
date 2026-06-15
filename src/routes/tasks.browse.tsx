@@ -2,9 +2,8 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { Search, Loader2, SlidersHorizontal, ChevronLeft, ChevronRight } from "lucide-react";
+import { Search, Loader2, ChevronDown, MapPin, Clock, Globe, Plus, Map as MapIcon, List } from "lucide-react";
 import { TaskHeader } from "@/components/TaskHeader";
-import { TaskCard, toCardData } from "@/components/TaskCard";
 import { listTasks, getCategories } from "@/lib/findtask.functions";
 
 export const Route = createFileRoute("/tasks/browse")({
@@ -27,22 +26,77 @@ export const Route = createFileRoute("/tasks/browse")({
   head: () => ({
     meta: [
       { title: "Browse tasks — Find-task" },
-      { name: "description", content: "Browse open tasks across Nigeria and find work that matches your skills." },
+      { name: "description", content: "Browse open tasks across Nigeria. Filter by category, location, budget and remote." },
     ],
   }),
   component: BrowseTasks,
 });
 
+function statusStyle(s: string) {
+  const v = s.toLowerCase();
+  if (v === "open") return "text-success";
+  if (v === "assigned" || v === "in_progress" || v === "accepted") return "text-amber-600";
+  if (v === "completed") return "text-success";
+  if (v === "cancelled") return "text-destructive";
+  return "text-muted-foreground";
+}
+
+function StatusDot({ s }: { s: string }) {
+  return <span className={"inline-block h-2 w-2 rounded-full bg-current " + statusStyle(s)} />;
+}
+
+function TaskListItem({ t, active, onHover }: { t: any; active?: boolean; onHover?: () => void }) {
+  const id = t.task_id ?? t.id;
+  const status = String(t.status ?? "open").toLowerCase();
+  const offers = t.offers_count ?? t.applications_count ?? 0;
+  const remote = !!t.is_remote;
+  const loc = t.location_text ?? t.location;
+  const date = t.deadline ? new Date(t.deadline) : null;
+
+  return (
+    <Link
+      to="/tasks/$taskId"
+      params={{ taskId: String(id) }}
+      onMouseEnter={onHover}
+      className={
+        "block rounded-2xl border bg-card p-4 transition hover:border-primary hover:shadow-sm " +
+        (active ? "border-primary shadow-sm" : "border-border")
+      }
+    >
+      <div className="flex items-start justify-between gap-3">
+        <h3 className="font-bold text-ink leading-snug line-clamp-2">{t.title ?? "Untitled task"}</h3>
+        <span className="font-display text-xl text-ink shrink-0">₦{Number(t.budget ?? 0).toLocaleString()}</span>
+      </div>
+      <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
+        <li className="flex items-center gap-1.5">
+          {remote ? <Globe className="h-3.5 w-3.5" /> : <MapPin className="h-3.5 w-3.5" />}
+          {remote ? "Remote" : (loc ?? "On-site")}
+        </li>
+        <li className="flex items-center gap-1.5">
+          <Clock className="h-3.5 w-3.5" />
+          {date ? date.toLocaleDateString(undefined, { weekday: "short", day: "numeric", month: "short" }) : "Flexible"}
+        </li>
+      </ul>
+      <div className="mt-2 flex items-center gap-1.5 text-xs font-semibold">
+        <StatusDot s={status} />
+        <span className={"capitalize " + statusStyle(status)}>{status.replace("_", " ")}</span>
+        <span className="text-muted-foreground">· {offers} offer{Number(offers) === 1 ? "" : "s"}</span>
+      </div>
+    </Link>
+  );
+}
+
 function BrowseTasks() {
   const search = Route.useSearch();
   const navigate = useNavigate();
   const [query, setQuery] = useState(search.q);
-  const [showFilters, setShowFilters] = useState(false);
+  const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const [mobileMap, setMobileMap] = useState(false);
 
   const list = useServerFn(listTasks);
   const cats = useServerFn(getCategories);
 
-  const limit = 12;
+  const limit = 20;
   const { data, isFetching } = useQuery({
     queryKey: ["tasks", "search", search],
     queryFn: () =>
@@ -71,136 +125,131 @@ function BrowseTasks() {
     const d: any = data.data;
     return d?.results ?? d?.tasks ?? (Array.isArray(d) ? d : []);
   })();
-  const total: number = data?.ok ? (data.data as any)?.total ?? rows.length : 0;
-  const hasMore = rows.length === limit;
 
   const setSearch = (patch: Partial<typeof search>) =>
     navigate({ to: "/tasks/browse", search: { ...search, ...patch, page: patch.page ?? 1 } });
 
+  const activeCat = categories.find((c) => c.category_id === search.category_id)?.category_name;
+
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <TaskHeader />
-      <main className="mx-auto w-full max-w-7xl px-4 sm:px-6 py-8 flex-1">
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Browse tasks</h1>
-            <p className="mt-1 text-muted-foreground">Find work that matches your skills</p>
-          </div>
-          <Link to="/post-task" className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90">
-            Post a task
+
+      {/* Sticky filter bar */}
+      <div className="sticky top-[110px] z-20 bg-background border-b border-border">
+        <div className="mx-auto max-w-7xl px-3 sm:px-4 py-2.5 flex items-center gap-2 overflow-x-auto">
+          <form
+            onSubmit={(e) => { e.preventDefault(); setSearch({ q: query }); }}
+            className="flex items-center gap-2 rounded-full bg-muted px-3 py-1.5 min-w-[180px] flex-1 max-w-xs"
+          >
+            <Search className="h-4 w-4 text-muted-foreground shrink-0" />
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search for a task"
+              className="flex-1 bg-transparent outline-none text-sm placeholder:text-muted-foreground"
+            />
+          </form>
+
+          <button
+            onClick={() => {
+              const v = prompt("Filter by category id (0 for all)", String(search.category_id || ""));
+              if (v != null) setSearch({ category_id: Number(v) || 0 });
+            }}
+            className="inline-flex items-center gap-1 rounded-full border border-border bg-card px-3 py-1.5 text-sm font-semibold whitespace-nowrap"
+          >
+            {activeCat ? activeCat : "All categories"} <ChevronDown className="h-3.5 w-3.5" />
+          </button>
+
+          <button
+            onClick={() => setSearch({ is_remote: search.is_remote ? 0 : 1 })}
+            className={
+              "inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-sm font-semibold whitespace-nowrap border " +
+              (search.is_remote ? "bg-primary text-primary-foreground border-primary" : "bg-card border-border")
+            }
+          >
+            Remote only <ChevronDown className="h-3.5 w-3.5" />
+          </button>
+
+          <button
+            onClick={() => {
+              const loc = prompt("Location filter", search.location);
+              if (loc != null) setSearch({ location: loc });
+            }}
+            className="hidden sm:inline-flex items-center gap-1 rounded-full border border-border bg-card px-3 py-1.5 text-sm font-semibold whitespace-nowrap"
+          >
+            {search.location || "Any location"} <ChevronDown className="h-3.5 w-3.5" />
+          </button>
+
+          <Link to="/post-task" className="ml-auto inline-flex items-center gap-1 rounded-full bg-primary px-3 py-1.5 text-sm font-bold text-primary-foreground whitespace-nowrap">
+            <Plus className="h-4 w-4" /> Post
           </Link>
         </div>
+      </div>
 
-        <form
-          onSubmit={(e) => { e.preventDefault(); setSearch({ q: query }); }}
-          className="mt-6 flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2.5"
-        >
-          <Search className="h-4 w-4 text-muted-foreground" />
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search tasks (e.g. plumber, logo design)"
-            className="flex-1 bg-transparent outline-none text-sm"
-          />
-          <button type="button" onClick={() => setShowFilters((s) => !s)} className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground">
-            <SlidersHorizontal className="h-4 w-4" /> Filters
-          </button>
-          <button type="submit" className="text-sm font-semibold text-primary">Search</button>
-        </form>
+      <main className="flex-1 mx-auto w-full max-w-7xl">
+        <div className="grid lg:grid-cols-[1fr_1.1fr] gap-0 lg:gap-4 lg:py-4 lg:px-4">
+          {/* LIST */}
+          <section className={(mobileMap ? "hidden " : "") + "lg:block px-3 sm:px-4 py-3 lg:p-0"}>
+            {isFetching ? (
+              <div className="flex items-center gap-2 text-muted-foreground py-12 justify-center"><Loader2 className="h-4 w-4 animate-spin" /> Loading tasks…</div>
+            ) : data && !data.ok ? (
+              <div className="rounded-xl border border-destructive/40 bg-destructive/10 p-4 text-sm text-destructive">Couldn't load tasks: {data.error}</div>
+            ) : rows.length === 0 ? (
+              <div className="rounded-2xl border border-dashed border-border p-10 text-center text-muted-foreground">
+                No tasks match those filters. <Link to="/post-task" className="text-primary font-bold">Post one</Link>.
+              </div>
+            ) : (
+              <>
+                <div className="text-xs text-muted-foreground mb-2">{rows.length} task{rows.length === 1 ? "" : "s"} found</div>
+                <div className="grid gap-2">
+                  {rows.map((t) => (
+                    <TaskListItem
+                      key={t.task_id ?? t.id}
+                      t={t}
+                      active={hoveredId === String(t.task_id ?? t.id)}
+                      onHover={() => setHoveredId(String(t.task_id ?? t.id))}
+                    />
+                  ))}
+                </div>
+                <div className="mt-6 flex items-center justify-between">
+                  <button
+                    disabled={search.page <= 1}
+                    onClick={() => setSearch({ page: search.page - 1 })}
+                    className="rounded-full border border-border bg-card px-4 py-1.5 text-sm font-semibold disabled:opacity-40"
+                  >Previous</button>
+                  <span className="text-xs text-muted-foreground">Page {search.page}</span>
+                  <button
+                    disabled={rows.length < limit}
+                    onClick={() => setSearch({ page: search.page + 1 })}
+                    className="rounded-full border border-border bg-card px-4 py-1.5 text-sm font-semibold disabled:opacity-40"
+                  >Next</button>
+                </div>
+              </>
+            )}
+          </section>
 
-        {showFilters && (
-          <div className="mt-3 grid gap-3 rounded-2xl border border-border bg-card p-4 sm:grid-cols-2 lg:grid-cols-3">
-            <label className="text-xs font-medium">
-              Location
-              <input
-                defaultValue={search.location}
-                onBlur={(e) => setSearch({ location: e.target.value })}
-                placeholder="e.g. Lagos"
-                className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
-              />
-            </label>
-            <label className="text-xs font-medium">
-              Category
-              <select
-                value={search.category_id || 0}
-                onChange={(e) => setSearch({ category_id: Number(e.target.value) || 0 })}
-                className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
-              >
-                <option value={0}>All categories</option>
-                {categories.map((c) => (
-                  <option key={c.category_id} value={c.category_id}>{c.category_name}</option>
-                ))}
-              </select>
-            </label>
-            <label className="text-xs font-medium inline-flex items-center gap-2 self-end">
-              <input
-                type="checkbox"
-                checked={!!search.is_remote}
-                onChange={(e) => setSearch({ is_remote: e.target.checked ? 1 : 0 })}
-              />
-              Remote only
-            </label>
-            <button
-              type="button"
-              onClick={() => navigate({ to: "/tasks/browse", search: { q: "", category_id: 0, location: "", is_remote: 0, page: 1 } })}
-              className="text-xs font-medium text-muted-foreground hover:text-foreground text-left"
-            >
-              Clear all filters
-            </button>
-          </div>
-        )}
-
-        <div className="mt-4 flex flex-wrap gap-2">
-          <button
-            onClick={() => setSearch({ category_id: 0 })}
-            className={`rounded-full border px-3 py-1 text-xs font-medium ${!search.category_id ? "bg-foreground text-background border-foreground" : "border-border hover:border-foreground"}`}
-          >All</button>
-          {categories.slice(0, 12).map((c) => (
-            <button
-              key={c.category_id}
-              onClick={() => setSearch({ category_id: c.category_id })}
-              className={`rounded-full border px-3 py-1 text-xs font-medium ${search.category_id === c.category_id ? "bg-foreground text-background border-foreground" : "border-border hover:border-foreground"}`}
-            >{c.category_name}</button>
-          ))}
-        </div>
-
-        <div className="mt-8">
-          {isFetching ? (
-            <div className="flex items-center gap-2 text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" /> Loading tasks…</div>
-          ) : data && !data.ok ? (
-            <div className="rounded-xl border border-destructive/40 bg-destructive/10 p-4 text-sm text-destructive">Couldn't load tasks: {data.error}</div>
-          ) : rows.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-border p-10 text-center text-muted-foreground">
-              No tasks match those filters. <Link to="/post-task" className="text-primary font-medium">Post one</Link>.
+          {/* MAP placeholder (we keep it lightweight; LiveTasksMap is heavy) */}
+          <aside className={(mobileMap ? "" : "hidden ") + "lg:block sticky top-[170px] h-[calc(100vh-170px)] lg:h-[calc(100vh-180px)] bg-surface-soft rounded-none lg:rounded-2xl border-y lg:border border-border overflow-hidden"}>
+            <div className="h-full w-full grid place-items-center text-muted-foreground bg-[radial-gradient(circle_at_50%_50%,oklch(0.95_0.02_240),oklch(0.92_0.02_240))]">
+              <div className="text-center px-6">
+                <MapIcon className="h-10 w-10 mx-auto text-primary" />
+                <div className="mt-3 font-bold text-ink">Tasks near you</div>
+                <p className="mt-1 text-xs">Open the full live map to see every task pin.</p>
+                <Link to="/map" className="mt-3 inline-flex rounded-full bg-primary px-4 py-1.5 text-xs font-bold text-primary-foreground">Open live map</Link>
+              </div>
             </div>
-          ) : (
-            <>
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {rows.map((t) => (
-                  <TaskCard key={t.task_id ?? t.id} task={toCardData(t)} />
-                ))}
-              </div>
-              <div className="mt-8 flex items-center justify-between">
-                <button
-                  disabled={search.page <= 1}
-                  onClick={() => setSearch({ page: search.page - 1 })}
-                  className="inline-flex items-center gap-1 rounded-full border border-border px-4 py-1.5 text-sm font-medium disabled:opacity-40 hover:bg-muted"
-                >
-                  <ChevronLeft className="h-4 w-4" /> Previous
-                </button>
-                <span className="text-xs text-muted-foreground">Page {search.page}{total ? ` · ${total} tasks` : ""}</span>
-                <button
-                  disabled={!hasMore}
-                  onClick={() => setSearch({ page: search.page + 1 })}
-                  className="inline-flex items-center gap-1 rounded-full border border-border px-4 py-1.5 text-sm font-medium disabled:opacity-40 hover:bg-muted"
-                >
-                  Next <ChevronRight className="h-4 w-4" />
-                </button>
-              </div>
-            </>
-          )}
+          </aside>
         </div>
       </main>
+
+      {/* Mobile map toggle */}
+      <button
+        onClick={() => setMobileMap((v) => !v)}
+        className="lg:hidden fixed bottom-5 right-5 z-30 inline-flex items-center gap-2 rounded-full bg-ink text-background px-4 py-3 text-sm font-bold shadow-lg"
+      >
+        {mobileMap ? <><List className="h-4 w-4" /> List</> : <><MapIcon className="h-4 w-4" /> Map</>}
+      </button>
     </div>
   );
 }
