@@ -93,7 +93,7 @@ function Dashboard() {
         {/* Greeting + mode + primary CTA */}
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Welcome back, {displayName}</h1>
+            <h1 className="font-display text-3xl sm:text-4xl text-ink">Welcome back, {displayName}</h1>
             <p className="mt-1 text-muted-foreground inline-flex items-center gap-2">
               You're in <span className="font-semibold text-foreground inline-flex items-center gap-1">
                 {isPoster ? <><Briefcase className="h-4 w-4" /> Poster</> : <><Wrench className="h-4 w-4" /> Tasker</>}
