@@ -127,6 +127,20 @@ function Dashboard() {
           ))}
         </div>
 
+        {/* KPI strip */}
+        <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {kpis.map((k) => (
+            <Kpi key={k.label} icon={k.icon} label={k.label} value={k.value} />
+          ))}
+        </div>
+
+        {/* Tasker tier progress */}
+        {!isPoster && (
+          <div className="mt-6">
+            <TierProgress earnings={Number(balance ?? 0)} />
+          </div>
+        )}
+
         {/* Mode-specific main section */}
         {isPoster ? <PosterMain myTasks={myTasks} loading={myTasksQ.isFetching} /> : <TaskerMain recent={recent} loading={recentQ.isFetching} />}
 

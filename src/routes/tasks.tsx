@@ -354,3 +354,129 @@ function TasksHome() {
     </div>
   );
 }
+
+const LOGGED_IN_CHIPS = [
+  { icon: Truck, label: "Help me move home" },
+  { icon: Brush, label: "End of lease cleaning" },
+  { icon: Wrench, label: "Fix my washing machine" },
+  { icon: TreeDeciduous, label: "Mow my backyard" },
+];
+
+const LOGGED_IN_TOPCATS = [
+  { icon: TreeDeciduous, label: "Gardening" },
+  { icon: Paintbrush, label: "Painting" },
+  { icon: Sparkle, label: "Cleaning" },
+  { icon: Truck, label: "Removals" },
+  { icon: Wrench, label: "Repairs and Installations" },
+  { icon: ClipboardList, label: "Admin" },
+];
+
+const LOGGED_IN_GRID = [
+  { icon: Briefcase, label: "Business & Admin" },
+  { icon: Laptop, label: "Computers & IT" },
+  { icon: Package, label: "Furniture Assembly" },
+  { icon: Hammer, label: "Handyman" },
+  { icon: Paintbrush, label: "Marketing & Design" },
+  { icon: Camera, label: "Events & Photography" },
+  { icon: Sparkles, label: "Fun & Quirky" },
+  { icon: TreeDeciduous, label: "Home & Gardening" },
+  { icon: Star, label: "Anything" },
+];
+
+function LoggedInHome() {
+  const navigate = useNavigate();
+  const [q, setQ] = useState("");
+
+  return (
+    <div className="min-h-screen flex flex-col bg-background text-foreground">
+      <TaskHeader />
+
+      {/* HERO — purple */}
+      <section className="bg-primary text-primary-foreground">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 py-12 sm:py-16">
+          <h1 className="font-display text-4xl sm:text-6xl leading-tight">Post a task. Get it done.</h1>
+          <form
+            onSubmit={(e) => { e.preventDefault(); navigate({ to: "/post-task" } as any); }}
+            className="mt-7 flex items-stretch gap-0 rounded-full bg-background overflow-hidden shadow-xl max-w-3xl"
+          >
+            <input
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="In a few words, what do you need done?"
+              className="flex-1 bg-transparent px-5 py-3 text-foreground placeholder:text-muted-foreground outline-none"
+            />
+            <button className="inline-flex items-center gap-1.5 bg-ink text-background px-5 sm:px-6 text-sm font-bold whitespace-nowrap">
+              Get Offers <MoveRight className="h-4 w-4" />
+            </button>
+          </form>
+          <div className="mt-5 flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
+            {LOGGED_IN_CHIPS.map((c) => (
+              <Link
+                key={c.label}
+                to="/post-task"
+                className="shrink-0 inline-flex items-center gap-1.5 rounded-full border border-primary-foreground/40 bg-primary-foreground/10 px-3.5 py-1.5 text-xs font-semibold text-primary-foreground hover:bg-primary-foreground/20"
+              >
+                <c.icon className="h-3.5 w-3.5" /> {c.label}
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* TOP CATEGORIES — chips */}
+      <section className="bg-surface-soft">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 py-10">
+          <h2 className="font-bold text-ink text-lg">Our top categories</h2>
+          <p className="text-sm text-muted-foreground">Find the help you need on Find-task</p>
+          <div className="mt-5 flex gap-2 overflow-x-auto pb-2 -mx-1 px-1">
+            {LOGGED_IN_TOPCATS.map((c) => (
+              <Link
+                key={c.label}
+                to="/tasks/categories"
+                className="shrink-0 inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-4 py-2 text-sm font-semibold text-ink hover:border-primary"
+              >
+                <c.icon className="h-4 w-4 text-primary" /> {c.label}
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* GET IT DONE TODAY */}
+      <section className="mx-auto max-w-7xl w-full px-4 sm:px-6 py-12">
+        <h2 className="font-bold text-ink text-2xl">Get it done today</h2>
+        <p className="text-sm text-muted-foreground max-w-2xl mt-1">
+          To-do list never getting shorter? Take the burden off and find the help you need on Find-task.
+        </p>
+        <div className="mt-6 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+          {LOGGED_IN_GRID.map((c) => (
+            <Link
+              key={c.label}
+              to="/tasks/categories"
+              className="rounded-xl border border-border bg-card p-5 flex flex-col items-center justify-center text-center gap-2 hover:border-primary hover:shadow-md transition min-h-[110px]"
+            >
+              <c.icon className="h-6 w-6 text-ink" />
+              <div className="text-[13px] font-semibold text-ink leading-tight">{c.label}</div>
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      {/* CTA band */}
+      <section className="bg-surface-soft">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 py-12 text-center">
+          <div className="text-sm text-muted-foreground">Can't find what you need?</div>
+          <Link
+            to="/post-task"
+            className="mt-3 inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-bold text-primary-foreground hover:opacity-90"
+          >
+            Post a task & get offers
+          </Link>
+        </div>
+      </section>
+
+      <Footer />
+    </div>
+  );
+}
+
