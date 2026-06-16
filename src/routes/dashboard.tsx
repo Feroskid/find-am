@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
   Loader2, Plus, MessageSquare, Bell, Wallet, Briefcase, Wrench, User,
   Search, Star, ListChecks, Banknote, MapPin,
@@ -120,12 +120,20 @@ function Dashboard() {
           </div>
         </div>
 
+
         {/* KPI strip */}
         <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {kpis.map((k) => (
             <Kpi key={k.label} icon={k.icon} label={k.label} value={k.value} />
           ))}
         </div>
+
+        {/* Tasker tier progress */}
+        {!isPoster && (
+          <div className="mt-6">
+            <TierProgress earnings={Number(balance ?? 0)} />
+          </div>
+        )}
 
         {/* Mode-specific main section */}
         {isPoster ? <PosterMain myTasks={myTasks} loading={myTasksQ.isFetching} /> : <TaskerMain recent={recent} loading={recentQ.isFetching} />}
@@ -174,6 +182,11 @@ function QuickLink({ to, icon: Icon, title, desc }: { to: string; icon: any; tit
 }
 
 function PosterMain({ myTasks, loading }: { myTasks: any[]; loading: boolean }) {
+  const [page, setPage] = useState(1);
+  const PAGE = 6;
+  const total = myTasks.length;
+  const pages = Math.max(1, Math.ceil(total / PAGE));
+  const slice = myTasks.slice((page - 1) * PAGE, page * PAGE);
   return (
     <section className="mt-10 rounded-2xl border border-border bg-card p-6">
       <div className="flex items-center justify-between">
@@ -182,13 +195,13 @@ function PosterMain({ myTasks, loading }: { myTasks: any[]; loading: boolean }) 
       </div>
       {loading ? (
         <div className="mt-4 flex items-center gap-2 text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" />Loading…</div>
-      ) : myTasks.length === 0 ? (
+      ) : total === 0 ? (
         <div className="mt-4 rounded-xl border border-dashed border-border p-8 text-center text-muted-foreground">
           You haven't posted any tasks yet. <Link to="/post-task" className="text-primary font-medium">Post your first task →</Link>
         </div>
       ) : (
         <ul className="mt-4 divide-y divide-border">
-          {myTasks.slice(0, 8).map((t: any) => (
+          {slice.map((t: any) => (
             <li key={t.task_id ?? t.id} className="py-3 flex items-center justify-between gap-3">
               <div className="min-w-0">
                 <Link to="/tasks/$taskId" params={{ taskId: String(t.task_id ?? t.id) }} className="font-medium hover:text-primary truncate block">
