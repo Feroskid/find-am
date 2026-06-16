@@ -1,11 +1,13 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import {
   ArrowRight, ShieldCheck, Users, Star, Sparkles, Hammer, Truck, Brush, Wrench, Laptop,
-  ClipboardList, Scissors, Camera, PenTool, Package, TreeDeciduous, PaintBucket, Heart, CheckCircle2, BadgeCheck,
+  Package, TreeDeciduous, Heart, CheckCircle2, BadgeCheck, Search, Briefcase, Paintbrush,
+  Sparkle, Camera, ClipboardList, MoveRight,
 } from "lucide-react";
 import { TaskHeader } from "@/components/TaskHeader";
 import { Footer } from "@/components/Footer";
+import { useAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/tasks")({
   head: () => ({
@@ -65,10 +67,14 @@ const SHOWCASE: Record<typeof SHOWCASE_TABS[number], { category: string; title: 
 
 function TasksHome() {
   const [tab, setTab] = useState<(typeof SHOWCASE_TABS)[number]>("Moving in");
+  const { token } = useAuth();
+
+  if (token) return <LoggedInHome />;
 
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground">
       <TaskHeader />
+
 
       {/* HERO */}
       <section className="relative overflow-hidden bg-surface-soft border-b border-border">
