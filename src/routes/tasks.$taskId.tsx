@@ -1,13 +1,18 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
-  ArrowLeft, MapPin, Clock, Loader2, Heart, Flag, ChevronDown, BadgeCheck, Star, Globe,
+  ArrowLeft, MapPin, Clock, Loader2, Heart, Flag, ChevronDown, BadgeCheck, Star, Globe, CheckCircle2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { TaskHeader } from "@/components/TaskHeader";
-import { getTask, applyToTask } from "@/lib/findtask.functions";
+import {
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  getTask, applyToTask, acceptApplicant, sendMessage, listMessages,
+} from "@/lib/findtask.functions";
 import { useAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/tasks/$taskId")({
@@ -25,6 +30,9 @@ function TaskDetail() {
   const { token, user } = useAuth();
   const fetchTask = useServerFn(getTask);
   const apply = useServerFn(applyToTask);
+  const accept = useServerFn(acceptApplicant);
+  const send = useServerFn(sendMessage);
+  const fetchMessages = useServerFn(listMessages);
 
   const { data, isFetching, refetch } = useQuery({
     queryKey: ["task", taskId],
@@ -49,15 +57,63 @@ function TaskDetail() {
 
   const [tab, setTab] = useState<"offers" | "questions">("offers");
   const [showApply, setShowApply] = useState(false);
-  const [message, setMessage] = useState("");
   const [offerAmt, setOfferAmt] = useState("");
+  const [message, setMessage] = useState("");
+  const [startDate, setStartDate] = useState("");
+  const [question, setQuestion] = useState("");
   const [moreOpen, setMoreOpen] = useState(false);
 
+  // Q&A: pull task message thread for public questions if API exposes them via the same channel
+  const qaQ = useQuery({
+    queryKey: ["task", taskId, "qa", token],
+    enabled: !!token && tab === "questions",
+    queryFn: () => fetchMessages({ data: { taskId, token: token! } }),
+  });
+  const liveQuestions: any[] = (() => {
+    const r = qaQ.data;
+    if (!r?.ok) return questions;
+    const list = (r.data as any)?.messages ?? (Array.isArray(r.data) ? r.data : []);
+    return list.length ? list : questions;
+  })();
+
+  // Initialise offer amount with task budget on first load
+  useEffect(() => {
+    if (task && !offerAmt) setOfferAmt(String(task.budget ?? ""));
+  }, [task]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const amtNum = Number(offerAmt);
+  const validOffer = amtNum >= 100 && message.trim().length >= 20 && message.trim().length <= 2000;
+
   const applyM = useMutation({
-    mutationFn: () =>
-      apply({ data: { taskId, token: token!, message: message.trim() || undefined } }),
+    mutationFn: () => {
+      const lines = [message.trim()];
+      if (amtNum && amtNum !== Number(task?.budget)) lines.unshift(`Offer: ₦${amtNum.toLocaleString()}`);
+      if (startDate) lines.push(`Earliest start: ${startDate}`);
+      return apply({ data: { taskId, token: token!, message: lines.join("\n\n") } });
+    },
     onSuccess: (r) => {
-      if (r.ok) { toast.success("Offer sent!"); setShowApply(false); setMessage(""); refetch(); }
+      if (r.ok) {
+        toast.success("Offer sent!");
+        setShowApply(false);
+        setMessage("");
+        refetch();
+      } else toast.error(r.error);
+    },
+  });
+
+  const acceptM = useMutation({
+    mutationFn: (taskerId: string | number) =>
+      accept({ data: { taskId, taskerId, token: token! } }),
+    onSuccess: (r) => {
+      if (r.ok) { toast.success("Tasker accepted"); refetch(); }
+      else toast.error(r.error);
+    },
+  });
+
+  const askM = useMutation({
+    mutationFn: () => send({ data: { taskId, message_text: question.trim(), token: token! } }),
+    onSuccess: (r) => {
+      if (r.ok) { setQuestion(""); qaQ.refetch(); toast.success("Question posted"); }
       else toast.error(r.error);
     },
   });
@@ -84,6 +140,12 @@ function TaskDetail() {
     );
   };
 
+  const openApplyModal = () => {
+    if (!token) return;
+    if (task && !offerAmt) setOfferAmt(String(task.budget ?? ""));
+    setShowApply(true);
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-background pb-24 sm:pb-0">
       <TaskHeader />
@@ -99,7 +161,6 @@ function TaskDetail() {
           <div className="grid md:grid-cols-[1fr_340px] gap-6">
             {/* MAIN COLUMN */}
             <div>
-              {/* Status row */}
               <div className="flex items-center justify-between">
                 <div className="flex gap-1">
                   <StatusPill name="open" />
@@ -120,7 +181,6 @@ function TaskDetail() {
                 <ArrowLeft className="h-4 w-4" /> Return to browse
               </Link>
 
-              {/* Meta */}
               <dl className="mt-6 space-y-4 border-t border-border pt-6">
                 <div className="flex items-start gap-3">
                   <div className="grid h-10 w-10 place-items-center rounded-full bg-primary/10 text-primary font-bold">
@@ -160,7 +220,6 @@ function TaskDetail() {
                 </div>
               </dl>
 
-              {/* Details */}
               <section className="mt-8 border-t border-border pt-6">
                 <h2 className="font-display text-2xl text-ink">Details</h2>
                 <p className="mt-3 whitespace-pre-wrap text-sm text-foreground/90">
@@ -187,28 +246,66 @@ function TaskDetail() {
                       (tab === "questions" ? "bg-ink text-background" : "text-muted-foreground")
                     }
                   >
-                    Questions <span className="ml-1 opacity-70">{questions.length}</span>
+                    Questions <span className="ml-1 opacity-70">{liveQuestions.length}</span>
                   </button>
                 </div>
 
                 <div className="mt-6 space-y-5">
                   {tab === "offers" ? (
                     offers.length === 0 ? (
-                      <div className="rounded-2xl border border-dashed border-border p-8 text-center text-muted-foreground">No offers yet. Be the first to make one!</div>
+                      <div className="rounded-2xl border border-dashed border-border p-8 text-center text-muted-foreground">
+                        No offers yet. {!isPoster && token && status === "open" && (
+                          <button onClick={openApplyModal} className="text-primary font-bold hover:underline">Be the first to make one →</button>
+                        )}
+                      </div>
                     ) : (
-                      offers.map((o, i) => <OfferCard key={i} offer={o} />)
+                      offers.map((o, i) => (
+                        <OfferCard
+                          key={i}
+                          offer={o}
+                          taskBudget={Number(task.budget ?? 0)}
+                          showAccept={isPoster && status === "open"}
+                          onAccept={() => {
+                            const tid = o.applicant_id ?? o.tasker_id ?? o.user_id;
+                            if (tid != null) acceptM.mutate(tid);
+                          }}
+                          accepting={acceptM.isPending}
+                        />
+                      ))
                     )
                   ) : (
-                    questions.length === 0 ? (
-                      <div className="rounded-2xl border border-dashed border-border p-8 text-center text-muted-foreground">No questions yet.</div>
-                    ) : (
-                      questions.map((q, i) => <OfferCard key={i} offer={q} />)
-                    )
+                    <>
+                      {token && !isPoster && (
+                        <div className="rounded-2xl border border-border bg-card p-4">
+                          <textarea
+                            value={question}
+                            onChange={(e) => setQuestion(e.target.value)}
+                            rows={3}
+                            placeholder="Ask the poster a question…"
+                            className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
+                          />
+                          <div className="mt-2 flex justify-end">
+                            <button
+                              onClick={() => askM.mutate()}
+                              disabled={askM.isPending || question.trim().length < 3}
+                              className="inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-bold text-primary-foreground hover:opacity-90 disabled:opacity-50"
+                            >
+                              {askM.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+                              Post question
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                      {liveQuestions.length === 0 ? (
+                        <div className="rounded-2xl border border-dashed border-border p-8 text-center text-muted-foreground">No questions yet.</div>
+                      ) : (
+                        liveQuestions.map((q, i) => <QuestionCard key={i} q={q} />)
+                      )}
+                    </>
                   )}
                 </div>
               </section>
 
-              {/* Cancellation policy */}
               <section className="mt-10 border-t border-border pt-6">
                 <h3 className="font-display text-xl text-ink">Cancellation policy</h3>
                 <p className="mt-2 text-sm text-muted-foreground">
@@ -246,35 +343,10 @@ function TaskDetail() {
                   <div className="mt-5 rounded-xl border border-border bg-muted/40 p-3 text-sm text-muted-foreground capitalize">
                     Task is {status}
                   </div>
-                ) : !showApply ? (
-                  <button onClick={() => setShowApply(true)} className="mt-5 w-full rounded-full bg-primary py-3 text-sm font-bold text-primary-foreground hover:opacity-90">
+                ) : (
+                  <button onClick={openApplyModal} className="mt-5 w-full rounded-full bg-primary py-3 text-sm font-bold text-primary-foreground hover:opacity-90">
                     Make an offer
                   </button>
-                ) : (
-                  <div className="mt-5 space-y-2 text-left">
-                    <input
-                      value={offerAmt}
-                      onChange={(e) => setOfferAmt(e.target.value)}
-                      placeholder="Your offer (₦)"
-                      className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
-                    />
-                    <textarea
-                      value={message}
-                      onChange={(e) => setMessage(e.target.value)}
-                      rows={4}
-                      placeholder="Why are you a great fit?"
-                      className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
-                    />
-                    <button
-                      onClick={() => applyM.mutate()}
-                      disabled={applyM.isPending}
-                      className="w-full rounded-full bg-primary py-2.5 text-sm font-bold text-primary-foreground hover:opacity-90 disabled:opacity-50 inline-flex items-center justify-center gap-2"
-                    >
-                      {applyM.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
-                      {applyM.isPending ? "Sending…" : "Submit offer"}
-                    </button>
-                    <button onClick={() => setShowApply(false)} className="w-full text-xs text-muted-foreground hover:text-foreground">Cancel</button>
-                  </div>
                 )}
               </div>
 
@@ -314,7 +386,7 @@ function TaskDetail() {
             </div>
           </div>
           {!isPoster && token && status === "open" && !myApplication && (
-            <button onClick={() => setShowApply(true)} className="w-full rounded-full bg-primary py-3 text-sm font-bold text-primary-foreground">
+            <button onClick={openApplyModal} className="w-full rounded-full bg-primary py-3 text-sm font-bold text-primary-foreground">
               Make an offer
             </button>
           )}
@@ -330,17 +402,93 @@ function TaskDetail() {
           )}
         </div>
       )}
+
+      {/* Make an offer modal */}
+      <Dialog open={showApply} onOpenChange={setShowApply}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="font-display text-2xl text-ink">Make an offer</DialogTitle>
+            <DialogDescription>
+              Tell the poster why you're a great fit. Be specific — clear offers get accepted faster.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2">
+            <div>
+              <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Your price (₦)</label>
+              <input
+                type="number"
+                inputMode="numeric"
+                min={100}
+                value={offerAmt}
+                onChange={(e) => setOfferAmt(e.target.value)}
+                className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 text-base font-semibold"
+                placeholder="0"
+              />
+              <p className="mt-1 text-xs text-muted-foreground">Task budget: ₦{Number(task?.budget ?? 0).toLocaleString()}</p>
+            </div>
+
+            <div>
+              <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Message to poster</label>
+              <textarea
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                rows={5}
+                placeholder="Hi! I've done similar tasks and can start right away. Here's how I'd approach it…"
+                className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
+                maxLength={2000}
+              />
+              <div className="mt-1 flex justify-between text-[11px] text-muted-foreground">
+                <span>Min 20 characters</span>
+                <span>{message.trim().length}/2000</span>
+              </div>
+            </div>
+
+            <div>
+              <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Earliest start (optional)</label>
+              <input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
+              />
+            </div>
+          </div>
+
+          <DialogFooter className="gap-2 sm:gap-2">
+            <button
+              onClick={() => setShowApply(false)}
+              className="rounded-full border border-border px-5 py-2.5 text-sm font-semibold hover:bg-muted"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={() => applyM.mutate()}
+              disabled={!validOffer || applyM.isPending}
+              className="inline-flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-bold text-primary-foreground hover:opacity-90 disabled:opacity-50"
+            >
+              {applyM.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+              {applyM.isPending ? "Sending…" : "Submit offer"}
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
 
-function OfferCard({ offer }: { offer: any }) {
+function OfferCard({
+  offer, taskBudget, showAccept, onAccept, accepting,
+}: {
+  offer: any; taskBudget: number; showAccept: boolean; onAccept: () => void; accepting: boolean;
+}) {
   const name = offer.applicant_name ?? offer.tasker_name ?? offer.user_name ?? offer.name ?? "Tasker";
   const rating = offer.rating ?? "5.0";
   const ratings = offer.ratings_count ?? offer.review_count ?? 0;
   const completion = offer.completion_rate ?? "100%";
   const msg = offer.message ?? offer.comment ?? offer.body ?? "Hi! I'd love to help with this task.";
   const time = offer.created_at ? new Date(offer.created_at).toLocaleDateString() : "Recently";
+  const amount = Number(offer.amount ?? offer.price ?? taskBudget);
 
   return (
     <article className="rounded-2xl border border-border bg-card p-5">
@@ -359,15 +507,43 @@ function OfferCard({ offer }: { offer: any }) {
           </div>
           <div className="text-sm font-semibold text-ink mt-0.5">{completion} Completion rate</div>
         </div>
+        <div className="text-right shrink-0">
+          <div className="font-display text-xl text-ink">₦{amount.toLocaleString()}</div>
+          <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Offer</div>
+        </div>
       </div>
-      <div className="mt-3 inline-flex items-center gap-1.5 rounded-md bg-muted px-2.5 py-1 text-[11px] font-semibold text-muted-foreground">
-        ◆ Rebooked 2+ times in 2026
-      </div>
-      <div className="mt-3 rounded-xl bg-muted/60 p-4 text-sm text-ink whitespace-pre-wrap line-clamp-3">{msg}</div>
-      <div className="mt-3 flex items-center justify-between text-xs">
-        <button className="font-bold text-primary hover:underline">↩ View replies</button>
+      <div className="mt-3 rounded-xl bg-muted/60 p-4 text-sm text-ink whitespace-pre-wrap">{msg}</div>
+      <div className="mt-3 flex items-center justify-between gap-3 text-xs">
         <span className="text-muted-foreground">{time}</span>
+        {showAccept && (
+          <button
+            onClick={onAccept}
+            disabled={accepting}
+            className="inline-flex items-center gap-1.5 rounded-full bg-primary px-4 py-1.5 text-xs font-bold text-primary-foreground hover:opacity-90 disabled:opacity-50"
+          >
+            {accepting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckCircle2 className="h-3.5 w-3.5" />}
+            Accept offer
+          </button>
+        )}
       </div>
+    </article>
+  );
+}
+
+function QuestionCard({ q }: { q: any }) {
+  const name = q.sender_name ?? q.user_name ?? q.name ?? "User";
+  const body = q.message_text ?? q.message ?? q.body ?? q.text ?? "";
+  const time = q.created_at ? new Date(q.created_at).toLocaleString() : "Recently";
+  return (
+    <article className="rounded-2xl border border-border bg-card p-4">
+      <div className="flex items-center gap-2">
+        <div className="grid h-8 w-8 place-items-center rounded-full bg-primary/10 text-primary font-bold text-sm">
+          {String(name).charAt(0).toUpperCase()}
+        </div>
+        <div className="font-semibold text-ink text-sm">{name}</div>
+        <div className="text-xs text-muted-foreground ml-auto">{time}</div>
+      </div>
+      <p className="mt-2 text-sm text-foreground/90 whitespace-pre-wrap">{body}</p>
     </article>
   );
 }

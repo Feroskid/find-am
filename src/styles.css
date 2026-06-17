@@ -63,6 +63,7 @@
   --color-surface-soft: var(--surface-soft);
   --color-surface-warm: var(--surface-warm);
   --color-success: var(--success);
+  --color-island-active: var(--island-active);
   --font-display: "Archivo Black", "Inter", sans-serif;
   --font-sans: "Inter", system-ui, sans-serif;
 }
@@ -106,6 +107,7 @@
   --surface-soft: oklch(0.975 0.008 285);
   --surface-warm: oklch(0.96 0.03 80);
   --success: oklch(0.62 0.18 150);
+  --island-active: oklch(0.52 0.24 295);
 }
 
 .dark {
@@ -145,6 +147,7 @@
   --surface-soft: oklch(0.22 0.02 285);
   --surface-warm: oklch(0.27 0.04 80);
   --success: oklch(0.72 0.18 150);
+  --island-active: oklch(0.62 0.22 295);
 }
 
 /* Auto follow user's system color-scheme preference */
