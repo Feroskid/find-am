@@ -27,6 +27,7 @@ import { Route as ExploreRouteImport } from './routes/explore'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as CommunityRouteImport } from './routes/community'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as TasksIndexRouteImport } from './routes/tasks.index'
 import { Route as UUserIdRouteImport } from './routes/u.$userId'
 import { Route as TasksMineRouteImport } from './routes/tasks.mine'
 import { Route as TasksCategoriesRouteImport } from './routes/tasks.categories'
@@ -126,6 +127,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TasksIndexRoute = TasksIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => TasksRoute,
+} as any)
 const UUserIdRoute = UUserIdRouteImport.update({
   id: '/u/$userId',
   path: '/u/$userId',
@@ -191,6 +197,7 @@ export interface FileRoutesByFullPath {
   '/tasks/categories': typeof TasksCategoriesRoute
   '/tasks/mine': typeof TasksMineRoute
   '/u/$userId': typeof UUserIdRoute
+  '/tasks/': typeof TasksIndexRoute
   '/api/public/search': typeof ApiPublicSearchRoute
   '/tasks/$taskId/applications': typeof TasksTaskIdApplicationsRoute
   '/tasks/$taskId/workspace': typeof TasksTaskIdWorkspaceRoute
@@ -210,7 +217,6 @@ export interface FileRoutesByTo {
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
   '/search': typeof SearchRoute
-  '/tasks': typeof TasksRouteWithChildren
   '/terms': typeof TermsRoute
   '/verify-email': typeof VerifyEmailRoute
   '/wallet': typeof WalletRoute
@@ -219,6 +225,7 @@ export interface FileRoutesByTo {
   '/tasks/categories': typeof TasksCategoriesRoute
   '/tasks/mine': typeof TasksMineRoute
   '/u/$userId': typeof UUserIdRoute
+  '/tasks': typeof TasksIndexRoute
   '/api/public/search': typeof ApiPublicSearchRoute
   '/tasks/$taskId/applications': typeof TasksTaskIdApplicationsRoute
   '/tasks/$taskId/workspace': typeof TasksTaskIdWorkspaceRoute
@@ -248,6 +255,7 @@ export interface FileRoutesById {
   '/tasks/categories': typeof TasksCategoriesRoute
   '/tasks/mine': typeof TasksMineRoute
   '/u/$userId': typeof UUserIdRoute
+  '/tasks/': typeof TasksIndexRoute
   '/api/public/search': typeof ApiPublicSearchRoute
   '/tasks/$taskId/applications': typeof TasksTaskIdApplicationsRoute
   '/tasks/$taskId/workspace': typeof TasksTaskIdWorkspaceRoute
@@ -278,6 +286,7 @@ export interface FileRouteTypes {
     | '/tasks/categories'
     | '/tasks/mine'
     | '/u/$userId'
+    | '/tasks/'
     | '/api/public/search'
     | '/tasks/$taskId/applications'
     | '/tasks/$taskId/workspace'
@@ -297,7 +306,6 @@ export interface FileRouteTypes {
     | '/register'
     | '/reset-password'
     | '/search'
-    | '/tasks'
     | '/terms'
     | '/verify-email'
     | '/wallet'
@@ -306,6 +314,7 @@ export interface FileRouteTypes {
     | '/tasks/categories'
     | '/tasks/mine'
     | '/u/$userId'
+    | '/tasks'
     | '/api/public/search'
     | '/tasks/$taskId/applications'
     | '/tasks/$taskId/workspace'
@@ -334,6 +343,7 @@ export interface FileRouteTypes {
     | '/tasks/categories'
     | '/tasks/mine'
     | '/u/$userId'
+    | '/tasks/'
     | '/api/public/search'
     | '/tasks/$taskId/applications'
     | '/tasks/$taskId/workspace'
@@ -490,6 +500,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/tasks/': {
+      id: '/tasks/'
+      path: '/'
+      fullPath: '/tasks/'
+      preLoaderRoute: typeof TasksIndexRouteImport
+      parentRoute: typeof TasksRoute
+    }
     '/u/$userId': {
       id: '/u/$userId'
       path: '/u/$userId'
@@ -568,6 +585,7 @@ interface TasksRouteChildren {
   TasksBrowseRoute: typeof TasksBrowseRoute
   TasksCategoriesRoute: typeof TasksCategoriesRoute
   TasksMineRoute: typeof TasksMineRoute
+  TasksIndexRoute: typeof TasksIndexRoute
 }
 
 const TasksRouteChildren: TasksRouteChildren = {
@@ -575,6 +593,7 @@ const TasksRouteChildren: TasksRouteChildren = {
   TasksBrowseRoute: TasksBrowseRoute,
   TasksCategoriesRoute: TasksCategoriesRoute,
   TasksMineRoute: TasksMineRoute,
+  TasksIndexRoute: TasksIndexRoute,
 }
 
 const TasksRouteWithChildren = TasksRoute._addFileChildren(TasksRouteChildren)
