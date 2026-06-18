@@ -574,6 +574,55 @@ function TaskDetail() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Counter-offer modal */}
+      <Dialog open={!!counterFor} onOpenChange={(o) => !o && setCounterFor(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="font-display text-2xl text-ink">Counter offer</DialogTitle>
+            <DialogDescription>
+              Propose a different price to {counterFor?.applicant_name ?? counterFor?.tasker_name ?? "the tasker"}.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div>
+              <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Counter price (₦)</label>
+              <input
+                type="number"
+                inputMode="numeric"
+                min={100}
+                value={counterAmt}
+                onChange={(e) => setCounterAmt(e.target.value)}
+                className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 text-base font-semibold"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Message</label>
+              <textarea
+                value={counterMsg}
+                onChange={(e) => setCounterMsg(e.target.value)}
+                rows={4}
+                placeholder="I can offer this price if you can start sooner…"
+                className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
+                maxLength={1000}
+              />
+            </div>
+          </div>
+          <DialogFooter className="gap-2 sm:gap-2">
+            <button onClick={() => setCounterFor(null)} className="rounded-full border border-border px-5 py-2.5 text-sm font-semibold hover:bg-muted">
+              <XIcon className="h-4 w-4 inline -mt-0.5" /> Cancel
+            </button>
+            <button
+              onClick={() => counterM.mutate()}
+              disabled={!validCounter || counterM.isPending}
+              className="inline-flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-bold text-primary-foreground hover:opacity-90 disabled:opacity-50"
+            >
+              {counterM.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+              Send counter
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
