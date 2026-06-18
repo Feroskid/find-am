@@ -19,16 +19,16 @@ export const Route = createFileRoute("/login")({
 
 function LoginPage() {
   const navigate = useNavigate();
-  const { setAuth, token } = useAuth();
+  const { setAuth, token, ready } = useAuth();
   const login = useServerFn(loginUser);
   const [form, setForm] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Already-logged-in users skip the form.
+  // Already-logged-in users skip the form (wait until auth has hydrated).
   useEffect(() => {
-    if (token) navigate({ to: "/dashboard", replace: true });
-  }, [token, navigate]);
+    if (ready && token) navigate({ to: "/dashboard", replace: true });
+  }, [ready, token, navigate]);
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
