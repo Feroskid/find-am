@@ -45,6 +45,7 @@ function formatDate(d?: string) {
 }
 
 export function TaskCard({ task }: { task: TaskCardData }) {
+  if (task.id == null || task.id === "" || task.id === "undefined") return null;
   return (
     <Link
       to="/tasks/$taskId"
