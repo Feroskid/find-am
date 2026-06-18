@@ -24,12 +24,12 @@ export const Route = createFileRoute("/dashboard")({
 const PAGE_SIZE = 6;
 
 function Dashboard() {
-  const { token, user, mode } = useAuth();
+  const { token, ready, user, mode } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!token) navigate({ to: "/login", search: { redirect: "/dashboard" } as any });
-  }, [token, navigate]);
+    if (ready && !token) navigate({ to: "/login", search: { redirect: "/dashboard" } as any });
+  }, [token, ready, navigate]);
 
   const unread = useServerFn(unreadCount);
   const wallet = useServerFn(walletBalance);

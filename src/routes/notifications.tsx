@@ -23,11 +23,11 @@ function extract(d: any): any[] {
 }
 
 function NotificationsPage() {
-  const { token } = useAuth();
+  const { token, ready } = useAuth();
   const navigate = useNavigate();
   useEffect(() => {
-    if (!token) navigate({ to: "/login", search: { redirect: "/notifications" } as any });
-  }, [token, navigate]);
+    if (ready && !token) navigate({ to: "/login", search: { redirect: "/notifications" } as any });
+  }, [token, ready, navigate]);
 
   const fn = useServerFn(listNotifications);
   const mark = useServerFn(markNotificationRead);

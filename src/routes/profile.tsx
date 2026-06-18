@@ -16,11 +16,11 @@ export const Route = createFileRoute("/profile")({
 });
 
 function ProfilePage() {
-  const { token, user, setAuth } = useAuth();
+  const { token, ready, user, setAuth } = useAuth();
   const navigate = useNavigate();
   useEffect(() => {
-    if (!token) navigate({ to: "/login", search: { redirect: "/profile" } as any });
-  }, [token, navigate]);
+    if (ready && !token) navigate({ to: "/login", search: { redirect: "/profile" } as any });
+  }, [token, ready, navigate]);
 
   const meFn = useServerFn(getMe);
   const updFn = useServerFn(updateProfile);
