@@ -14,11 +14,11 @@ export const Route = createFileRoute("/wallet")({
 });
 
 function WalletPage() {
-  const { token } = useAuth();
+  const { token, ready } = useAuth();
   const navigate = useNavigate();
   useEffect(() => {
-    if (!token) navigate({ to: "/login", search: { redirect: "/wallet" } as any });
-  }, [token, navigate]);
+    if (ready && !token) navigate({ to: "/login", search: { redirect: "/wallet" } as any });
+  }, [token, ready, navigate]);
 
   const bFn = useServerFn(walletBalance);
   const tFn = useServerFn(walletTransactions);

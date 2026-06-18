@@ -16,7 +16,7 @@ export const Route = createFileRoute("/tasks/mine")({
 const FILTERS = ["All", "Open", "Assigned", "Completed", "Cancelled"] as const;
 
 function MyTasksPage() {
-  const { token, user } = useAuth();
+  const { token, ready, user } = useAuth();
   const navigate = useNavigate();
   const userTasks = useServerFn(getUserTasks);
   const myId = (user as any)?.user_id ?? (user as any)?.id;
@@ -24,8 +24,8 @@ function MyTasksPage() {
   const [filter, setFilter] = useState<(typeof FILTERS)[number]>("All");
 
   useEffect(() => {
-    if (!token) navigate({ to: "/login", search: { redirect: "/tasks/mine" } as any });
-  }, [token, navigate]);
+    if (ready && !token) navigate({ to: "/login", search: { redirect: "/tasks/mine" } as any });
+  }, [token, ready, navigate]);
 
   const myTasksQ = useQuery({
     queryKey: ["my-tasks", myId],

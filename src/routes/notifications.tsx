@@ -23,11 +23,11 @@ function extract(d: any): any[] {
 }
 
 function NotificationsPage() {
-  const { token } = useAuth();
+  const { token, ready } = useAuth();
   const navigate = useNavigate();
   useEffect(() => {
-    if (!token) navigate({ to: "/login", search: { redirect: "/notifications" } as any });
-  }, [token, navigate]);
+    if (ready && !token) navigate({ to: "/login", search: { redirect: "/notifications" } as any });
+  }, [token, ready, navigate]);
 
   const fn = useServerFn(listNotifications);
   const mark = useServerFn(markNotificationRead);
@@ -40,19 +40,20 @@ function NotificationsPage() {
     queryFn: () => fn({ data: { token: token! } }),
   });
 
-  if (!token) return null;
   const items = data?.ok ? extract(data.data) : [];
   const hasUnread = items.some((n: any) => !n.read && !n.read_at);
 
   // Auto-mark all as read on view (most users expect opening the inbox to clear the badge).
   useEffect(() => {
-    if (!hasUnread || busy) return;
+    if (!token || !hasUnread || busy) return;
     setBusy(true);
-    markAll({ data: { token: token! } })
+    markAll({ data: { token } })
       .catch(() => {})
       .finally(() => { setBusy(false); refetch(); });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hasUnread]);
+  }, [hasUnread, token]);
+
+  if (!token) return null;
 
   return (
     <div className="min-h-screen flex flex-col bg-background">

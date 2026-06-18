@@ -8,6 +8,8 @@ interface AuthCtx {
   token: string | null;
   user: Record<string, unknown> | null;
   mode: AppMode;
+  /** True once the auth state has been hydrated from storage on the client. */
+  ready: boolean;
   setAuth: (a: { token: string | null; user: Record<string, unknown> | null }) => void;
   setMode: (m: AppMode) => void;
   logout: () => void;
@@ -17,17 +19,40 @@ const KEY = "findam:auth";
 const MODE_KEY = "findam:mode";
 const Ctx = createContext<AuthCtx | null>(null);
 
+function readInitialAuth(): StoredAuth {
+  if (typeof window === "undefined") return { token: null, user: null };
+  try {
+    const raw = window.localStorage.getItem(KEY);
+    if (raw) return JSON.parse(raw);
+  } catch {}
+  return { token: null, user: null };
+}
+
+function readInitialMode(): AppMode {
+  if (typeof window === "undefined") return "poster";
+  try {
+    const m = window.localStorage.getItem(MODE_KEY) as AppMode | null;
+    if (m === "poster" || m === "tasker") return m;
+  } catch {}
+  return "poster";
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [state, setState] = useState<StoredAuth>({ token: null, user: null });
-  const [mode, setModeState] = useState<AppMode>("poster");
+  // Lazy init so the first client render already sees the persisted session.
+  const [state, setState] = useState<StoredAuth>(readInitialAuth);
+  const [mode, setModeState] = useState<AppMode>(readInitialMode);
+  // `ready` starts true on the client (lazy init already read storage) and
+  // false during SSR. Gated pages should wait for `ready` before redirecting
+  // so they don't bounce to /login during the unauthenticated SSR pass.
+  const [ready, setReady] = useState<boolean>(typeof window !== "undefined");
 
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem(KEY);
-      if (raw) setState(JSON.parse(raw));
-      const m = localStorage.getItem(MODE_KEY) as AppMode | null;
-      if (m === "poster" || m === "tasker") setModeState(m);
-    } catch {}
+    if (!ready) {
+      setState(readInitialAuth());
+      setModeState(readInitialMode());
+      setReady(true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const setAuth = (a: { token: string | null; user: Record<string, unknown> | null }) => {
@@ -46,7 +71,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <Ctx.Provider value={{ token: state.token, user: state.user, mode, setAuth, setMode, logout }}>
+    <Ctx.Provider value={{ token: state.token, user: state.user, mode, ready, setAuth, setMode, logout }}>
       {children}
     </Ctx.Provider>
   );
