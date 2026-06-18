@@ -338,19 +338,41 @@ function TaskDetail() {
                         )}
                       </div>
                     ) : (
-                      offers.map((o, i) => (
-                        <OfferCard
-                          key={i}
-                          offer={o}
-                          taskBudget={Number(task.budget ?? 0)}
-                          showAccept={isPoster && status === "open"}
-                          onAccept={() => {
-                            const tid = o.applicant_id ?? o.tasker_id ?? o.user_id;
-                            if (tid != null) acceptM.mutate(tid);
-                          }}
-                          accepting={acceptM.isPending}
-                        />
-                      ))
+                      offers.map((o, i) => {
+                        const oName = o.applicant_name ?? o.tasker_name ?? o.name ?? "Tasker";
+                        const counters = allMessages.filter((m: any) => {
+                          const body = m.message_text ?? m.message ?? m.body ?? "";
+                          const tgt = parseCounterTarget(body);
+                          return tgt && oName && tgt.toLowerCase().includes(String(oName).split(" ")[0].toLowerCase());
+                        });
+                        const declined = allMessages.some((m: any) => {
+                          const body = m.message_text ?? m.message ?? m.body ?? "";
+                          return isDecline(body) && (body || "").toLowerCase().includes(String(oName).split(" ")[0].toLowerCase());
+                        });
+                        return (
+                          <OfferCard
+                            key={i}
+                            offer={o}
+                            taskBudget={Number(task.budget ?? 0)}
+                            isPoster={isPoster}
+                            isMine={String(o.applicant_id ?? o.tasker_id ?? o.user_id) === String(myId)}
+                            counters={counters}
+                            declined={declined}
+                            showAccept={isPoster && status === "open" && !declined}
+                            onAccept={() => {
+                              const tid = o.applicant_id ?? o.tasker_id ?? o.user_id;
+                              if (tid != null) acceptM.mutate(tid);
+                            }}
+                            onCounter={() => {
+                              setCounterFor(o);
+                              setCounterAmt(String(parseOfferAmount(o.message) ?? task.budget ?? ""));
+                              setCounterMsg("");
+                            }}
+                            onDecline={() => declineM.mutate(o)}
+                            accepting={acceptM.isPending}
+                          />
+                        );
+                      })
                     )
                   ) : (
                     <>
