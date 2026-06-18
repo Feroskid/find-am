@@ -8,6 +8,8 @@ interface AuthCtx {
   token: string | null;
   user: Record<string, unknown> | null;
   mode: AppMode;
+  /** True once the auth state has been hydrated from storage on the client. */
+  ready: boolean;
   setAuth: (a: { token: string | null; user: Record<string, unknown> | null }) => void;
   setMode: (m: AppMode) => void;
   logout: () => void;
