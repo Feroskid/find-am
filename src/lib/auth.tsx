@@ -39,17 +39,19 @@ function readInitialMode(): AppMode {
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   // Lazy init so the first client render already sees the persisted session.
-  // Without this, protected pages momentarily see token=null and bounce to
-  // /login, which then redirects logged-in users back to /dashboard.
   const [state, setState] = useState<StoredAuth>(readInitialAuth);
   const [mode, setModeState] = useState<AppMode>(readInitialMode);
+  // `ready` starts true on the client (lazy init already read storage) and
+  // false during SSR. Gated pages should wait for `ready` before redirecting
+  // so they don't bounce to /login during the unauthenticated SSR pass.
+  const [ready, setReady] = useState<boolean>(typeof window !== "undefined");
 
-  // Re-sync after mount in case SSR rendered with empty defaults.
   useEffect(() => {
-    const next = readInitialAuth();
-    if (next.token !== state.token) setState(next);
-    const m = readInitialMode();
-    if (m !== mode) setModeState(m);
+    if (!ready) {
+      setState(readInitialAuth());
+      setModeState(readInitialMode());
+      setReady(true);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -69,7 +71,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <Ctx.Provider value={{ token: state.token, user: state.user, mode, setAuth, setMode, logout }}>
+    <Ctx.Provider value={{ token: state.token, user: state.user, mode, ready, setAuth, setMode, logout }}>
       {children}
     </Ctx.Provider>
   );
