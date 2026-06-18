@@ -47,6 +47,7 @@ function StatusDot({ s }: { s: string }) {
 
 function TaskListItem({ t, active, onHover }: { t: any; active?: boolean; onHover?: () => void }) {
   const id = t.task_id ?? t.id;
+  if (id == null) return null;
   const status = String(t.status ?? "open").toLowerCase();
   const offers = t.offers_count ?? t.applications_count ?? 0;
   const remote = !!t.is_remote;
