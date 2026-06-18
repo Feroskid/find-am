@@ -1,9 +1,9 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
-  ArrowLeft, MapPin, Clock, Loader2, Heart, Flag, ChevronDown, BadgeCheck, Star, Globe, CheckCircle2,
+  ArrowLeft, MapPin, Clock, Loader2, Heart, Flag, ChevronDown, BadgeCheck, Star, Globe, CheckCircle2, RefreshCw, MessageSquare, X as XIcon,
 } from "lucide-react";
 import { toast } from "sonner";
 import { TaskHeader } from "@/components/TaskHeader";
@@ -14,16 +14,56 @@ import {
   getTask, applyToTask, acceptApplicant, sendMessage, listMessages,
 } from "@/lib/findtask.functions";
 import { useAuth } from "@/lib/auth";
+import {
+  parseOfferAmount, parseReplyTarget, parseCounterTarget, isDecline, stripHeaders, formatOfferMessage,
+} from "@/lib/offerParse";
 
 export const Route = createFileRoute("/tasks/$taskId")({
-  head: () => ({
+  head: ({ params }) => ({
     meta: [
-      { title: "Task — Find-task" },
-      { name: "description", content: "View task details and make an offer on Find-task." },
+      { title: `Task #${params.taskId} — Find-task` },
+      { name: "description", content: "View task details, make an offer or negotiate with the poster on Find-task." },
     ],
   }),
   component: TaskDetail,
+  errorComponent: TaskError,
+  notFoundComponent: TaskNotFound,
 });
+
+function TaskError({ error, reset }: { error: Error; reset: () => void }) {
+  const router = useRouter();
+  return (
+    <div className="min-h-screen flex flex-col bg-background">
+      <TaskHeader />
+      <main className="mx-auto w-full max-w-xl px-4 py-16 text-center">
+        <h1 className="font-display text-2xl text-ink">Something went wrong</h1>
+        <p className="mt-2 text-sm text-muted-foreground">{error?.message ?? "We couldn't load this task."}</p>
+        <button
+          onClick={() => { router.invalidate(); reset(); }}
+          className="mt-6 inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-bold text-primary-foreground"
+        >
+          <RefreshCw className="h-4 w-4" /> Try again
+        </button>
+      </main>
+    </div>
+  );
+}
+
+function TaskNotFound() {
+  const { taskId } = Route.useParams();
+  return (
+    <div className="min-h-screen flex flex-col bg-background">
+      <TaskHeader />
+      <main className="mx-auto w-full max-w-xl px-4 py-16 text-center">
+        <h1 className="font-display text-2xl text-ink">Task not found</h1>
+        <p className="mt-2 text-sm text-muted-foreground">Task #{taskId} doesn't exist or has been removed.</p>
+        <Link to="/tasks/browse" search={{ q: "", category_id: 0, location: "", is_remote: 0, page: 1 } as any} className="mt-6 inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-bold text-primary-foreground">
+          Browse other tasks
+        </Link>
+      </main>
+    </div>
+  );
+}
 
 function TaskDetail() {
   const { taskId } = Route.useParams();
