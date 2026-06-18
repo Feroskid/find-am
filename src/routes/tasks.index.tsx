@@ -9,7 +9,7 @@ import { TaskHeader } from "@/components/TaskHeader";
 import { Footer } from "@/components/Footer";
 import { useAuth } from "@/lib/auth";
 
-export const Route = createFileRoute("/tasks")({
+export const Route = createFileRoute("/tasks/")({
   head: () => ({
     meta: [
       { title: "Find-task — Get anything done across Nigeria" },
