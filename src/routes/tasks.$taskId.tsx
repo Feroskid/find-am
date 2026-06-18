@@ -1,9 +1,9 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
-  ArrowLeft, MapPin, Clock, Loader2, Heart, Flag, ChevronDown, BadgeCheck, Star, Globe, CheckCircle2,
+  ArrowLeft, MapPin, Clock, Loader2, Heart, Flag, ChevronDown, BadgeCheck, Star, Globe, CheckCircle2, RefreshCw, MessageSquare, X as XIcon,
 } from "lucide-react";
 import { toast } from "sonner";
 import { TaskHeader } from "@/components/TaskHeader";
@@ -14,16 +14,56 @@ import {
   getTask, applyToTask, acceptApplicant, sendMessage, listMessages,
 } from "@/lib/findtask.functions";
 import { useAuth } from "@/lib/auth";
+import {
+  parseOfferAmount, parseReplyTarget, parseCounterTarget, isDecline, stripHeaders, formatOfferMessage,
+} from "@/lib/offerParse";
 
 export const Route = createFileRoute("/tasks/$taskId")({
-  head: () => ({
+  head: ({ params }) => ({
     meta: [
-      { title: "Task — Find-task" },
-      { name: "description", content: "View task details and make an offer on Find-task." },
+      { title: `Task #${params.taskId} — Find-task` },
+      { name: "description", content: "View task details, make an offer or negotiate with the poster on Find-task." },
     ],
   }),
   component: TaskDetail,
+  errorComponent: TaskError,
+  notFoundComponent: TaskNotFound,
 });
+
+function TaskError({ error, reset }: { error: Error; reset: () => void }) {
+  const router = useRouter();
+  return (
+    <div className="min-h-screen flex flex-col bg-background">
+      <TaskHeader />
+      <main className="mx-auto w-full max-w-xl px-4 py-16 text-center">
+        <h1 className="font-display text-2xl text-ink">Something went wrong</h1>
+        <p className="mt-2 text-sm text-muted-foreground">{error?.message ?? "We couldn't load this task."}</p>
+        <button
+          onClick={() => { router.invalidate(); reset(); }}
+          className="mt-6 inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-bold text-primary-foreground"
+        >
+          <RefreshCw className="h-4 w-4" /> Try again
+        </button>
+      </main>
+    </div>
+  );
+}
+
+function TaskNotFound() {
+  const { taskId } = Route.useParams();
+  return (
+    <div className="min-h-screen flex flex-col bg-background">
+      <TaskHeader />
+      <main className="mx-auto w-full max-w-xl px-4 py-16 text-center">
+        <h1 className="font-display text-2xl text-ink">Task not found</h1>
+        <p className="mt-2 text-sm text-muted-foreground">Task #{taskId} doesn't exist or has been removed.</p>
+        <Link to="/tasks/browse" search={{ q: "", category_id: 0, location: "", is_remote: 0, page: 1 } as any} className="mt-6 inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-bold text-primary-foreground">
+          Browse other tasks
+        </Link>
+      </main>
+    </div>
+  );
+}
 
 function TaskDetail() {
   const { taskId } = Route.useParams();
@@ -62,19 +102,25 @@ function TaskDetail() {
   const [startDate, setStartDate] = useState("");
   const [question, setQuestion] = useState("");
   const [moreOpen, setMoreOpen] = useState(false);
+  const [counterFor, setCounterFor] = useState<any | null>(null);
+  const [counterAmt, setCounterAmt] = useState("");
+  const [counterMsg, setCounterMsg] = useState("");
 
-  // Q&A: pull task message thread for public questions if API exposes them via the same channel
+  // Message thread — used for Q&A and per-offer counter/reply rendering
   const qaQ = useQuery({
-    queryKey: ["task", taskId, "qa", token],
-    enabled: !!token && tab === "questions",
+    queryKey: ["task", taskId, "thread", token],
+    enabled: !!token,
     queryFn: () => fetchMessages({ data: { taskId, token: token! } }),
   });
-  const liveQuestions: any[] = (() => {
+  const allMessages: any[] = useMemo(() => {
     const r = qaQ.data;
-    if (!r?.ok) return questions;
-    const list = (r.data as any)?.messages ?? (Array.isArray(r.data) ? r.data : []);
-    return list.length ? list : questions;
-  })();
+    if (!r?.ok) return [];
+    return (r.data as any)?.messages ?? (Array.isArray(r.data) ? r.data : []);
+  }, [qaQ.data]);
+  const liveQuestions = allMessages.length ? allMessages.filter((m: any) => {
+    const body = m.message_text ?? m.message ?? m.body ?? "";
+    return !parseCounterTarget(body) && !parseReplyTarget(body) && !isDecline(body);
+  }) : questions;
 
   // Initialise offer amount with task budget on first load
   useEffect(() => {
@@ -85,12 +131,13 @@ function TaskDetail() {
   const validOffer = amtNum >= 100 && message.trim().length >= 20 && message.trim().length <= 2000;
 
   const applyM = useMutation({
-    mutationFn: () => {
-      const lines = [message.trim()];
-      if (amtNum && amtNum !== Number(task?.budget)) lines.unshift(`Offer: ₦${amtNum.toLocaleString()}`);
-      if (startDate) lines.push(`Earliest start: ${startDate}`);
-      return apply({ data: { taskId, token: token!, message: lines.join("\n\n") } });
-    },
+    mutationFn: () => apply({
+      data: {
+        taskId,
+        token: token!,
+        message: formatOfferMessage({ kind: "OFFER", amount: amtNum, body: message.trim(), startDate: startDate || undefined }),
+      },
+    }),
     onSuccess: (r) => {
       if (r.ok) {
         toast.success("Offer sent!");
@@ -108,6 +155,38 @@ function TaskDetail() {
       if (r.ok) { toast.success("Tasker accepted"); refetch(); }
       else toast.error(r.error);
     },
+  });
+
+  const counterAmtNum = Number(counterAmt);
+  const validCounter = counterAmtNum >= 100 && counterMsg.trim().length >= 5;
+  const counterM = useMutation({
+    mutationFn: () => {
+      const toName = counterFor?.applicant_name ?? counterFor?.tasker_name ?? counterFor?.name ?? "tasker";
+      return send({
+        data: {
+          taskId,
+          token: token!,
+          message_text: formatOfferMessage({ kind: "COUNTER", amount: counterAmtNum, toName, body: counterMsg.trim() }),
+        },
+      });
+    },
+    onSuccess: (r) => {
+      if (r.ok) {
+        toast.success("Counter sent");
+        setCounterFor(null); setCounterMsg("");
+        qaQ.refetch();
+      } else toast.error(r.error);
+    },
+  });
+
+  const declineM = useMutation({
+    mutationFn: (offer: any) => {
+      const toName = offer?.applicant_name ?? offer?.tasker_name ?? offer?.name ?? "tasker";
+      return send({
+        data: { taskId, token: token!, message_text: formatOfferMessage({ kind: "DECLINE", toName, body: "Sorry, going with someone else." }) },
+      });
+    },
+    onSuccess: (r) => { if (r.ok) { toast.success("Offer declined"); qaQ.refetch(); } else toast.error(r.error); },
   });
 
   const askM = useMutation({
@@ -259,19 +338,41 @@ function TaskDetail() {
                         )}
                       </div>
                     ) : (
-                      offers.map((o, i) => (
-                        <OfferCard
-                          key={i}
-                          offer={o}
-                          taskBudget={Number(task.budget ?? 0)}
-                          showAccept={isPoster && status === "open"}
-                          onAccept={() => {
-                            const tid = o.applicant_id ?? o.tasker_id ?? o.user_id;
-                            if (tid != null) acceptM.mutate(tid);
-                          }}
-                          accepting={acceptM.isPending}
-                        />
-                      ))
+                      offers.map((o, i) => {
+                        const oName = o.applicant_name ?? o.tasker_name ?? o.name ?? "Tasker";
+                        const counters = allMessages.filter((m: any) => {
+                          const body = m.message_text ?? m.message ?? m.body ?? "";
+                          const tgt = parseCounterTarget(body);
+                          return tgt && oName && tgt.toLowerCase().includes(String(oName).split(" ")[0].toLowerCase());
+                        });
+                        const declined = allMessages.some((m: any) => {
+                          const body = m.message_text ?? m.message ?? m.body ?? "";
+                          return isDecline(body) && (body || "").toLowerCase().includes(String(oName).split(" ")[0].toLowerCase());
+                        });
+                        return (
+                          <OfferCard
+                            key={i}
+                            offer={o}
+                            taskBudget={Number(task.budget ?? 0)}
+                            isPoster={isPoster}
+                            isMine={String(o.applicant_id ?? o.tasker_id ?? o.user_id) === String(myId)}
+                            counters={counters}
+                            declined={declined}
+                            showAccept={isPoster && status === "open" && !declined}
+                            onAccept={() => {
+                              const tid = o.applicant_id ?? o.tasker_id ?? o.user_id;
+                              if (tid != null) acceptM.mutate(tid);
+                            }}
+                            onCounter={() => {
+                              setCounterFor(o);
+                              setCounterAmt(String(parseOfferAmount(o.message) ?? task.budget ?? ""));
+                              setCounterMsg("");
+                            }}
+                            onDecline={() => declineM.mutate(o)}
+                            accepting={acceptM.isPending}
+                          />
+                        );
+                      })
                     )
                   ) : (
                     <>
@@ -473,25 +574,79 @@ function TaskDetail() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Counter-offer modal */}
+      <Dialog open={!!counterFor} onOpenChange={(o) => !o && setCounterFor(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="font-display text-2xl text-ink">Counter offer</DialogTitle>
+            <DialogDescription>
+              Propose a different price to {counterFor?.applicant_name ?? counterFor?.tasker_name ?? "the tasker"}.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div>
+              <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Counter price (₦)</label>
+              <input
+                type="number"
+                inputMode="numeric"
+                min={100}
+                value={counterAmt}
+                onChange={(e) => setCounterAmt(e.target.value)}
+                className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 text-base font-semibold"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Message</label>
+              <textarea
+                value={counterMsg}
+                onChange={(e) => setCounterMsg(e.target.value)}
+                rows={4}
+                placeholder="I can offer this price if you can start sooner…"
+                className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
+                maxLength={1000}
+              />
+            </div>
+          </div>
+          <DialogFooter className="gap-2 sm:gap-2">
+            <button onClick={() => setCounterFor(null)} className="rounded-full border border-border px-5 py-2.5 text-sm font-semibold hover:bg-muted">
+              <XIcon className="h-4 w-4 inline -mt-0.5" /> Cancel
+            </button>
+            <button
+              onClick={() => counterM.mutate()}
+              disabled={!validCounter || counterM.isPending}
+              className="inline-flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-bold text-primary-foreground hover:opacity-90 disabled:opacity-50"
+            >
+              {counterM.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+              Send counter
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
 
 function OfferCard({
-  offer, taskBudget, showAccept, onAccept, accepting,
+  offer, taskBudget, isPoster, isMine, counters, declined, showAccept, onAccept, onCounter, onDecline, accepting,
 }: {
-  offer: any; taskBudget: number; showAccept: boolean; onAccept: () => void; accepting: boolean;
+  offer: any; taskBudget: number; isPoster: boolean; isMine: boolean;
+  counters: any[]; declined: boolean; showAccept: boolean;
+  onAccept: () => void; onCounter: () => void; onDecline: () => void; accepting: boolean;
 }) {
   const name = offer.applicant_name ?? offer.tasker_name ?? offer.user_name ?? offer.name ?? "Tasker";
   const rating = offer.rating ?? "5.0";
   const ratings = offer.ratings_count ?? offer.review_count ?? 0;
   const completion = offer.completion_rate ?? "100%";
-  const msg = offer.message ?? offer.comment ?? offer.body ?? "Hi! I'd love to help with this task.";
+  const rawMsg = offer.message ?? offer.comment ?? offer.body ?? "Hi! I'd love to help with this task.";
+  const parsedAmt = parseOfferAmount(rawMsg);
+  const cleanMsg = stripHeaders(rawMsg) || rawMsg;
   const time = offer.created_at ? new Date(offer.created_at).toLocaleDateString() : "Recently";
-  const amount = Number(offer.amount ?? offer.price ?? taskBudget);
+  const amount = Number(offer.amount ?? offer.price ?? parsedAmt ?? taskBudget);
+  const [showReplies, setShowReplies] = useState(false);
 
   return (
-    <article className="rounded-2xl border border-border bg-card p-5">
+    <article className={"rounded-2xl border bg-card p-5 " + (declined ? "border-destructive/30 opacity-70" : "border-border")}>
       <div className="flex items-start gap-3">
         <div className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-primary/10 font-display text-lg text-primary">
           {String(name).charAt(0).toUpperCase()}
@@ -499,6 +654,8 @@ function OfferCard({
         <div className="min-w-0 flex-1">
           <div className="font-bold text-ink inline-flex items-center gap-1.5">
             {name} <BadgeCheck className="h-4 w-4 text-primary" />
+            {isMine && <span className="ml-1 text-[10px] uppercase tracking-wider rounded-full bg-primary/10 text-primary px-2 py-0.5">You</span>}
+            {declined && <span className="ml-1 text-[10px] uppercase tracking-wider rounded-full bg-destructive/10 text-destructive px-2 py-0.5">Declined</span>}
           </div>
           <div className="text-sm text-ink flex items-center gap-1.5 mt-0.5">
             <span className="font-bold">{rating}</span>
@@ -512,19 +669,49 @@ function OfferCard({
           <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Offer</div>
         </div>
       </div>
-      <div className="mt-3 rounded-xl bg-muted/60 p-4 text-sm text-ink whitespace-pre-wrap">{msg}</div>
+      <div className="mt-3 rounded-xl bg-muted/60 p-4 text-sm text-ink whitespace-pre-wrap">{cleanMsg}</div>
+
+      {counters.length > 0 && (
+        <div className="mt-3 space-y-2">
+          {counters.map((c, i) => {
+            const body = c.message_text ?? c.message ?? c.body ?? "";
+            const cAmt = parseOfferAmount(body);
+            return (
+              <div key={i} className="rounded-xl border border-primary/30 bg-primary/5 p-3 text-sm">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-primary">Counter offer</span>
+                  {cAmt != null && <span className="font-display text-lg text-ink">₦{cAmt.toLocaleString()}</span>}
+                </div>
+                <p className="mt-1 whitespace-pre-wrap text-foreground/90">{stripHeaders(body)}</p>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
       <div className="mt-3 flex items-center justify-between gap-3 text-xs">
-        <span className="text-muted-foreground">{time}</span>
-        {showAccept && (
-          <button
-            onClick={onAccept}
-            disabled={accepting}
-            className="inline-flex items-center gap-1.5 rounded-full bg-primary px-4 py-1.5 text-xs font-bold text-primary-foreground hover:opacity-90 disabled:opacity-50"
-          >
-            {accepting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckCircle2 className="h-3.5 w-3.5" />}
-            Accept offer
-          </button>
-        )}
+        <button onClick={() => setShowReplies((v) => !v)} className="inline-flex items-center gap-1 text-primary font-semibold hover:underline">
+          <MessageSquare className="h-3.5 w-3.5" /> {showReplies ? "Hide" : "View"} replies ({counters.length})
+        </button>
+        <span className="text-muted-foreground">· {time}</span>
+        <div className="flex items-center gap-2 ml-auto">
+          {isPoster && !declined && (
+            <>
+              <button onClick={onDecline} className="rounded-full border border-border px-3 py-1.5 text-xs font-semibold hover:bg-muted">Decline</button>
+              <button onClick={onCounter} className="rounded-full border border-primary text-primary px-3 py-1.5 text-xs font-semibold hover:bg-primary/5">Counter</button>
+            </>
+          )}
+          {showAccept && (
+            <button
+              onClick={onAccept}
+              disabled={accepting}
+              className="inline-flex items-center gap-1.5 rounded-full bg-primary px-4 py-1.5 text-xs font-bold text-primary-foreground hover:opacity-90 disabled:opacity-50"
+            >
+              {accepting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckCircle2 className="h-3.5 w-3.5" />}
+              Accept
+            </button>
+          )}
+        </div>
       </div>
     </article>
   );
