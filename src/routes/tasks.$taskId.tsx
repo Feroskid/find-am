@@ -102,19 +102,25 @@ function TaskDetail() {
   const [startDate, setStartDate] = useState("");
   const [question, setQuestion] = useState("");
   const [moreOpen, setMoreOpen] = useState(false);
+  const [counterFor, setCounterFor] = useState<any | null>(null);
+  const [counterAmt, setCounterAmt] = useState("");
+  const [counterMsg, setCounterMsg] = useState("");
 
-  // Q&A: pull task message thread for public questions if API exposes them via the same channel
+  // Message thread — used for Q&A and per-offer counter/reply rendering
   const qaQ = useQuery({
-    queryKey: ["task", taskId, "qa", token],
-    enabled: !!token && tab === "questions",
+    queryKey: ["task", taskId, "thread", token],
+    enabled: !!token,
     queryFn: () => fetchMessages({ data: { taskId, token: token! } }),
   });
-  const liveQuestions: any[] = (() => {
+  const allMessages: any[] = useMemo(() => {
     const r = qaQ.data;
-    if (!r?.ok) return questions;
-    const list = (r.data as any)?.messages ?? (Array.isArray(r.data) ? r.data : []);
-    return list.length ? list : questions;
-  })();
+    if (!r?.ok) return [];
+    return (r.data as any)?.messages ?? (Array.isArray(r.data) ? r.data : []);
+  }, [qaQ.data]);
+  const liveQuestions = allMessages.length ? allMessages.filter((m: any) => {
+    const body = m.message_text ?? m.message ?? m.body ?? "";
+    return !parseCounterTarget(body) && !parseReplyTarget(body) && !isDecline(body);
+  }) : questions;
 
   // Initialise offer amount with task budget on first load
   useEffect(() => {
@@ -125,12 +131,13 @@ function TaskDetail() {
   const validOffer = amtNum >= 100 && message.trim().length >= 20 && message.trim().length <= 2000;
 
   const applyM = useMutation({
-    mutationFn: () => {
-      const lines = [message.trim()];
-      if (amtNum && amtNum !== Number(task?.budget)) lines.unshift(`Offer: ₦${amtNum.toLocaleString()}`);
-      if (startDate) lines.push(`Earliest start: ${startDate}`);
-      return apply({ data: { taskId, token: token!, message: lines.join("\n\n") } });
-    },
+    mutationFn: () => apply({
+      data: {
+        taskId,
+        token: token!,
+        message: formatOfferMessage({ kind: "OFFER", amount: amtNum, body: message.trim(), startDate: startDate || undefined }),
+      },
+    }),
     onSuccess: (r) => {
       if (r.ok) {
         toast.success("Offer sent!");
@@ -148,6 +155,38 @@ function TaskDetail() {
       if (r.ok) { toast.success("Tasker accepted"); refetch(); }
       else toast.error(r.error);
     },
+  });
+
+  const counterAmtNum = Number(counterAmt);
+  const validCounter = counterAmtNum >= 100 && counterMsg.trim().length >= 5;
+  const counterM = useMutation({
+    mutationFn: () => {
+      const toName = counterFor?.applicant_name ?? counterFor?.tasker_name ?? counterFor?.name ?? "tasker";
+      return send({
+        data: {
+          taskId,
+          token: token!,
+          message_text: formatOfferMessage({ kind: "COUNTER", amount: counterAmtNum, toName, body: counterMsg.trim() }),
+        },
+      });
+    },
+    onSuccess: (r) => {
+      if (r.ok) {
+        toast.success("Counter sent");
+        setCounterFor(null); setCounterMsg("");
+        qaQ.refetch();
+      } else toast.error(r.error);
+    },
+  });
+
+  const declineM = useMutation({
+    mutationFn: (offer: any) => {
+      const toName = offer?.applicant_name ?? offer?.tasker_name ?? offer?.name ?? "tasker";
+      return send({
+        data: { taskId, token: token!, message_text: formatOfferMessage({ kind: "DECLINE", toName, body: "Sorry, going with someone else." }) },
+      });
+    },
+    onSuccess: (r) => { if (r.ok) { toast.success("Offer declined"); qaQ.refetch(); } else toast.error(r.error); },
   });
 
   const askM = useMutation({
