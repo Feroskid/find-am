@@ -17,17 +17,38 @@ const KEY = "findam:auth";
 const MODE_KEY = "findam:mode";
 const Ctx = createContext<AuthCtx | null>(null);
 
-export function AuthProvider({ children }: { children: ReactNode }) {
-  const [state, setState] = useState<StoredAuth>({ token: null, user: null });
-  const [mode, setModeState] = useState<AppMode>("poster");
+function readInitialAuth(): StoredAuth {
+  if (typeof window === "undefined") return { token: null, user: null };
+  try {
+    const raw = window.localStorage.getItem(KEY);
+    if (raw) return JSON.parse(raw);
+  } catch {}
+  return { token: null, user: null };
+}
 
+function readInitialMode(): AppMode {
+  if (typeof window === "undefined") return "poster";
+  try {
+    const m = window.localStorage.getItem(MODE_KEY) as AppMode | null;
+    if (m === "poster" || m === "tasker") return m;
+  } catch {}
+  return "poster";
+}
+
+export function AuthProvider({ children }: { children: ReactNode }) {
+  // Lazy init so the first client render already sees the persisted session.
+  // Without this, protected pages momentarily see token=null and bounce to
+  // /login, which then redirects logged-in users back to /dashboard.
+  const [state, setState] = useState<StoredAuth>(readInitialAuth);
+  const [mode, setModeState] = useState<AppMode>(readInitialMode);
+
+  // Re-sync after mount in case SSR rendered with empty defaults.
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem(KEY);
-      if (raw) setState(JSON.parse(raw));
-      const m = localStorage.getItem(MODE_KEY) as AppMode | null;
-      if (m === "poster" || m === "tasker") setModeState(m);
-    } catch {}
+    const next = readInitialAuth();
+    if (next.token !== state.token) setState(next);
+    const m = readInitialMode();
+    if (m !== mode) setModeState(m);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const setAuth = (a: { token: string | null; user: Record<string, unknown> | null }) => {
