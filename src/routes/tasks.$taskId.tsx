@@ -579,20 +579,25 @@ function TaskDetail() {
 }
 
 function OfferCard({
-  offer, taskBudget, showAccept, onAccept, accepting,
+  offer, taskBudget, isPoster, isMine, counters, declined, showAccept, onAccept, onCounter, onDecline, accepting,
 }: {
-  offer: any; taskBudget: number; showAccept: boolean; onAccept: () => void; accepting: boolean;
+  offer: any; taskBudget: number; isPoster: boolean; isMine: boolean;
+  counters: any[]; declined: boolean; showAccept: boolean;
+  onAccept: () => void; onCounter: () => void; onDecline: () => void; accepting: boolean;
 }) {
   const name = offer.applicant_name ?? offer.tasker_name ?? offer.user_name ?? offer.name ?? "Tasker";
   const rating = offer.rating ?? "5.0";
   const ratings = offer.ratings_count ?? offer.review_count ?? 0;
   const completion = offer.completion_rate ?? "100%";
-  const msg = offer.message ?? offer.comment ?? offer.body ?? "Hi! I'd love to help with this task.";
+  const rawMsg = offer.message ?? offer.comment ?? offer.body ?? "Hi! I'd love to help with this task.";
+  const parsedAmt = parseOfferAmount(rawMsg);
+  const cleanMsg = stripHeaders(rawMsg) || rawMsg;
   const time = offer.created_at ? new Date(offer.created_at).toLocaleDateString() : "Recently";
-  const amount = Number(offer.amount ?? offer.price ?? taskBudget);
+  const amount = Number(offer.amount ?? offer.price ?? parsedAmt ?? taskBudget);
+  const [showReplies, setShowReplies] = useState(false);
 
   return (
-    <article className="rounded-2xl border border-border bg-card p-5">
+    <article className={"rounded-2xl border bg-card p-5 " + (declined ? "border-destructive/30 opacity-70" : "border-border")}>
       <div className="flex items-start gap-3">
         <div className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-primary/10 font-display text-lg text-primary">
           {String(name).charAt(0).toUpperCase()}
@@ -600,6 +605,8 @@ function OfferCard({
         <div className="min-w-0 flex-1">
           <div className="font-bold text-ink inline-flex items-center gap-1.5">
             {name} <BadgeCheck className="h-4 w-4 text-primary" />
+            {isMine && <span className="ml-1 text-[10px] uppercase tracking-wider rounded-full bg-primary/10 text-primary px-2 py-0.5">You</span>}
+            {declined && <span className="ml-1 text-[10px] uppercase tracking-wider rounded-full bg-destructive/10 text-destructive px-2 py-0.5">Declined</span>}
           </div>
           <div className="text-sm text-ink flex items-center gap-1.5 mt-0.5">
             <span className="font-bold">{rating}</span>
@@ -613,19 +620,49 @@ function OfferCard({
           <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Offer</div>
         </div>
       </div>
-      <div className="mt-3 rounded-xl bg-muted/60 p-4 text-sm text-ink whitespace-pre-wrap">{msg}</div>
+      <div className="mt-3 rounded-xl bg-muted/60 p-4 text-sm text-ink whitespace-pre-wrap">{cleanMsg}</div>
+
+      {counters.length > 0 && (
+        <div className="mt-3 space-y-2">
+          {counters.map((c, i) => {
+            const body = c.message_text ?? c.message ?? c.body ?? "";
+            const cAmt = parseOfferAmount(body);
+            return (
+              <div key={i} className="rounded-xl border border-primary/30 bg-primary/5 p-3 text-sm">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-primary">Counter offer</span>
+                  {cAmt != null && <span className="font-display text-lg text-ink">₦{cAmt.toLocaleString()}</span>}
+                </div>
+                <p className="mt-1 whitespace-pre-wrap text-foreground/90">{stripHeaders(body)}</p>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
       <div className="mt-3 flex items-center justify-between gap-3 text-xs">
-        <span className="text-muted-foreground">{time}</span>
-        {showAccept && (
-          <button
-            onClick={onAccept}
-            disabled={accepting}
-            className="inline-flex items-center gap-1.5 rounded-full bg-primary px-4 py-1.5 text-xs font-bold text-primary-foreground hover:opacity-90 disabled:opacity-50"
-          >
-            {accepting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckCircle2 className="h-3.5 w-3.5" />}
-            Accept offer
-          </button>
-        )}
+        <button onClick={() => setShowReplies((v) => !v)} className="inline-flex items-center gap-1 text-primary font-semibold hover:underline">
+          <MessageSquare className="h-3.5 w-3.5" /> {showReplies ? "Hide" : "View"} replies ({counters.length})
+        </button>
+        <span className="text-muted-foreground">· {time}</span>
+        <div className="flex items-center gap-2 ml-auto">
+          {isPoster && !declined && (
+            <>
+              <button onClick={onDecline} className="rounded-full border border-border px-3 py-1.5 text-xs font-semibold hover:bg-muted">Decline</button>
+              <button onClick={onCounter} className="rounded-full border border-primary text-primary px-3 py-1.5 text-xs font-semibold hover:bg-primary/5">Counter</button>
+            </>
+          )}
+          {showAccept && (
+            <button
+              onClick={onAccept}
+              disabled={accepting}
+              className="inline-flex items-center gap-1.5 rounded-full bg-primary px-4 py-1.5 text-xs font-bold text-primary-foreground hover:opacity-90 disabled:opacity-50"
+            >
+              {accepting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckCircle2 className="h-3.5 w-3.5" />}
+              Accept
+            </button>
+          )}
+        </div>
       </div>
     </article>
   );
