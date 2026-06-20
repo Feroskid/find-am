@@ -33,6 +33,7 @@ import { Route as TasksMineRouteImport } from './routes/tasks.mine'
 import { Route as TasksCategoriesRouteImport } from './routes/tasks.categories'
 import { Route as TasksBrowseRouteImport } from './routes/tasks.browse'
 import { Route as TasksTaskIdRouteImport } from './routes/tasks.$taskId'
+import { Route as AuthVerifyEmailRouteImport } from './routes/auth.verify-email'
 import { Route as TasksTaskIdWorkspaceRouteImport } from './routes/tasks.$taskId.workspace'
 import { Route as TasksTaskIdApplicationsRouteImport } from './routes/tasks.$taskId.applications'
 import { Route as ApiPublicSearchRouteImport } from './routes/api/public/search'
@@ -157,6 +158,11 @@ const TasksTaskIdRoute = TasksTaskIdRouteImport.update({
   path: '/$taskId',
   getParentRoute: () => TasksRoute,
 } as any)
+const AuthVerifyEmailRoute = AuthVerifyEmailRouteImport.update({
+  id: '/auth/verify-email',
+  path: '/auth/verify-email',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TasksTaskIdWorkspaceRoute = TasksTaskIdWorkspaceRouteImport.update({
   id: '/workspace',
   path: '/workspace',
@@ -192,6 +198,7 @@ export interface FileRoutesByFullPath {
   '/terms': typeof TermsRoute
   '/verify-email': typeof VerifyEmailRoute
   '/wallet': typeof WalletRoute
+  '/auth/verify-email': typeof AuthVerifyEmailRoute
   '/tasks/$taskId': typeof TasksTaskIdRouteWithChildren
   '/tasks/browse': typeof TasksBrowseRoute
   '/tasks/categories': typeof TasksCategoriesRoute
@@ -220,6 +227,7 @@ export interface FileRoutesByTo {
   '/terms': typeof TermsRoute
   '/verify-email': typeof VerifyEmailRoute
   '/wallet': typeof WalletRoute
+  '/auth/verify-email': typeof AuthVerifyEmailRoute
   '/tasks/$taskId': typeof TasksTaskIdRouteWithChildren
   '/tasks/browse': typeof TasksBrowseRoute
   '/tasks/categories': typeof TasksCategoriesRoute
@@ -250,6 +258,7 @@ export interface FileRoutesById {
   '/terms': typeof TermsRoute
   '/verify-email': typeof VerifyEmailRoute
   '/wallet': typeof WalletRoute
+  '/auth/verify-email': typeof AuthVerifyEmailRoute
   '/tasks/$taskId': typeof TasksTaskIdRouteWithChildren
   '/tasks/browse': typeof TasksBrowseRoute
   '/tasks/categories': typeof TasksCategoriesRoute
@@ -281,6 +290,7 @@ export interface FileRouteTypes {
     | '/terms'
     | '/verify-email'
     | '/wallet'
+    | '/auth/verify-email'
     | '/tasks/$taskId'
     | '/tasks/browse'
     | '/tasks/categories'
@@ -309,6 +319,7 @@ export interface FileRouteTypes {
     | '/terms'
     | '/verify-email'
     | '/wallet'
+    | '/auth/verify-email'
     | '/tasks/$taskId'
     | '/tasks/browse'
     | '/tasks/categories'
@@ -338,6 +349,7 @@ export interface FileRouteTypes {
     | '/terms'
     | '/verify-email'
     | '/wallet'
+    | '/auth/verify-email'
     | '/tasks/$taskId'
     | '/tasks/browse'
     | '/tasks/categories'
@@ -368,6 +380,7 @@ export interface RootRouteChildren {
   TermsRoute: typeof TermsRoute
   VerifyEmailRoute: typeof VerifyEmailRoute
   WalletRoute: typeof WalletRoute
+  AuthVerifyEmailRoute: typeof AuthVerifyEmailRoute
   UUserIdRoute: typeof UUserIdRoute
   ApiPublicSearchRoute: typeof ApiPublicSearchRoute
 }
@@ -542,6 +555,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TasksTaskIdRouteImport
       parentRoute: typeof TasksRoute
     }
+    '/auth/verify-email': {
+      id: '/auth/verify-email'
+      path: '/auth/verify-email'
+      fullPath: '/auth/verify-email'
+      preLoaderRoute: typeof AuthVerifyEmailRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/tasks/$taskId/workspace': {
       id: '/tasks/$taskId/workspace'
       path: '/workspace'
@@ -617,6 +637,7 @@ const rootRouteChildren: RootRouteChildren = {
   TermsRoute: TermsRoute,
   VerifyEmailRoute: VerifyEmailRoute,
   WalletRoute: WalletRoute,
+  AuthVerifyEmailRoute: AuthVerifyEmailRoute,
   UUserIdRoute: UUserIdRoute,
   ApiPublicSearchRoute: ApiPublicSearchRoute,
 }

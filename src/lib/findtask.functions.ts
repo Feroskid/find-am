@@ -61,15 +61,23 @@ export const getSubCategories = createServerFn({ method: "POST" })
 
 // --- Auth helpers --------------------------------------------------------
 export const verifyEmail = createServerFn({ method: "POST" })
-  .inputValidator((i: unknown) => z.object({ token: z.string().min(4).max(512) }).parse(i))
+  .inputValidator((i: unknown) => z.object({ token: z.string().min(1).max(4096) }).parse(i))
   .handler(async ({ data }) =>
     call(`/auth/verify-email`, { method: "POST", body: { token: data.token } }),
   );
 
 export const resendVerification = createServerFn({ method: "POST" })
-  .inputValidator((i: unknown) => z.object({ email: z.string().email().max(200) }).parse(i))
+  .inputValidator((i: unknown) =>
+    z.object({
+      email: z.string().email().max(200).optional(),
+      token: Token,
+    }).parse(i),
+  )
   .handler(async ({ data }) =>
-    call(`/auth/resend-verification`, { method: "POST", body: { email: data.email } }),
+    call(`/auth/resend-verification`, {
+      method: "POST",
+      token: data.token,
+    }),
   );
 
 export const forgotPassword = createServerFn({ method: "POST" })
