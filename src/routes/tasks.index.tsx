@@ -469,6 +469,8 @@ function LoggedInHome() {
         </div>
       </section>
 
+      <RandomTasksRail />
+
       {/* CTA band */}
       <section className="bg-surface-soft">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 py-12 text-center">
