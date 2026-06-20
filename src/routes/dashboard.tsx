@@ -58,7 +58,7 @@ function Dashboard() {
   const myTasksQ = useQuery({
     queryKey: ["dashboard", "my-tasks", myId, mode],
     enabled: !!token && !!myId,
-    queryFn: () => userTasks({ data: { userId: String(myId) } }),
+    queryFn: () => userTasks({ data: { userId: String(myId), token } }),
   });
 
   if (!token) return null;

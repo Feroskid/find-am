@@ -80,6 +80,17 @@ export const resendVerification = createServerFn({ method: "POST" })
     }),
   );
 
+export const checkEmailVerification = createServerFn({ method: "POST" })
+  .inputValidator((i: unknown) => z.object({ token: Token }).parse(i))
+  .handler(async ({ data }) => {
+    const res = await call(`/auth/resend-verification`, { method: "POST", token: data.token });
+    if (res.ok) return { ok: true as const, data: { verified: false, resent: true } };
+    if (/already\s+verified/i.test(res.error)) {
+      return { ok: true as const, data: { verified: true, resent: false } };
+    }
+    return res;
+  });
+
 export const forgotPassword = createServerFn({ method: "POST" })
   .inputValidator((i: unknown) => z.object({ email: z.string().email().max(200) }).parse(i))
   .handler(async ({ data }) =>
@@ -180,13 +191,21 @@ export const applyToTask = createServerFn({ method: "POST" })
       token: Token,
     }).parse(i),
   )
-  .handler(async ({ data }) =>
-    call(`/task/${data.taskId}/apply`, {
+  .handler(async ({ data }) => {
+    const res = await call(`/task/${data.taskId}/apply`, {
       method: "POST",
       body: { message: data.message ?? "" },
       token: data.token,
-    }),
-  );
+    });
+    if (!res.ok && res.status >= 500) {
+      return {
+        ok: false as const,
+        status: res.status,
+        error: "The offer could not be submitted because the task offer service returned a server error. Please try another task or try again shortly.",
+      };
+    }
+    return res;
+  });
 
 
 
@@ -356,8 +375,24 @@ export const getUserRatings = createServerFn({ method: "POST" })
   .handler(async ({ data }) => call(`/user/${data.userId}/ratings`));
 
 export const getUserTasks = createServerFn({ method: "POST" })
-  .inputValidator((i: unknown) => z.object({ userId: UserId }).parse(i))
-  .handler(async ({ data }) => call(`/user/${data.userId}/tasks`));
+  .inputValidator((i: unknown) => z.object({ userId: UserId, token: Token.optional() }).parse(i))
+  .handler(async ({ data }) => {
+    const direct = await call(`/user/${data.userId}/tasks`, { token: data.token });
+    if (direct.ok || direct.status !== 404) return direct;
+    const search = await call(`/task/search?limit=100&page=1`);
+    if (!search.ok) return search;
+    const list: any[] = (search.data as any)?.results ?? (search.data as any)?.tasks ?? [];
+    const details = await Promise.all(
+      list.map(async (t: any) => {
+        const id = t.task_id ?? t.id;
+        if (id == null) return t;
+        const detail = await call(`/task/${id}`);
+        return detail.ok ? ((detail.data as any)?.task ?? detail.data) : t;
+      }),
+    );
+    const tasks = details.filter((t: any) => String(t?.poster_id ?? t?.user_id ?? t?.owner_id ?? "") === String(data.userId));
+    return { ok: true as const, data: { tasks } };
+  });
 
 // --- Payments (Paystack) ------------------------------------------------
 export const initiateEscrow = createServerFn({ method: "POST" })

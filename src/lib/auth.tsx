@@ -38,20 +38,14 @@ function readInitialMode(): AppMode {
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  // Lazy init so the first client render already sees the persisted session.
-  const [state, setState] = useState<StoredAuth>(readInitialAuth);
-  const [mode, setModeState] = useState<AppMode>(readInitialMode);
-  // `ready` starts true on the client (lazy init already read storage) and
-  // false during SSR. Gated pages should wait for `ready` before redirecting
-  // so they don't bounce to /login during the unauthenticated SSR pass.
-  const [ready, setReady] = useState<boolean>(typeof window !== "undefined");
+  const [state, setState] = useState<StoredAuth>({ token: null, user: null });
+  const [mode, setModeState] = useState<AppMode>("poster");
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    if (!ready) {
-      setState(readInitialAuth());
-      setModeState(readInitialMode());
-      setReady(true);
-    }
+    setState(readInitialAuth());
+    setModeState(readInitialMode());
+    setReady(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -106,7 +100,7 @@ export function pickUser(
   if (d.user) return d.user;
   if (d.data?.user) return d.data.user;
   const fromRoot: Record<string, unknown> = {};
-  for (const k of ["user_id", "id", "name", "full_name", "email", "phone", "account_type", "photo_url", "location", "tagline", "about"]) {
+  for (const k of ["user_id", "id", "name", "full_name", "email", "phone", "account_type", "photo_url", "location", "tagline", "about", "email_verified", "is_email_verified", "verified", "email_verified_at", "rating", "average_rating"]) {
     if (d[k] !== undefined) fromRoot[k] = d[k];
   }
   return Object.keys(fromRoot).length ? fromRoot : null;
