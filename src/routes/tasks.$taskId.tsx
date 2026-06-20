@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import {
   ArrowLeft, MapPin, Clock, Loader2, Heart, Flag, ChevronDown, BadgeCheck, Star, Globe, CheckCircle2, RefreshCw, MessageSquare, X as XIcon,
 } from "lucide-react";
