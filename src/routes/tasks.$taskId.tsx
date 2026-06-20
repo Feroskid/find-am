@@ -125,6 +125,7 @@ function TaskDetail() {
   const amtNum = Number(task?.budget ?? 0);
   const validOffer = message.trim().length >= 20 && message.trim().length <= 2000;
 
+  const [applyError, setApplyError] = useState<string | null>(null);
   const applyM = useMutation({
     mutationFn: () => apply({
       data: {
@@ -138,8 +139,17 @@ function TaskDetail() {
         toast.success("Offer sent!");
         setShowApply(false);
         setMessage("");
+        setApplyError(null);
         refetch();
-      } else toast.error(r.error);
+      } else {
+        setApplyError(r.error);
+        toast.error(r.error);
+      }
+    },
+    onError: (e: any) => {
+      const msg = e?.message ?? "Failed to send offer. Please try again.";
+      setApplyError(msg);
+      toast.error(msg);
     },
   });
 
