@@ -25,31 +25,23 @@ function VerifyEmail() {
   const [status, setStatus] = useState<"idle" | "verifying" | "ok" | "error">(linkToken ? "verifying" : "idle");
   const [msg, setMsg] = useState("");
   const [email, setEmail] = useState(userEmail);
-  const [code, setCode] = useState("");
 
-  useEffect(() => { if (userEmail && !email) setEmail(userEmail); }, [userEmail]);
+  useEffect(() => { if (userEmail && !email) setEmail(userEmail); }, [userEmail]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Auto-verify if a link token is present in the URL.
+  // Auto-verify when the user clicks the link in their inbox.
   useEffect(() => {
     if (!linkToken) return;
+    setStatus("verifying");
     (async () => {
       const r = await verify({ data: { token: linkToken } });
-      if (r.ok) { setStatus("ok"); setMsg("Your email has been verified."); }
-      else { setStatus("error"); setMsg(r.error || "This link is invalid or expired."); }
+      if (r.ok) { setStatus("ok"); setMsg("Your email has been verified. You're all set."); }
+      else { setStatus("error"); setMsg(r.error || "This verification link is invalid or has expired."); }
     })();
   }, [linkToken, verify]);
 
-  const codeM = useMutation({
-    mutationFn: () => verify({ data: { token: code.trim() } }),
-    onSuccess: (r) => {
-      if (r.ok) { setStatus("ok"); setMsg("Your email has been verified."); }
-      else { setStatus("error"); setMsg(r.error || "Invalid or expired code."); }
-    },
-  });
-
   const resendM = useMutation({
     mutationFn: () => resend({ data: { email: email.trim() } }),
-    onSuccess: (r) => setMsg(r.ok ? "Verification code sent. Check your inbox." : r.error),
+    onSuccess: (r) => setMsg(r.ok ? "We've sent a new verification link. Check your inbox (and spam)." : r.error),
   });
 
   return (
@@ -58,53 +50,38 @@ function VerifyEmail() {
       <main className="flex-1 mx-auto max-w-lg w-full px-4 sm:px-6 py-12">
         <div className="rounded-2xl border border-border bg-card p-8 text-center">
           <div className="mx-auto h-14 w-14 rounded-full bg-primary/10 grid place-items-center text-primary">
-            {status === "verifying" || codeM.isPending ? <Loader2 className="h-7 w-7 animate-spin" />
+            {status === "verifying"
+              ? <Loader2 className="h-7 w-7 animate-spin" />
               : status === "ok" ? <CheckCircle2 className="h-7 w-7" />
               : status === "error" ? <AlertCircle className="h-7 w-7" />
               : <MailCheck className="h-7 w-7" />}
           </div>
           <h1 className="mt-4 text-2xl font-bold tracking-tight">
-            {status === "ok" ? "Email verified" : "Verify your email"}
+            {status === "ok"
+              ? "Email verified"
+              : status === "verifying"
+              ? "Verifying your email…"
+              : status === "error"
+              ? "Verification failed"
+              : "Verify your email"}
           </h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            {status === "ok"
+            {status === "ok" || status === "error"
               ? msg
-              : `We sent a verification code to ${email || "your email"}. Enter it below to confirm it's really you.`}
+              : status === "verifying"
+              ? "Hang tight while we confirm your email."
+              : `We've sent a verification link to ${email || "your email"}. Open it from your inbox to confirm your account — no codes needed.`}
           </p>
 
           {status === "ok" ? (
             <Link to="/dashboard" className="mt-6 inline-flex items-center justify-center rounded-full bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground">
               Continue to dashboard
             </Link>
-          ) : (
+          ) : status !== "verifying" && (
             <>
-              <form
-                onSubmit={(e) => { e.preventDefault(); if (code.trim().length >= 4) codeM.mutate(); }}
-                className="mt-6 space-y-3 text-left"
-              >
-                <label className="block">
-                  <span className="text-xs font-medium text-muted-foreground">Verification code</span>
-                  <input
-                    inputMode="numeric"
-                    autoComplete="one-time-code"
-                    value={code}
-                    onChange={(e) => setCode(e.target.value.replace(/[^0-9A-Za-z-]/g, "").slice(0, 12))}
-                    placeholder="123456"
-                    className="mt-1 w-full text-center tracking-[0.4em] text-lg font-semibold rounded-lg border border-border bg-background px-3 py-2.5 outline-none focus:border-primary focus:ring-2 focus:ring-primary/30"
-                  />
-                </label>
-                <button
-                  type="submit"
-                  disabled={codeM.isPending || code.trim().length < 4}
-                  className="w-full inline-flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground disabled:opacity-50"
-                >
-                  {codeM.isPending && <Loader2 className="h-4 w-4 animate-spin" />} Verify code
-                </button>
-              </form>
-
-              <div className="mt-5 rounded-lg bg-muted/40 p-3 text-left">
-                <div className="text-xs font-medium text-muted-foreground">Didn't get it?</div>
-                <div className="mt-2 flex gap-2">
+              <div className="mt-6 rounded-lg bg-muted/40 p-4 text-left">
+                <div className="text-xs font-medium text-muted-foreground">Didn't get the link?</div>
+                <div className="mt-2 flex flex-col sm:flex-row gap-2">
                   <input
                     type="email"
                     value={email}
@@ -115,11 +92,15 @@ function VerifyEmail() {
                   <button
                     disabled={resendM.isPending || !email}
                     onClick={() => resendM.mutate()}
-                    className="rounded-full bg-foreground/90 text-background px-3 py-2 text-xs font-semibold disabled:opacity-50"
+                    className="inline-flex items-center justify-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-50"
                   >
-                    {resendM.isPending ? "Sending…" : "Resend"}
+                    {resendM.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+                    {resendM.isPending ? "Sending…" : "Resend link"}
                   </button>
                 </div>
+                <p className="mt-2 text-[11px] text-muted-foreground">
+                  Tip: check your spam folder. The link expires after a short while — request a new one if it stops working.
+                </p>
               </div>
 
               {msg && (
