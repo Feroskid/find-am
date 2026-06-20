@@ -487,3 +487,53 @@ function LoggedInHome() {
   );
 }
 
+function RandomTasksRail() {
+  const list = useServerFn(listTasks);
+  const q = useQuery({
+    queryKey: ["random-tasks"],
+    queryFn: () => list({ data: { sort: "random", limit: 8, page: 1 } }),
+    staleTime: 60_000,
+  });
+  const items: any[] = (() => {
+    const d: any = q.data?.ok ? q.data.data : null;
+    if (!d) return [];
+    if (Array.isArray(d)) return d;
+    return d.tasks ?? d.results ?? d.data ?? d.items ?? [];
+  })();
+  return (
+    <section className="bg-surface-warm border-y border-border">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 py-14">
+        <div className="flex items-end justify-between flex-wrap gap-3">
+          <div>
+            <h2 className="font-display text-3xl sm:text-4xl text-ink inline-flex items-center gap-2">
+              <Shuffle className="h-7 w-7 text-primary" /> Random tasks happening now
+            </h2>
+            <p className="mt-1 text-muted-foreground">A live snapshot of what people across Nigeria need done today.</p>
+          </div>
+          <Link to="/tasks/browse" search={{ q: "", category_id: 0, location: "", is_remote: 0, page: 1 } as any} className="text-sm font-bold text-primary hover:underline">
+            Browse all tasks →
+          </Link>
+        </div>
+        <div className="mt-6">
+          {q.isLoading ? (
+            <div className="flex items-center justify-center gap-2 text-muted-foreground py-12">
+              <Loader2 className="h-4 w-4 animate-spin" /> Loading live tasks…
+            </div>
+          ) : items.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-border bg-card p-10 text-center text-muted-foreground">
+              No open tasks just now — check back soon.
+            </div>
+          ) : (
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              {items.slice(0, 8).map((t: any) => (
+                <TaskCard key={t.task_id ?? t.id} task={toCardData(t)} />
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+
