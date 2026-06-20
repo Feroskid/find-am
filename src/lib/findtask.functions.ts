@@ -187,14 +187,14 @@ export const applyToTask = createServerFn({ method: "POST" })
   .inputValidator((i: unknown) =>
     z.object({
       taskId: TaskId,
-      message_text: z.string().min(2).max(2000).optional(),
+      message: z.string().min(2).max(2000).optional(),
       token: Token,
     }).parse(i),
   )
   .handler(async ({ data }) => {
     const res = await call(`/task/${data.taskId}/apply`, {
       method: "POST",
-      body: { message_text: data.message_text ?? "" },
+      body: { message: data.message ?? "" },
       token: data.token,
     });
     if (!res.ok && res.status >= 500) {
