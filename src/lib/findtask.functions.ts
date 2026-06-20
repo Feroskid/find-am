@@ -376,7 +376,23 @@ export const getUserRatings = createServerFn({ method: "POST" })
 
 export const getUserTasks = createServerFn({ method: "POST" })
   .inputValidator((i: unknown) => z.object({ userId: UserId, token: Token.optional() }).parse(i))
-  .handler(async ({ data }) => call(`/user/${data.userId}/tasks`, { token: data.token }));
+  .handler(async ({ data }) => {
+    const direct = await call(`/user/${data.userId}/tasks`, { token: data.token });
+    if (direct.ok || direct.status !== 404) return direct;
+    const search = await call(`/task/search?limit=100&page=1`);
+    if (!search.ok) return search;
+    const list: any[] = (search.data as any)?.results ?? (search.data as any)?.tasks ?? [];
+    const details = await Promise.all(
+      list.map(async (t: any) => {
+        const id = t.task_id ?? t.id;
+        if (id == null) return t;
+        const detail = await call(`/task/${id}`);
+        return detail.ok ? ((detail.data as any)?.task ?? detail.data) : t;
+      }),
+    );
+    const tasks = details.filter((t: any) => String(t?.poster_id ?? t?.user_id ?? t?.owner_id ?? "") === String(data.userId));
+    return { ok: true as const, data: { tasks } };
+  });
 
 // --- Payments (Paystack) ------------------------------------------------
 export const initiateEscrow = createServerFn({ method: "POST" })
