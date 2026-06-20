@@ -1,13 +1,24 @@
 import { Link } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
+import { useQuery } from "@tanstack/react-query";
 import { MailWarning, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth";
+import { checkEmailVerification } from "@/lib/findtask.functions";
 
 const DISMISS_KEY = "findam:verifyBannerDismissed";
 
 export function VerifyEmailBanner() {
   const { token, user } = useAuth();
+  const checkVerified = useServerFn(checkEmailVerification);
   const [dismissed, setDismissed] = useState(true);
+
+  const verificationQ = useQuery({
+    queryKey: ["email-verification-status", token],
+    enabled: !!token,
+    staleTime: 10 * 60_000,
+    queryFn: () => checkVerified({ data: { token: token! } }),
+  });
 
   useEffect(() => {
     try { setDismissed(sessionStorage.getItem(DISMISS_KEY) === "1"); } catch {}
@@ -18,7 +29,8 @@ export function VerifyEmailBanner() {
     (user as any).email_verified === true ||
     (user as any).is_email_verified === true ||
     (user as any).verified === true ||
-    (user as any).email_verified_at != null;
+    (user as any).email_verified_at != null ||
+    (verificationQ.data?.ok && (verificationQ.data.data as any)?.verified === true);
   if (verified || dismissed) return null;
 
   return (
