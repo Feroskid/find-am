@@ -1,13 +1,17 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
+import { useQuery } from "@tanstack/react-query";
 import {
   ArrowRight, ShieldCheck, Users, Star, Sparkles, Hammer, Truck, Brush, Wrench, Laptop,
-  Package, TreeDeciduous, Heart, CheckCircle2, BadgeCheck, Search, Briefcase, Paintbrush,
-  Sparkle, Camera, ClipboardList, MoveRight,
+  Package, TreeDeciduous, CheckCircle2, BadgeCheck, Briefcase, Paintbrush,
+  Sparkle, Camera, ClipboardList, MoveRight, Shuffle, Loader2,
 } from "lucide-react";
 import { TaskHeader } from "@/components/TaskHeader";
 import { Footer } from "@/components/Footer";
+import { TaskCard, toCardData } from "@/components/TaskCard";
 import { useAuth } from "@/lib/auth";
+import { listTasks } from "@/lib/findtask.functions";
 
 export const Route = createFileRoute("/tasks/")({
   head: () => ({
