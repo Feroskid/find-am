@@ -191,6 +191,9 @@ function TasksHome() {
           </div>
         </div>
       </section>
+      {/* RANDOM LIVE TASKS */}
+      <RandomTasksRail />
+
 
       {/* SHOWCASE TABS */}
       <section className="mx-auto max-w-7xl w-full px-4 sm:px-6 py-16">
