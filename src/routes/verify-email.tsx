@@ -40,6 +40,10 @@ export function EmailVerificationPage({ linkToken }: { linkToken?: string }) {
 
   useEffect(() => { if (userEmail && !email) setEmail(userEmail); }, [userEmail]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
+    if (linkToken) {
+      setEffectiveToken(linkToken);
+      return;
+    }
     if (linkToken || typeof window === "undefined") return;
     const rawHash = window.location.hash.replace(/^#/, "");
     if (!rawHash) return;
