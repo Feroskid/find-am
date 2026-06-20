@@ -167,7 +167,10 @@ function Dashboard() {
 function extractList(d: any): any[] {
   if (!d) return [];
   if (Array.isArray(d)) return d;
-  return d.tasks ?? d.results ?? d.transactions ?? d.data ?? [];
+  return (
+    d.tasks ?? d.results ?? d.transactions ?? d.items ?? d.data ??
+    d.posted_tasks ?? d.user_tasks ?? d.my_tasks ?? []
+  );
 }
 
 function Kpi({ icon: Icon, label, value, sub }: { icon: any; label: string; value: string; sub?: string }) {
