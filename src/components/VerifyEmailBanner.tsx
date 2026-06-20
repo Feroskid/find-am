@@ -31,7 +31,7 @@ export function VerifyEmailBanner() {
     (user as any).verified === true ||
     (user as any).email_verified_at != null ||
     (verificationQ.data?.ok && (verificationQ.data.data as any)?.verified === true);
-  if (verified || dismissed) return null;
+  if (verificationQ.isLoading || verified || dismissed) return null;
 
   return (
     <div className="w-full bg-amber-500/15 border-b border-amber-500/30 text-amber-900 dark:text-amber-200">
