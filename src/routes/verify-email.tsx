@@ -10,14 +10,25 @@ import { useAuth } from "@/lib/auth";
 import { z } from "zod";
 
 export const Route = createFileRoute("/verify-email")({
-  validateSearch: (s) => z.object({ token: z.string().optional() }).parse(s),
+  validateSearch: (s) =>
+    z.object({
+      token: z.string().optional(),
+      verification_token: z.string().optional(),
+      email_verification_token: z.string().optional(),
+      code: z.string().optional(),
+    }).parse(s),
   head: () => ({ meta: [{ title: "Verify your email — Find-task" }] }),
   component: VerifyEmail,
 });
 
 function VerifyEmail() {
-  const { token: linkToken } = useSearch({ from: "/verify-email" });
-  const { user } = useAuth();
+  const search = useSearch({ from: "/verify-email" });
+  const linkToken = search.token ?? search.verification_token ?? search.email_verification_token ?? search.code;
+  return <EmailVerificationPage linkToken={linkToken} />;
+}
+
+export function EmailVerificationPage({ linkToken }: { linkToken?: string }) {
+  const { token, user } = useAuth();
   const verify = useServerFn(verifyEmail);
   const resend = useServerFn(resendVerification);
 
@@ -25,23 +36,38 @@ function VerifyEmail() {
   const [status, setStatus] = useState<"idle" | "verifying" | "ok" | "error">(linkToken ? "verifying" : "idle");
   const [msg, setMsg] = useState("");
   const [email, setEmail] = useState(userEmail);
+  const [effectiveToken, setEffectiveToken] = useState(linkToken);
 
   useEffect(() => { if (userEmail && !email) setEmail(userEmail); }, [userEmail]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (linkToken || typeof window === "undefined") return;
+    const rawHash = window.location.hash.replace(/^#/, "");
+    if (!rawHash) return;
+    const hashParams = new URLSearchParams(rawHash);
+    const hashToken = hashParams.get("token") ?? hashParams.get("verification_token") ?? hashParams.get("email_verification_token") ?? hashParams.get("code") ?? undefined;
+    if (hashToken) setEffectiveToken(hashToken);
+  }, [linkToken]);
 
   // Auto-verify when the user clicks the link in their inbox.
   useEffect(() => {
-    if (!linkToken) return;
+    if (!effectiveToken) return;
     setStatus("verifying");
     (async () => {
-      const r = await verify({ data: { token: linkToken } });
+      const r = await verify({ data: { token: effectiveToken } });
       if (r.ok) { setStatus("ok"); setMsg("Your email has been verified. You're all set."); }
       else { setStatus("error"); setMsg(r.error || "This verification link is invalid or has expired."); }
     })();
-  }, [linkToken, verify]);
+  }, [effectiveToken, verify]);
 
   const resendM = useMutation({
-    mutationFn: () => resend({ data: { email: email.trim() } }),
-    onSuccess: (r) => setMsg(r.ok ? "We've sent a new verification link. Check your inbox (and spam)." : r.error),
+    mutationFn: async () => {
+      if (!token) return { ok: false as const, status: 401, error: "Please log in before requesting a new verification link." };
+      return resend({ data: { email: email.trim(), token } });
+    },
+    onSuccess: (r) => {
+      setStatus(r.ok ? "idle" : "error");
+      setMsg(r.ok ? "We've sent a new verification link. Check your inbox (and spam)." : r.error);
+    },
   });
 
   return (
