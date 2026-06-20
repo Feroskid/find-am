@@ -79,7 +79,11 @@ function Privacy() {
               <li>Records of fees charged</li>
             </ul>
             <h3>2.4 Location Information</h3>
-            <ul><li>Geographic coordinates associated with Tasks, used to enable location-based ("near me") search and to display Task locations.</li></ul>
+            <p>We collect geographic location data in the following ways:</p>
+            <ul>
+              <li><strong>Task location:</strong> coordinates associated with a Task, used to enable location-based ("near me") search and to display where a Task is located.</li>
+              <li><strong>Shared location during on-site Tasks:</strong> where you are party to an on-site (non-remote) Task, and where you have enabled location sharing, your device's location may be captured while you have the Find-task map or task page open, and shared with the other party or parties to that same Task. This may include capturing your location when you indicate arrival at a Task location.</li>
+            </ul>
             <h3>2.5 Usage, Device, and Session Information</h3>
             <ul><li>Device type and IP address</li><li>Login sessions and activity records</li><li>Interactions with the Platform (such as searches and views)</li></ul>
             <h3>2.6 Communications and Content</h3>
@@ -95,6 +99,9 @@ function Privacy() {
               <li>Prevent, detect, and investigate fraud, abuse, and prohibited activity</li>
               <li>Resolve disputes between Users</li>
               <li>Enable location-based search</li>
+              <li>Enable parties to an on-site Task to view each other's shared location for coordination during that Task</li>
+              <li>Confirm arrival at a Task location</li>
+              <li>Help resolve disputes and support safety, including records of location shared during a Task</li>
               <li>Send essential service communications (verification emails, password resets, account, payment, and status notifications)</li>
               <li>Comply with legal and regulatory obligations</li>
               <li>Maintain the security and integrity of the Platform</li>
@@ -133,6 +140,7 @@ function Privacy() {
               <li>We retain your personal data while your account is active.</li>
               <li>After your account is closed, we retain <strong>transaction and financial records</strong> for as long as required by applicable law (for example, for tax, accounting, and regulatory purposes).</li>
               <li>Other personal data is deleted within <strong>twelve (12) months</strong> of account closure, except where we are legally required or permitted to retain it longer.</li>
+              <li>Location data shared between parties during a Task is retained only for the duration of the Task and for a limited period afterward to support dispute resolution and safety, after which it is deleted or anonymized.</li>
             </ul>
           </section>
 
