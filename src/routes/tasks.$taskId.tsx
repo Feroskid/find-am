@@ -576,6 +576,20 @@ function TaskDetail() {
             </div>
           </div>
 
+          {applyError && (
+            <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+              <div className="font-semibold">{applyError}</div>
+              {/verify|verif/i.test(applyError) && (
+                <Link
+                  to="/verify-email"
+                  className="mt-1.5 inline-flex items-center gap-1 rounded-full bg-destructive px-3 py-1 text-xs font-bold text-destructive-foreground hover:opacity-90"
+                >
+                  Verify your email →
+                </Link>
+              )}
+            </div>
+          )}
+
           <DialogFooter className="gap-2 sm:gap-2">
             <button
               onClick={() => setShowApply(false)}
