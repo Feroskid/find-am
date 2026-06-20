@@ -388,23 +388,26 @@ function TaskDetail() {
                     )
                   ) : (
                     <>
-                      {token && !isPoster && (
+                      {token && (
                         <div className="rounded-2xl border border-border bg-card p-4">
                           <textarea
                             value={question}
                             onChange={(e) => setQuestion(e.target.value)}
                             rows={3}
-                            placeholder="Ask the poster a question…"
+                            placeholder={isPoster ? "Answer a tasker's question…" : "Ask the poster a question…"}
                             className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
                           />
-                          <div className="mt-2 flex justify-end">
+                          <div className="mt-2 flex items-center justify-between">
+                            <span className="text-[11px] text-muted-foreground">
+                              {isPoster ? "Only you (the poster) can answer questions here." : "The poster will be notified."}
+                            </span>
                             <button
                               onClick={() => askM.mutate()}
                               disabled={askM.isPending || question.trim().length < 3}
                               className="inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-bold text-primary-foreground hover:opacity-90 disabled:opacity-50"
                             >
                               {askM.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
-                              Post question
+                              {isPoster ? "Post answer" : "Post question"}
                             </button>
                           </div>
                         </div>
@@ -412,7 +415,7 @@ function TaskDetail() {
                       {liveQuestions.length === 0 ? (
                         <div className="rounded-2xl border border-dashed border-border p-8 text-center text-muted-foreground">No questions yet.</div>
                       ) : (
-                        liveQuestions.map((q, i) => <QuestionCard key={i} q={q} />)
+                        liveQuestions.map((q, i) => <QuestionCard key={i} q={q} posterId={posterId} />)
                       )}
                     </>
                   )}
