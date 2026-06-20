@@ -80,6 +80,17 @@ export const resendVerification = createServerFn({ method: "POST" })
     }),
   );
 
+export const checkEmailVerification = createServerFn({ method: "POST" })
+  .inputValidator((i: unknown) => z.object({ token: Token }).parse(i))
+  .handler(async ({ data }) => {
+    const res = await call(`/auth/resend-verification`, { method: "POST", token: data.token });
+    if (res.ok) return { ok: true as const, data: { verified: false, resent: true } };
+    if (/already\s+verified/i.test(res.error)) {
+      return { ok: true as const, data: { verified: true, resent: false } };
+    }
+    return res;
+  });
+
 export const forgotPassword = createServerFn({ method: "POST" })
   .inputValidator((i: unknown) => z.object({ email: z.string().email().max(200) }).parse(i))
   .handler(async ({ data }) =>
@@ -180,13 +191,21 @@ export const applyToTask = createServerFn({ method: "POST" })
       token: Token,
     }).parse(i),
   )
-  .handler(async ({ data }) =>
-    call(`/task/${data.taskId}/apply`, {
+  .handler(async ({ data }) => {
+    const res = await call(`/task/${data.taskId}/apply`, {
       method: "POST",
       body: { message_text: data.message_text ?? "" },
       token: data.token,
-    }),
-  );
+    });
+    if (!res.ok && res.status >= 500) {
+      return {
+        ok: false as const,
+        status: res.status,
+        error: "The offer could not be submitted because the task offer service returned a server error. Please try another task or try again shortly.",
+      };
+    }
+    return res;
+  });
 
 
 
