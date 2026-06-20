@@ -727,17 +727,22 @@ function OfferCard({
   );
 }
 
-function QuestionCard({ q }: { q: any }) {
+function QuestionCard({ q, posterId }: { q: any; posterId?: any }) {
   const name = q.sender_name ?? q.user_name ?? q.name ?? "User";
   const body = q.message_text ?? q.message ?? q.body ?? q.text ?? "";
   const time = q.created_at ? new Date(q.created_at).toLocaleString() : "Recently";
+  const senderId = q.sender_id ?? q.user_id ?? q.from_id;
+  const isPosterMsg = posterId != null && senderId != null && String(senderId) === String(posterId);
   return (
-    <article className="rounded-2xl border border-border bg-card p-4">
+    <article className={"rounded-2xl border bg-card p-4 " + (isPosterMsg ? "border-primary/40 bg-primary/5" : "border-border")}>
       <div className="flex items-center gap-2">
         <div className="grid h-8 w-8 place-items-center rounded-full bg-primary/10 text-primary font-bold text-sm">
           {String(name).charAt(0).toUpperCase()}
         </div>
         <div className="font-semibold text-ink text-sm">{name}</div>
+        {isPosterMsg && (
+          <span className="rounded-full bg-primary/15 text-primary px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider">Poster</span>
+        )}
         <div className="text-xs text-muted-foreground ml-auto">{time}</div>
       </div>
       <p className="mt-2 text-sm text-foreground/90 whitespace-pre-wrap">{body}</p>
