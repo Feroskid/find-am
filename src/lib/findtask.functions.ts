@@ -356,8 +356,8 @@ export const getUserRatings = createServerFn({ method: "POST" })
   .handler(async ({ data }) => call(`/user/${data.userId}/ratings`));
 
 export const getUserTasks = createServerFn({ method: "POST" })
-  .inputValidator((i: unknown) => z.object({ userId: UserId }).parse(i))
-  .handler(async ({ data }) => call(`/user/${data.userId}/tasks`));
+  .inputValidator((i: unknown) => z.object({ userId: UserId, token: Token.optional() }).parse(i))
+  .handler(async ({ data }) => call(`/user/${data.userId}/tasks`, { token: data.token }));
 
 // --- Payments (Paystack) ------------------------------------------------
 export const initiateEscrow = createServerFn({ method: "POST" })
