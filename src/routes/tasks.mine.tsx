@@ -37,7 +37,7 @@ function MyTasksPage() {
     const d: any = myTasksQ.data?.ok ? myTasksQ.data.data : null;
     if (!d) return [];
     if (Array.isArray(d)) return d;
-    return d.tasks ?? d.results ?? d.data ?? [];
+    return d.tasks ?? d.results ?? d.data ?? d.items ?? d.posted_tasks ?? d.user_tasks ?? d.my_tasks ?? [];
   })();
 
   const filtered = useMemo(() => {

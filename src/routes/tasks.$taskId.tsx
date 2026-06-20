@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import {
   ArrowLeft, MapPin, Clock, Loader2, Heart, Flag, ChevronDown, BadgeCheck, Star, Globe, CheckCircle2, RefreshCw, MessageSquare, X as XIcon,
 } from "lucide-react";
@@ -97,7 +97,6 @@ function TaskDetail() {
 
   const [tab, setTab] = useState<"offers" | "questions">("offers");
   const [showApply, setShowApply] = useState(false);
-  const [offerAmt, setOfferAmt] = useState("");
   const [message, setMessage] = useState("");
   const [startDate, setStartDate] = useState("");
   const [question, setQuestion] = useState("");
@@ -122,13 +121,9 @@ function TaskDetail() {
     return !parseCounterTarget(body) && !parseReplyTarget(body) && !isDecline(body);
   }) : questions;
 
-  // Initialise offer amount with task budget on first load
-  useEffect(() => {
-    if (task && !offerAmt) setOfferAmt(String(task.budget ?? ""));
-  }, [task]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const amtNum = Number(offerAmt);
-  const validOffer = amtNum >= 100 && message.trim().length >= 20 && message.trim().length <= 2000;
+  // Tasker offer amount is locked to the task budget (poster-controlled).
+  const amtNum = Number(task?.budget ?? 0);
+  const validOffer = message.trim().length >= 20 && message.trim().length <= 2000;
 
   const applyM = useMutation({
     mutationFn: () => apply({
@@ -221,7 +216,6 @@ function TaskDetail() {
 
   const openApplyModal = () => {
     if (!token) return;
-    if (task && !offerAmt) setOfferAmt(String(task.budget ?? ""));
     setShowApply(true);
   };
 
@@ -262,13 +256,31 @@ function TaskDetail() {
 
               <dl className="mt-6 space-y-4 border-t border-border pt-6">
                 <div className="flex items-start gap-3">
-                  <div className="grid h-10 w-10 place-items-center rounded-full bg-primary/10 text-primary font-bold">
-                    {(task.poster_name ?? "U").charAt(0).toUpperCase()}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <dt className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Posted by</dt>
-                    <dd className="font-semibold text-ink">{task.poster_name ?? "Anonymous"}</dd>
-                  </div>
+                  {posterId != null ? (
+                    <Link
+                      to="/u/$userId"
+                      params={{ userId: String(posterId) }}
+                      className="flex items-start gap-3 flex-1 min-w-0 hover:opacity-90"
+                    >
+                      <div className="grid h-10 w-10 place-items-center rounded-full bg-primary/10 text-primary font-bold">
+                        {(task.poster_name ?? "U").charAt(0).toUpperCase()}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <dt className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Posted by</dt>
+                        <dd className="font-semibold text-ink hover:text-primary hover:underline">{task.poster_name ?? "Anonymous"}</dd>
+                      </div>
+                    </Link>
+                  ) : (
+                    <>
+                      <div className="grid h-10 w-10 place-items-center rounded-full bg-primary/10 text-primary font-bold">
+                        {(task.poster_name ?? "U").charAt(0).toUpperCase()}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <dt className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Posted by</dt>
+                        <dd className="font-semibold text-ink">{task.poster_name ?? "Anonymous"}</dd>
+                      </div>
+                    </>
+                  )}
                   <span className="text-xs text-muted-foreground shrink-0">
                     {task.created_at ? new Date(task.created_at).toLocaleDateString() : ""}
                   </span>
@@ -376,23 +388,26 @@ function TaskDetail() {
                     )
                   ) : (
                     <>
-                      {token && !isPoster && (
+                      {token && (
                         <div className="rounded-2xl border border-border bg-card p-4">
                           <textarea
                             value={question}
                             onChange={(e) => setQuestion(e.target.value)}
                             rows={3}
-                            placeholder="Ask the poster a question…"
+                            placeholder={isPoster ? "Answer a tasker's question…" : "Ask the poster a question…"}
                             className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
                           />
-                          <div className="mt-2 flex justify-end">
+                          <div className="mt-2 flex items-center justify-between">
+                            <span className="text-[11px] text-muted-foreground">
+                              {isPoster ? "Only you (the poster) can answer questions here." : "The poster will be notified."}
+                            </span>
                             <button
                               onClick={() => askM.mutate()}
                               disabled={askM.isPending || question.trim().length < 3}
                               className="inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-bold text-primary-foreground hover:opacity-90 disabled:opacity-50"
                             >
                               {askM.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
-                              Post question
+                              {isPoster ? "Post answer" : "Post question"}
                             </button>
                           </div>
                         </div>
@@ -400,7 +415,7 @@ function TaskDetail() {
                       {liveQuestions.length === 0 ? (
                         <div className="rounded-2xl border border-dashed border-border p-8 text-center text-muted-foreground">No questions yet.</div>
                       ) : (
-                        liveQuestions.map((q, i) => <QuestionCard key={i} q={q} />)
+                        liveQuestions.map((q, i) => <QuestionCard key={i} q={q} posterId={posterId} />)
                       )}
                     </>
                   )}
@@ -515,18 +530,12 @@ function TaskDetail() {
           </DialogHeader>
 
           <div className="space-y-4 py-2">
-            <div>
-              <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Your price (₦)</label>
-              <input
-                type="number"
-                inputMode="numeric"
-                min={100}
-                value={offerAmt}
-                onChange={(e) => setOfferAmt(e.target.value)}
-                className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 text-base font-semibold"
-                placeholder="0"
-              />
-              <p className="mt-1 text-xs text-muted-foreground">Task budget: ₦{Number(task?.budget ?? 0).toLocaleString()}</p>
+            <div className="rounded-xl bg-muted/60 px-4 py-3 flex items-center justify-between">
+              <div>
+                <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Task budget</div>
+                <div className="text-xs text-muted-foreground mt-0.5">Set by the poster · cannot be changed</div>
+              </div>
+              <div className="font-display text-2xl text-ink">₦{Number(task?.budget ?? 0).toLocaleString()}</div>
             </div>
 
             <div>
@@ -534,10 +543,11 @@ function TaskDetail() {
               <textarea
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
-                rows={5}
+                rows={6}
                 placeholder="Hi! I've done similar tasks and can start right away. Here's how I'd approach it…"
                 className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
                 maxLength={2000}
+                autoFocus
               />
               <div className="mt-1 flex justify-between text-[11px] text-muted-foreground">
                 <span>Min 20 characters</span>
@@ -717,17 +727,22 @@ function OfferCard({
   );
 }
 
-function QuestionCard({ q }: { q: any }) {
+function QuestionCard({ q, posterId }: { q: any; posterId?: any }) {
   const name = q.sender_name ?? q.user_name ?? q.name ?? "User";
   const body = q.message_text ?? q.message ?? q.body ?? q.text ?? "";
   const time = q.created_at ? new Date(q.created_at).toLocaleString() : "Recently";
+  const senderId = q.sender_id ?? q.user_id ?? q.from_id;
+  const isPosterMsg = posterId != null && senderId != null && String(senderId) === String(posterId);
   return (
-    <article className="rounded-2xl border border-border bg-card p-4">
+    <article className={"rounded-2xl border bg-card p-4 " + (isPosterMsg ? "border-primary/40 bg-primary/5" : "border-border")}>
       <div className="flex items-center gap-2">
         <div className="grid h-8 w-8 place-items-center rounded-full bg-primary/10 text-primary font-bold text-sm">
           {String(name).charAt(0).toUpperCase()}
         </div>
         <div className="font-semibold text-ink text-sm">{name}</div>
+        {isPosterMsg && (
+          <span className="rounded-full bg-primary/15 text-primary px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider">Poster</span>
+        )}
         <div className="text-xs text-muted-foreground ml-auto">{time}</div>
       </div>
       <p className="mt-2 text-sm text-foreground/90 whitespace-pre-wrap">{body}</p>
