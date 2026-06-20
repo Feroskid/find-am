@@ -131,7 +131,7 @@ function TaskDetail() {
       data: {
         taskId,
         token: token!,
-        message: formatOfferMessage({ kind: "OFFER", amount: amtNum, body: message.trim(), startDate: startDate || undefined }),
+        message_text: formatOfferMessage({ kind: "OFFER", amount: amtNum, body: message.trim(), startDate: startDate || undefined }),
       },
     }),
     onSuccess: (r) => {

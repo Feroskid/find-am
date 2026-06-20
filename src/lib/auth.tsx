@@ -106,7 +106,7 @@ export function pickUser(
   if (d.user) return d.user;
   if (d.data?.user) return d.data.user;
   const fromRoot: Record<string, unknown> = {};
-  for (const k of ["user_id", "id", "name", "full_name", "email", "phone", "account_type", "photo_url", "location", "tagline", "about"]) {
+  for (const k of ["user_id", "id", "name", "full_name", "email", "phone", "account_type", "photo_url", "location", "tagline", "about", "email_verified", "is_email_verified", "verified", "rating", "average_rating"]) {
     if (d[k] !== undefined) fromRoot[k] = d[k];
   }
   return Object.keys(fromRoot).length ? fromRoot : null;

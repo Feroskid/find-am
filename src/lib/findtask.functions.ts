@@ -176,14 +176,14 @@ export const applyToTask = createServerFn({ method: "POST" })
   .inputValidator((i: unknown) =>
     z.object({
       taskId: TaskId,
-      message: z.string().min(2).max(2000).optional(),
+      message_text: z.string().min(2).max(2000).optional(),
       token: Token,
     }).parse(i),
   )
   .handler(async ({ data }) =>
     call(`/task/${data.taskId}/apply`, {
       method: "POST",
-      body: { message: data.message ?? "" },
+      body: { message_text: data.message_text ?? "" },
       token: data.token,
     }),
   );

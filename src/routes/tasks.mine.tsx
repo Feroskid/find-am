@@ -30,7 +30,7 @@ function MyTasksPage() {
   const myTasksQ = useQuery({
     queryKey: ["my-tasks", myId],
     enabled: !!token && !!myId,
-    queryFn: () => userTasks({ data: { userId: String(myId) } }),
+    queryFn: () => userTasks({ data: { userId: String(myId), token } }),
   });
 
   const rows: any[] = (() => {
