@@ -97,7 +97,6 @@ function TaskDetail() {
 
   const [tab, setTab] = useState<"offers" | "questions">("offers");
   const [showApply, setShowApply] = useState(false);
-  const [offerAmt, setOfferAmt] = useState("");
   const [message, setMessage] = useState("");
   const [startDate, setStartDate] = useState("");
   const [question, setQuestion] = useState("");
@@ -122,13 +121,9 @@ function TaskDetail() {
     return !parseCounterTarget(body) && !parseReplyTarget(body) && !isDecline(body);
   }) : questions;
 
-  // Initialise offer amount with task budget on first load
-  useEffect(() => {
-    if (task && !offerAmt) setOfferAmt(String(task.budget ?? ""));
-  }, [task]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const amtNum = Number(offerAmt);
-  const validOffer = amtNum >= 100 && message.trim().length >= 20 && message.trim().length <= 2000;
+  // Tasker offer amount is locked to the task budget (poster-controlled).
+  const amtNum = Number(task?.budget ?? 0);
+  const validOffer = message.trim().length >= 20 && message.trim().length <= 2000;
 
   const applyM = useMutation({
     mutationFn: () => apply({
@@ -221,7 +216,6 @@ function TaskDetail() {
 
   const openApplyModal = () => {
     if (!token) return;
-    if (task && !offerAmt) setOfferAmt(String(task.budget ?? ""));
     setShowApply(true);
   };
 
@@ -262,13 +256,31 @@ function TaskDetail() {
 
               <dl className="mt-6 space-y-4 border-t border-border pt-6">
                 <div className="flex items-start gap-3">
-                  <div className="grid h-10 w-10 place-items-center rounded-full bg-primary/10 text-primary font-bold">
-                    {(task.poster_name ?? "U").charAt(0).toUpperCase()}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <dt className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Posted by</dt>
-                    <dd className="font-semibold text-ink">{task.poster_name ?? "Anonymous"}</dd>
-                  </div>
+                  {posterId != null ? (
+                    <Link
+                      to="/u/$userId"
+                      params={{ userId: String(posterId) }}
+                      className="flex items-start gap-3 flex-1 min-w-0 hover:opacity-90"
+                    >
+                      <div className="grid h-10 w-10 place-items-center rounded-full bg-primary/10 text-primary font-bold">
+                        {(task.poster_name ?? "U").charAt(0).toUpperCase()}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <dt className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Posted by</dt>
+                        <dd className="font-semibold text-ink hover:text-primary hover:underline">{task.poster_name ?? "Anonymous"}</dd>
+                      </div>
+                    </Link>
+                  ) : (
+                    <>
+                      <div className="grid h-10 w-10 place-items-center rounded-full bg-primary/10 text-primary font-bold">
+                        {(task.poster_name ?? "U").charAt(0).toUpperCase()}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <dt className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Posted by</dt>
+                        <dd className="font-semibold text-ink">{task.poster_name ?? "Anonymous"}</dd>
+                      </div>
+                    </>
+                  )}
                   <span className="text-xs text-muted-foreground shrink-0">
                     {task.created_at ? new Date(task.created_at).toLocaleDateString() : ""}
                   </span>
@@ -515,18 +527,12 @@ function TaskDetail() {
           </DialogHeader>
 
           <div className="space-y-4 py-2">
-            <div>
-              <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Your price (₦)</label>
-              <input
-                type="number"
-                inputMode="numeric"
-                min={100}
-                value={offerAmt}
-                onChange={(e) => setOfferAmt(e.target.value)}
-                className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 text-base font-semibold"
-                placeholder="0"
-              />
-              <p className="mt-1 text-xs text-muted-foreground">Task budget: ₦{Number(task?.budget ?? 0).toLocaleString()}</p>
+            <div className="rounded-xl bg-muted/60 px-4 py-3 flex items-center justify-between">
+              <div>
+                <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Task budget</div>
+                <div className="text-xs text-muted-foreground mt-0.5">Set by the poster · cannot be changed</div>
+              </div>
+              <div className="font-display text-2xl text-ink">₦{Number(task?.budget ?? 0).toLocaleString()}</div>
             </div>
 
             <div>
@@ -534,10 +540,11 @@ function TaskDetail() {
               <textarea
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
-                rows={5}
+                rows={6}
                 placeholder="Hi! I've done similar tasks and can start right away. Here's how I'd approach it…"
                 className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
                 maxLength={2000}
+                autoFocus
               />
               <div className="mt-1 flex justify-between text-[11px] text-muted-foreground">
                 <span>Min 20 characters</span>
