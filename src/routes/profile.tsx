@@ -2,11 +2,14 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { Loader2, User, MapPin, Star, Award, ShieldCheck } from "lucide-react";
+import { Loader2, User, MapPin, Star, Award, ShieldCheck, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { TaskHeader } from "@/components/TaskHeader";
 import { AvatarUpload } from "@/components/AvatarUpload";
 import { Footer } from "@/components/Footer";
+import {
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
+} from "@/components/ui/dialog";
 import { useAuth } from "@/lib/auth";
 import { getMe, updateProfile, getCategories } from "@/lib/findtask.functions";
 
