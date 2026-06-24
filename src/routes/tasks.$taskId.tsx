@@ -438,7 +438,8 @@ function TaskDetail() {
                           />
                         );
                       })
-                    )
+                    )}
+                    </>
                   ) : (
                     <>
                       {token && (
