@@ -383,7 +383,20 @@ function TaskDetail() {
 
                 <div className="mt-6 space-y-5">
                   {tab === "offers" ? (
-                    offers.length === 0 ? (
+                    <>
+                      {!isPoster && token && totalOfferCount > 0 && (
+                        <div className="rounded-xl border border-border bg-muted/40 p-3 text-xs text-muted-foreground">
+                          {offers.length > 0
+                            ? "Only you and the poster can see your offer. Other taskers' offers are private to the poster."
+                            : `There ${totalOfferCount === 1 ? "is" : "are"} ${totalOfferCount} private offer${totalOfferCount === 1 ? "" : "s"} on this task — only the poster can view them.`}
+                        </div>
+                      )}
+                      {!isPoster && !token && totalOfferCount > 0 && (
+                        <div className="rounded-xl border border-border bg-muted/40 p-3 text-xs text-muted-foreground">
+                          Offers are private — only the poster can see them.
+                        </div>
+                      )}
+                      {offers.length === 0 ? (
                       <div className="rounded-2xl border border-dashed border-border p-8 text-center text-muted-foreground">
                         No offers yet. {!isPoster && token && status === "open" && (
                           <button onClick={openApplyModal} className="text-primary font-bold hover:underline">Be the first to make one →</button>
