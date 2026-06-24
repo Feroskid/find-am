@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { Loader2, MapPin, Crosshair } from "lucide-react";
+import { Loader2, MapPin, Crosshair, Sparkles, ShieldCheck, Clock, Wallet } from "lucide-react";
 import { TaskHeader } from "@/components/TaskHeader";
 import { FeeBreakdown } from "@/components/FeeBreakdown";
 import { createTask, getCategories } from "@/lib/findtask.functions";
@@ -171,13 +171,22 @@ function PostTask() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <div className="min-h-screen flex flex-col bg-gradient-to-b from-primary/[0.04] via-background to-background">
       <TaskHeader />
-      <main className="mx-auto w-full max-w-2xl px-4 sm:px-6 py-10 flex-1">
-        <h1 className="text-3xl font-bold tracking-tight">Post a task</h1>
-        <p className="mt-1 text-muted-foreground">Tell us what you need done. Free to post.</p>
+      <main className="mx-auto w-full max-w-5xl px-4 sm:px-6 py-10 flex-1">
+        <div className="flex items-center gap-3">
+          <span className="grid h-12 w-12 place-items-center rounded-2xl bg-primary/10 text-primary">
+            <Sparkles className="h-6 w-6" />
+          </span>
+          <div>
+            <h1 className="text-3xl sm:text-4xl font-bold tracking-tight">Post a task</h1>
+            <p className="mt-0.5 text-sm text-muted-foreground">Tell us what you need done. Free to post — only pay when you accept an offer.</p>
+          </div>
+        </div>
 
-        <form onSubmit={submit} className="mt-8 space-y-5 rounded-2xl border border-border bg-card p-6">
+        <div className="mt-8 grid gap-6 md:grid-cols-[1fr_280px] items-start">
+        <form onSubmit={submit} className="space-y-5 rounded-3xl border border-border bg-card p-6 sm:p-8 shadow-sm">
+          <div className="-mt-2 mb-2 text-[11px] font-bold uppercase tracking-widest text-muted-foreground">Step 1 · The basics</div>
           <Field label="Task title" hint="e.g. 'Fix leaking kitchen sink'">
             <input required minLength={4} maxLength={140}
               value={form.title}
@@ -379,6 +388,22 @@ function PostTask() {
             By posting you agree to Find-task <Link to="/tasks" className="underline">Terms</Link>.
           </p>
         </form>
+
+        <aside className="md:sticky md:top-[120px] space-y-3">
+          <div className="rounded-2xl border border-border bg-card p-5">
+            <h3 className="font-semibold inline-flex items-center gap-2 text-sm"><ShieldCheck className="h-4 w-4 text-primary" /> Why post on Find-task</h3>
+            <ul className="mt-3 space-y-2.5 text-sm text-foreground/80">
+              <li className="flex gap-2"><Wallet className="h-4 w-4 text-primary shrink-0 mt-0.5" /><span>Funds held in Paystack escrow — only released when you mark complete.</span></li>
+              <li className="flex gap-2"><Clock className="h-4 w-4 text-primary shrink-0 mt-0.5" /><span>Most tasks get their first offer in under 30 minutes.</span></li>
+              <li className="flex gap-2"><ShieldCheck className="h-4 w-4 text-primary shrink-0 mt-0.5" /><span>Verified taskers with ratings and reviews.</span></li>
+            </ul>
+          </div>
+          <div className="rounded-2xl border border-dashed border-border bg-muted/30 p-5 text-xs text-muted-foreground">
+            <div className="font-semibold text-foreground mb-1">Pro tip</div>
+            Be specific in your title and description. Tasks with clear scope and photos get up to 3× more offers.
+          </div>
+        </aside>
+        </div>
       </main>
       <style>{`.input{width:100%;border:1px solid hsl(var(--border));background:hsl(var(--background));border-radius:0.5rem;padding:0.5rem 0.75rem;font-size:0.875rem;outline:none}.input:focus{border-color:hsl(var(--primary))}`}</style>
     </div>

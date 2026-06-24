@@ -2,11 +2,14 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { Loader2, User, MapPin, Star, Award, ShieldCheck } from "lucide-react";
+import { Loader2, User, MapPin, Star, Award, ShieldCheck, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { TaskHeader } from "@/components/TaskHeader";
 import { AvatarUpload } from "@/components/AvatarUpload";
 import { Footer } from "@/components/Footer";
+import {
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
+} from "@/components/ui/dialog";
 import { useAuth } from "@/lib/auth";
 import { getMe, updateProfile, getCategories } from "@/lib/findtask.functions";
 
@@ -61,10 +64,14 @@ function ProfilePage() {
     }
   }, [me, loaded]);
 
+  const [showSaved, setShowSaved] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+
   const save = useMutation({
     mutationFn: () => {
-      // Strip empty/invalid optional fields so the backend validators don't reject the save.
+      setSaveError(null);
       const photoUrl = form.photo_url?.trim();
+      // Accept http(s) URLs only — data URLs are too large for the profile endpoint.
       const isValidUrl = photoUrl ? /^https?:\/\/\S+$/i.test(photoUrl) : false;
       const payload: any = {
         token: token!,
@@ -80,13 +87,22 @@ function ProfilePage() {
     },
     onSuccess: (r) => {
       if (r.ok) {
-        toast.success("Profile saved.");
         const updatedUser = (r.data as any)?.user ?? r.data;
         if (updatedUser && token) setAuth({ token, user: { ...(user ?? {}), ...updatedUser } });
         meQ.refetch();
-      } else toast.error(r.error || "Couldn't save profile");
+        setShowSaved(true);
+        toast.success("Profile saved successfully");
+      } else {
+        const msg = r.error || "Couldn't save profile";
+        setSaveError(msg);
+        toast.error(msg);
+      }
     },
-    onError: (e: any) => toast.error(e?.message || "Couldn't save profile"),
+    onError: (e: any) => {
+      const msg = e?.message || "Couldn't save profile";
+      setSaveError(msg);
+      toast.error(msg);
+    },
   });
 
   if (!token) return null;
@@ -173,6 +189,17 @@ function ProfilePage() {
               </div>
             </Field>
 
+            {saveError && (
+              <div className="rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
+                {saveError}
+              </div>
+            )}
+            {form.photo_url?.startsWith("data:") && (
+              <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 text-xs text-foreground/80">
+                Heads up: uploaded photos must be hosted on a public URL. The rest of your profile will save, but the new photo will not be sent. Paste an image URL with “Use URL” to set your avatar for now.
+              </div>
+            )}
+
             <button
               type="submit"
               disabled={save.isPending}
@@ -255,6 +282,28 @@ function ProfilePage() {
         </div>
       </main>
       <Footer />
+
+      <Dialog open={showSaved} onOpenChange={setShowSaved}>
+        <DialogContent className="sm:max-w-md text-center">
+          <DialogHeader>
+            <div className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
+              <CheckCircle2 className="h-9 w-9" />
+            </div>
+            <DialogTitle className="text-2xl mt-3">Profile saved</DialogTitle>
+            <DialogDescription>
+              Your profile changes have been saved successfully.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="sm:justify-center">
+            <button
+              onClick={() => setShowSaved(false)}
+              className="rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground hover:opacity-90"
+            >
+              Great
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

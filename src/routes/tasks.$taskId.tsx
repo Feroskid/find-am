@@ -11,7 +11,7 @@ import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 import {
-  getTask, applyToTask, acceptApplicant, sendMessage, listMessages,
+  getTask, applyToTask, acceptApplicant, sendMessage, listMessages, listTaskApplications,
 } from "@/lib/findtask.functions";
 import { useAuth } from "@/lib/auth";
 import {
@@ -73,6 +73,7 @@ function TaskDetail() {
   const accept = useServerFn(acceptApplicant);
   const send = useServerFn(sendMessage);
   const fetchMessages = useServerFn(listMessages);
+  const fetchApps = useServerFn(listTaskApplications);
 
   const { data, isFetching, refetch } = useQuery({
     queryKey: ["task", taskId],
@@ -84,19 +85,47 @@ function TaskDetail() {
   const posterId = task?.poster_id ?? task?.user_id ?? task?.owner_id;
   const isPoster = !!task && posterId !== undefined && String(posterId) === String(myId);
 
-  const myApplication: any = (() => {
-    const t: any = task;
-    if (!t) return null;
-    if (t.my_application) return t.my_application;
-    const apps: any[] = t.applications ?? [];
-    return apps.find((a) => String(a.applicant_id ?? a.tasker_id ?? a.user_id) === String(myId)) ?? null;
+  // Poster fetches the full applications list (backend doesn't embed them in /task/:id)
+  const appsQ = useQuery({
+    queryKey: ["task", taskId, "apps", token],
+    enabled: !!token && isPoster,
+    queryFn: () => fetchApps({ data: { taskId, token: token! } }),
+  });
+  const fetchedApps: any[] = (() => {
+    const r = appsQ.data;
+    if (!r?.ok) return [];
+    const d: any = r.data;
+    return d?.applications ?? d?.applicants ?? d?.results ?? (Array.isArray(d) ? d : []);
   })();
 
-  const offers: any[] = task?.applications ?? task?.offers ?? [];
+  // Merge: prefer fetched apps (poster), fall back to embedded on task, dedupe by applicant.
+  const embeddedOffers: any[] = task?.applications ?? task?.offers ?? [];
+  const mergedOffers: any[] = (() => {
+    const byId = new Map<string, any>();
+    [...embeddedOffers, ...fetchedApps].forEach((o, i) => {
+      const k = String(o.applicant_id ?? o.tasker_id ?? o.user_id ?? o.id ?? `idx-${i}`);
+      byId.set(k, { ...(byId.get(k) ?? {}), ...o });
+    });
+    return Array.from(byId.values());
+  })();
+
+  // Visibility: poster sees all; everyone else sees only their own offer.
+  const offers: any[] = isPoster
+    ? mergedOffers
+    : mergedOffers.filter((o) => String(o.applicant_id ?? o.tasker_id ?? o.user_id) === String(myId));
+  const totalOfferCount = mergedOffers.length;
+
+  const myApplication: any = (() => {
+    if (!mergedOffers.length) return null;
+    if (task?.my_application) return task.my_application;
+    return mergedOffers.find((a) => String(a.applicant_id ?? a.tasker_id ?? a.user_id) === String(myId)) ?? null;
+  })();
+
   const questions: any[] = task?.comments ?? task?.questions ?? [];
 
   const [tab, setTab] = useState<"offers" | "questions">("offers");
   const [showApply, setShowApply] = useState(false);
+  const [showOfferSuccess, setShowOfferSuccess] = useState(false);
   const [message, setMessage] = useState("");
   const [startDate, setStartDate] = useState("");
   const [question, setQuestion] = useState("");
@@ -136,11 +165,12 @@ function TaskDetail() {
     }),
     onSuccess: (r) => {
       if (r.ok) {
-        toast.success("Offer sent!");
         setShowApply(false);
         setMessage("");
         setApplyError(null);
+        setShowOfferSuccess(true);
         refetch();
+        appsQ.refetch();
       } else {
         setApplyError(r.error);
         toast.error(r.error);
@@ -338,7 +368,7 @@ function TaskDetail() {
                       (tab === "offers" ? "bg-ink text-background" : "text-muted-foreground")
                     }
                   >
-                    Offers <span className="ml-1 opacity-70">{offers.length}</span>
+                    Offers <span className="ml-1 opacity-70">{totalOfferCount}</span>
                   </button>
                   <button
                     onClick={() => setTab("questions")}
@@ -353,7 +383,20 @@ function TaskDetail() {
 
                 <div className="mt-6 space-y-5">
                   {tab === "offers" ? (
-                    offers.length === 0 ? (
+                    <>
+                      {!isPoster && token && totalOfferCount > 0 && (
+                        <div className="rounded-xl border border-border bg-muted/40 p-3 text-xs text-muted-foreground">
+                          {offers.length > 0
+                            ? "Only you and the poster can see your offer. Other taskers' offers are private to the poster."
+                            : `There ${totalOfferCount === 1 ? "is" : "are"} ${totalOfferCount} private offer${totalOfferCount === 1 ? "" : "s"} on this task — only the poster can view them.`}
+                        </div>
+                      )}
+                      {!isPoster && !token && totalOfferCount > 0 && (
+                        <div className="rounded-xl border border-border bg-muted/40 p-3 text-xs text-muted-foreground">
+                          Offers are private — only the poster can see them.
+                        </div>
+                      )}
+                      {offers.length === 0 ? (
                       <div className="rounded-2xl border border-dashed border-border p-8 text-center text-muted-foreground">
                         No offers yet. {!isPoster && token && status === "open" && (
                           <button onClick={openApplyModal} className="text-primary font-bold hover:underline">Be the first to make one →</button>
@@ -395,7 +438,8 @@ function TaskDetail() {
                           />
                         );
                       })
-                    )
+                    )}
+                    </>
                   ) : (
                     <>
                       {token && (
@@ -654,6 +698,40 @@ function TaskDetail() {
               {counterM.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
               Send counter
             </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Offer submitted success modal */}
+      <Dialog open={showOfferSuccess} onOpenChange={setShowOfferSuccess}>
+        <DialogContent className="sm:max-w-md text-center">
+          <DialogHeader>
+            <div className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-success/15 text-success">
+              <CheckCircle2 className="h-9 w-9" />
+            </div>
+            <DialogTitle className="font-display text-2xl text-ink mt-3">Offer submitted!</DialogTitle>
+            <DialogDescription>
+              Your offer was sent to the poster. You'll be notified the moment they reply or accept it.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="rounded-xl border border-border bg-muted/40 p-3 text-left text-xs text-muted-foreground">
+            Only you and the poster can see your offer and any messages — it's private.
+          </div>
+          <DialogFooter className="gap-2 sm:gap-2 sm:justify-center">
+            <button
+              onClick={() => setShowOfferSuccess(false)}
+              className="rounded-full border border-border px-5 py-2.5 text-sm font-semibold hover:bg-muted"
+            >
+              Keep browsing
+            </button>
+            <Link
+              to="/tasks/$taskId/workspace"
+              params={{ taskId }}
+              onClick={() => setShowOfferSuccess(false)}
+              className="inline-flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-bold text-primary-foreground hover:opacity-90"
+            >
+              Open conversation
+            </Link>
           </DialogFooter>
         </DialogContent>
       </Dialog>
