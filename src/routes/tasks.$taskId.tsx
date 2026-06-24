@@ -125,6 +125,7 @@ function TaskDetail() {
 
   const [tab, setTab] = useState<"offers" | "questions">("offers");
   const [showApply, setShowApply] = useState(false);
+  const [showOfferSuccess, setShowOfferSuccess] = useState(false);
   const [message, setMessage] = useState("");
   const [startDate, setStartDate] = useState("");
   const [question, setQuestion] = useState("");
