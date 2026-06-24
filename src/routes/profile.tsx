@@ -64,10 +64,14 @@ function ProfilePage() {
     }
   }, [me, loaded]);
 
+  const [showSaved, setShowSaved] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+
   const save = useMutation({
     mutationFn: () => {
-      // Strip empty/invalid optional fields so the backend validators don't reject the save.
+      setSaveError(null);
       const photoUrl = form.photo_url?.trim();
+      // Accept http(s) URLs only — data URLs are too large for the profile endpoint.
       const isValidUrl = photoUrl ? /^https?:\/\/\S+$/i.test(photoUrl) : false;
       const payload: any = {
         token: token!,
@@ -83,13 +87,22 @@ function ProfilePage() {
     },
     onSuccess: (r) => {
       if (r.ok) {
-        toast.success("Profile saved.");
         const updatedUser = (r.data as any)?.user ?? r.data;
         if (updatedUser && token) setAuth({ token, user: { ...(user ?? {}), ...updatedUser } });
         meQ.refetch();
-      } else toast.error(r.error || "Couldn't save profile");
+        setShowSaved(true);
+        toast.success("Profile saved successfully");
+      } else {
+        const msg = r.error || "Couldn't save profile";
+        setSaveError(msg);
+        toast.error(msg);
+      }
     },
-    onError: (e: any) => toast.error(e?.message || "Couldn't save profile"),
+    onError: (e: any) => {
+      const msg = e?.message || "Couldn't save profile";
+      setSaveError(msg);
+      toast.error(msg);
+    },
   });
 
   if (!token) return null;
