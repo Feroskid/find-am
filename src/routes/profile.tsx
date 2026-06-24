@@ -189,6 +189,17 @@ function ProfilePage() {
               </div>
             </Field>
 
+            {saveError && (
+              <div className="rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
+                {saveError}
+              </div>
+            )}
+            {form.photo_url?.startsWith("data:") && (
+              <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 text-xs text-foreground/80">
+                Heads up: uploaded photos must be hosted on a public URL. The rest of your profile will save, but the new photo will not be sent. Paste an image URL with “Use URL” to set your avatar for now.
+              </div>
+            )}
+
             <button
               type="submit"
               disabled={save.isPending}
