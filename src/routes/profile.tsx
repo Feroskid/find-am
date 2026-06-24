@@ -282,6 +282,28 @@ function ProfilePage() {
         </div>
       </main>
       <Footer />
+
+      <Dialog open={showSaved} onOpenChange={setShowSaved}>
+        <DialogContent className="sm:max-w-md text-center">
+          <DialogHeader>
+            <div className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
+              <CheckCircle2 className="h-9 w-9" />
+            </div>
+            <DialogTitle className="text-2xl mt-3">Profile saved</DialogTitle>
+            <DialogDescription>
+              Your profile changes have been saved successfully.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="sm:justify-center">
+            <button
+              onClick={() => setShowSaved(false)}
+              className="rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground hover:opacity-90"
+            >
+              Great
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
