@@ -165,11 +165,12 @@ function TaskDetail() {
     }),
     onSuccess: (r) => {
       if (r.ok) {
-        toast.success("Offer sent!");
         setShowApply(false);
         setMessage("");
         setApplyError(null);
+        setShowOfferSuccess(true);
         refetch();
+        appsQ.refetch();
       } else {
         setApplyError(r.error);
         toast.error(r.error);
