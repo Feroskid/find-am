@@ -368,7 +368,7 @@ function TaskDetail() {
                       (tab === "offers" ? "bg-ink text-background" : "text-muted-foreground")
                     }
                   >
-                    Offers <span className="ml-1 opacity-70">{offers.length}</span>
+                    Offers <span className="ml-1 opacity-70">{totalOfferCount}</span>
                   </button>
                   <button
                     onClick={() => setTab("questions")}
