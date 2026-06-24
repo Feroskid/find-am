@@ -388,6 +388,22 @@ function PostTask() {
             By posting you agree to Find-task <Link to="/tasks" className="underline">Terms</Link>.
           </p>
         </form>
+
+        <aside className="md:sticky md:top-[120px] space-y-3">
+          <div className="rounded-2xl border border-border bg-card p-5">
+            <h3 className="font-semibold inline-flex items-center gap-2 text-sm"><ShieldCheck className="h-4 w-4 text-primary" /> Why post on Find-task</h3>
+            <ul className="mt-3 space-y-2.5 text-sm text-foreground/80">
+              <li className="flex gap-2"><Wallet className="h-4 w-4 text-primary shrink-0 mt-0.5" /><span>Funds held in Paystack escrow — only released when you mark complete.</span></li>
+              <li className="flex gap-2"><Clock className="h-4 w-4 text-primary shrink-0 mt-0.5" /><span>Most tasks get their first offer in under 30 minutes.</span></li>
+              <li className="flex gap-2"><ShieldCheck className="h-4 w-4 text-primary shrink-0 mt-0.5" /><span>Verified taskers with ratings and reviews.</span></li>
+            </ul>
+          </div>
+          <div className="rounded-2xl border border-dashed border-border bg-muted/30 p-5 text-xs text-muted-foreground">
+            <div className="font-semibold text-foreground mb-1">Pro tip</div>
+            Be specific in your title and description. Tasks with clear scope and photos get up to 3× more offers.
+          </div>
+        </aside>
+        </div>
       </main>
       <style>{`.input{width:100%;border:1px solid hsl(var(--border));background:hsl(var(--background));border-radius:0.5rem;padding:0.5rem 0.75rem;font-size:0.875rem;outline:none}.input:focus{border-color:hsl(var(--primary))}`}</style>
     </div>
