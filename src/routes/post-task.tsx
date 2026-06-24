@@ -171,13 +171,22 @@ function PostTask() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <div className="min-h-screen flex flex-col bg-gradient-to-b from-primary/[0.04] via-background to-background">
       <TaskHeader />
-      <main className="mx-auto w-full max-w-2xl px-4 sm:px-6 py-10 flex-1">
-        <h1 className="text-3xl font-bold tracking-tight">Post a task</h1>
-        <p className="mt-1 text-muted-foreground">Tell us what you need done. Free to post.</p>
+      <main className="mx-auto w-full max-w-5xl px-4 sm:px-6 py-10 flex-1">
+        <div className="flex items-center gap-3">
+          <span className="grid h-12 w-12 place-items-center rounded-2xl bg-primary/10 text-primary">
+            <Sparkles className="h-6 w-6" />
+          </span>
+          <div>
+            <h1 className="text-3xl sm:text-4xl font-bold tracking-tight">Post a task</h1>
+            <p className="mt-0.5 text-sm text-muted-foreground">Tell us what you need done. Free to post — only pay when you accept an offer.</p>
+          </div>
+        </div>
 
-        <form onSubmit={submit} className="mt-8 space-y-5 rounded-2xl border border-border bg-card p-6">
+        <div className="mt-8 grid gap-6 md:grid-cols-[1fr_280px] items-start">
+        <form onSubmit={submit} className="space-y-5 rounded-3xl border border-border bg-card p-6 sm:p-8 shadow-sm">
+          <div className="-mt-2 mb-2 text-[11px] font-bold uppercase tracking-widest text-muted-foreground">Step 1 · The basics</div>
           <Field label="Task title" hint="e.g. 'Fix leaking kitchen sink'">
             <input required minLength={4} maxLength={140}
               value={form.title}
