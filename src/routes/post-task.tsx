@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { Loader2, MapPin, Crosshair } from "lucide-react";
+import { Loader2, MapPin, Crosshair, Sparkles, ShieldCheck, Clock, Wallet } from "lucide-react";
 import { TaskHeader } from "@/components/TaskHeader";
 import { FeeBreakdown } from "@/components/FeeBreakdown";
 import { createTask, getCategories } from "@/lib/findtask.functions";
