@@ -73,6 +73,7 @@ function TaskDetail() {
   const accept = useServerFn(acceptApplicant);
   const send = useServerFn(sendMessage);
   const fetchMessages = useServerFn(listMessages);
+  const fetchApps = useServerFn(listTaskApplications);
 
   const { data, isFetching, refetch } = useQuery({
     queryKey: ["task", taskId],
@@ -84,15 +85,42 @@ function TaskDetail() {
   const posterId = task?.poster_id ?? task?.user_id ?? task?.owner_id;
   const isPoster = !!task && posterId !== undefined && String(posterId) === String(myId);
 
-  const myApplication: any = (() => {
-    const t: any = task;
-    if (!t) return null;
-    if (t.my_application) return t.my_application;
-    const apps: any[] = t.applications ?? [];
-    return apps.find((a) => String(a.applicant_id ?? a.tasker_id ?? a.user_id) === String(myId)) ?? null;
+  // Poster fetches the full applications list (backend doesn't embed them in /task/:id)
+  const appsQ = useQuery({
+    queryKey: ["task", taskId, "apps", token],
+    enabled: !!token && isPoster,
+    queryFn: () => fetchApps({ data: { taskId, token: token! } }),
+  });
+  const fetchedApps: any[] = (() => {
+    const r = appsQ.data;
+    if (!r?.ok) return [];
+    const d: any = r.data;
+    return d?.applications ?? d?.applicants ?? d?.results ?? (Array.isArray(d) ? d : []);
   })();
 
-  const offers: any[] = task?.applications ?? task?.offers ?? [];
+  // Merge: prefer fetched apps (poster), fall back to embedded on task, dedupe by applicant.
+  const embeddedOffers: any[] = task?.applications ?? task?.offers ?? [];
+  const mergedOffers: any[] = (() => {
+    const byId = new Map<string, any>();
+    [...embeddedOffers, ...fetchedApps].forEach((o, i) => {
+      const k = String(o.applicant_id ?? o.tasker_id ?? o.user_id ?? o.id ?? `idx-${i}`);
+      byId.set(k, { ...(byId.get(k) ?? {}), ...o });
+    });
+    return Array.from(byId.values());
+  })();
+
+  // Visibility: poster sees all; everyone else sees only their own offer.
+  const offers: any[] = isPoster
+    ? mergedOffers
+    : mergedOffers.filter((o) => String(o.applicant_id ?? o.tasker_id ?? o.user_id) === String(myId));
+  const totalOfferCount = mergedOffers.length;
+
+  const myApplication: any = (() => {
+    if (!mergedOffers.length) return null;
+    if (task?.my_application) return task.my_application;
+    return mergedOffers.find((a) => String(a.applicant_id ?? a.tasker_id ?? a.user_id) === String(myId)) ?? null;
+  })();
+
   const questions: any[] = task?.comments ?? task?.questions ?? [];
 
   const [tab, setTab] = useState<"offers" | "questions">("offers");
