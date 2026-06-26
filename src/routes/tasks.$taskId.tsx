@@ -825,11 +825,9 @@ function OfferCard({
         <span className="text-muted-foreground">· {time}</span>
         <div className="flex items-center gap-2 ml-auto">
           {isPoster && !declined && (
-            <>
-              <button onClick={onDecline} className="rounded-full border border-border px-3 py-1.5 text-xs font-semibold hover:bg-muted">Decline</button>
-              <button onClick={onCounter} className="rounded-full border border-primary text-primary px-3 py-1.5 text-xs font-semibold hover:bg-primary/5">Counter</button>
-            </>
+            <button onClick={onDecline} className="rounded-full border border-border px-3 py-1.5 text-xs font-semibold hover:bg-muted">Decline</button>
           )}
+
           {showAccept && (
             <button
               onClick={onAccept}
