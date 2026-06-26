@@ -718,6 +718,101 @@ function TaskDetail() {
         </DialogContent>
       </Dialog>
 
+      {/* Flutterwave payment confirmation modal — fires before accept */}
+      <Dialog open={!!payFor} onOpenChange={(o) => { if (!o && payStage !== "processing" && payStage !== "verifying") { setPayFor(null); setPayStage("confirm"); setPayError(null); } }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <div className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-primary/15 text-primary">
+              <CheckCircle2 className="h-8 w-8" />
+            </div>
+            <DialogTitle className="font-display text-2xl text-ink mt-2 text-center">Confirm payment to accept</DialogTitle>
+            <DialogDescription className="text-center">
+              Pay securely with <span className="font-semibold text-ink">Flutterwave</span>. Funds are held in escrow and only released to the tasker after the task is completed.
+            </DialogDescription>
+          </DialogHeader>
+          {payFor && (
+            <div className="rounded-2xl border border-border bg-muted/40 p-4 text-sm">
+              <div className="flex justify-between"><span className="text-muted-foreground">Tasker</span><span className="font-semibold text-ink">{payFor.applicant_name ?? payFor.tasker_name ?? payFor.name ?? "Tasker"}</span></div>
+              <div className="flex justify-between mt-1"><span className="text-muted-foreground">Task</span><span className="font-semibold text-ink truncate ml-2">{task?.title}</span></div>
+              <div className="mt-3 border-t border-border pt-3 flex justify-between items-baseline">
+                <span className="text-xs uppercase tracking-wider text-muted-foreground">Total to pay</span>
+                <span className="font-display text-2xl text-ink">₦{Number(payFor.amount ?? payFor.price ?? parseOfferAmount(payFor.message) ?? task?.budget ?? 0).toLocaleString()}</span>
+              </div>
+            </div>
+          )}
+          {payError && (
+            <div className="rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-xs text-destructive">{payError}</div>
+          )}
+          <DialogFooter className="gap-2 sm:gap-2">
+            <button
+              onClick={() => { setPayFor(null); setPayStage("confirm"); setPayError(null); }}
+              disabled={payStage === "processing" || payStage === "verifying" || payStage === "accepting"}
+              className="rounded-full border border-border px-5 py-2.5 text-sm font-semibold hover:bg-muted disabled:opacity-50"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={async () => {
+                if (!payFor) return;
+                setPayError(null);
+                setPayStage("processing");
+                try {
+                  const r: any = await initEscrow({ data: { taskId, token: token! } });
+                  if (!r?.ok) throw new Error(r?.error ?? "Could not start payment");
+                  const d: any = r.data ?? {};
+                  const url = d.payment_url ?? d.checkout_url ?? d.authorization_url ?? d.link ?? d.url;
+                  const reference = d.reference ?? d.tx_ref ?? d.transaction_id;
+                  if (url) {
+                    window.open(url, "_blank", "noopener,noreferrer,width=520,height=720");
+                  }
+                  // Poll verification up to ~60s if we have a reference
+                  setPayStage("verifying");
+                  let verified = !reference; // if no ref, skip and accept directly
+                  if (reference) {
+                    for (let i = 0; i < 20; i++) {
+                      await new Promise((res) => setTimeout(res, 3000));
+                      const v: any = await verifyPay({ data: { reference: String(reference), token: token! } });
+                      const vd: any = v?.data ?? {};
+                      const status = String(vd.status ?? vd.payment_status ?? "").toLowerCase();
+                      if (v?.ok && (status === "success" || status === "successful" || status === "paid" || vd.verified)) {
+                        verified = true; break;
+                      }
+                    }
+                  }
+                  if (!verified) throw new Error("Payment not confirmed yet. If you completed it, please try again in a minute.");
+                  setPayStage("accepting");
+                  await acceptM.mutateAsync(payFor._taskerId);
+                  // Decline all other open offers
+                  for (const other of mergedOffers) {
+                    const oid = other.applicant_id ?? other.tasker_id ?? other.user_id;
+                    if (String(oid) !== String(payFor._taskerId)) {
+                      try { await declineM.mutateAsync(other); } catch {}
+                    }
+                  }
+                  setPayStage("done");
+                  toast.success("Payment confirmed — tasker accepted and notified");
+                  setPayFor(null);
+                  setPayStage("confirm");
+                } catch (e: any) {
+                  setPayError(e?.message ?? "Payment failed");
+                  setPayStage("confirm");
+                }
+              }}
+              disabled={payStage === "processing" || payStage === "verifying" || payStage === "accepting"}
+              className="inline-flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-bold text-primary-foreground hover:opacity-90 disabled:opacity-50"
+            >
+              {(payStage === "processing" || payStage === "verifying" || payStage === "accepting") && <Loader2 className="h-4 w-4 animate-spin" />}
+              {payStage === "processing" && "Opening Flutterwave…"}
+              {payStage === "verifying" && "Verifying payment…"}
+              {payStage === "accepting" && "Accepting offer…"}
+              {payStage === "confirm" && "Pay & accept"}
+              {payStage === "done" && "Done"}
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+
       {/* Offer submitted success modal */}
       <Dialog open={showOfferSuccess} onOpenChange={setShowOfferSuccess}>
         <DialogContent className="sm:max-w-md text-center">
