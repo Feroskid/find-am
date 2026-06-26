@@ -183,14 +183,31 @@ function TaskDetail() {
     },
   });
 
+  // Pending payment / accept flow
+  const [payFor, setPayFor] = useState<any | null>(null);
+  const [payStage, setPayStage] = useState<"confirm" | "processing" | "verifying" | "accepting" | "done">("confirm");
+  const [payError, setPayError] = useState<string | null>(null);
+  const initEscrow = useServerFn(initiateEscrow);
+  const verifyPay = useServerFn(verifyPayment);
+
   const acceptM = useMutation({
-    mutationFn: (taskerId: string | number) =>
-      accept({ data: { taskId, taskerId, token: token! } }),
+    mutationFn: async (taskerId: string | number) => {
+      const r = await accept({ data: { taskId, taskerId, token: token! } });
+      if (r.ok) {
+        try {
+          const offer = mergedOffers.find((o) => String(o.applicant_id ?? o.tasker_id ?? o.user_id) === String(taskerId));
+          const toName = offer?.applicant_name ?? offer?.tasker_name ?? offer?.name ?? "there";
+          await send({ data: { taskId, token: token!, message_text: `🎉 Offer accepted! Hi ${toName}, your offer on "${task?.title ?? "this task"}" has been accepted and payment is held in escrow. Let's coordinate next steps here.` } });
+        } catch {}
+      }
+      return r;
+    },
     onSuccess: (r) => {
-      if (r.ok) { toast.success("Tasker accepted"); refetch(); }
+      if (r.ok) { toast.success("Tasker accepted — conversation opened"); refetch(); appsQ.refetch(); qaQ.refetch(); }
       else toast.error(r.error);
     },
   });
+
 
   const counterAmtNum = Number(counterAmt);
   const validCounter = counterAmtNum >= 100 && counterMsg.trim().length >= 5;
