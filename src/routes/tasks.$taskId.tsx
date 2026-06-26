@@ -443,16 +443,15 @@ function TaskDetail() {
                             showAccept={isPoster && status === "open" && !declined}
                             onAccept={() => {
                               const tid = o.applicant_id ?? o.tasker_id ?? o.user_id;
-                              if (tid != null) acceptM.mutate(tid);
-                            }}
-                            onCounter={() => {
-                              setCounterFor(o);
-                              setCounterAmt(String(parseOfferAmount(o.message) ?? task.budget ?? ""));
-                              setCounterMsg("");
+                              if (tid == null) return;
+                              setPayFor({ ...o, _taskerId: tid });
+                              setPayStage("confirm");
+                              setPayError(null);
                             }}
                             onDecline={() => declineM.mutate(o)}
                             accepting={acceptM.isPending}
                           />
+
                         );
                       })
                     )}
