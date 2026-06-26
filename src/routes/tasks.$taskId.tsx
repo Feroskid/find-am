@@ -756,12 +756,13 @@ function TaskDetail() {
 }
 
 function OfferCard({
-  offer, taskBudget, isPoster, isMine, counters, declined, showAccept, onAccept, onCounter, onDecline, accepting,
+  offer, taskBudget, isPoster, isMine, counters, declined, showAccept, onAccept, onDecline, accepting,
 }: {
   offer: any; taskBudget: number; isPoster: boolean; isMine: boolean;
   counters: any[]; declined: boolean; showAccept: boolean;
-  onAccept: () => void; onCounter: () => void; onDecline: () => void; accepting: boolean;
+  onAccept: () => void; onDecline: () => void; accepting: boolean;
 }) {
+
   const name = offer.applicant_name ?? offer.tasker_name ?? offer.user_name ?? offer.name ?? "Tasker";
   const rating = offer.rating ?? "5.0";
   const ratings = offer.ratings_count ?? offer.review_count ?? 0;
