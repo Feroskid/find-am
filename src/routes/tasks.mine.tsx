@@ -98,12 +98,13 @@ function MyTasksPage() {
             <div className="flex items-center gap-2 text-muted-foreground py-12 justify-center"><Loader2 className="h-4 w-4 animate-spin" /> Loading…</div>
           ) : filtered.length === 0 ? (
             <div className="rounded-3xl border border-dashed border-border bg-card p-12 text-center">
-              <h2 className="font-display text-2xl text-ink">You haven't posted any tasks yet</h2>
-              <p className="mt-2 text-muted-foreground">Get started on Find-task by posting a task.</p>
-              <Link to="/post-task" className="mt-5 inline-flex items-center gap-1.5 rounded-full bg-primary px-6 py-2.5 text-sm font-bold text-primary-foreground hover:opacity-90">
-                <Plus className="h-4 w-4" /> Post a task
+              <h2 className="font-display text-2xl text-ink">{isPoster ? "You haven't posted any tasks yet" : "No assigned tasks yet"}</h2>
+              <p className="mt-2 text-muted-foreground">{isPoster ? "Get started on Find-task by posting a task." : "Browse open tasks and make an offer — accepted offers will appear here."}</p>
+              <Link to={isPoster ? "/post-task" : "/tasks/browse"} search={isPoster ? undefined : ({ q: "", category_id: 0, location: "", is_remote: 0, page: 1 } as any)} className="mt-5 inline-flex items-center gap-1.5 rounded-full bg-primary px-6 py-2.5 text-sm font-bold text-primary-foreground hover:opacity-90">
+                <Plus className="h-4 w-4" /> {isPoster ? "Post a task" : "Browse tasks"}
               </Link>
             </div>
+
           ) : (
             <ul className="grid gap-3">
               {filtered.map((t) => {
