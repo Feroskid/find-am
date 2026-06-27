@@ -528,7 +528,24 @@ function TaskDetail() {
                     <Link to="/tasks/$taskId/workspace" params={{ taskId }} className="block w-full rounded-full border border-border py-3 text-sm font-bold hover:bg-muted">
                       Open workspace
                     </Link>
+                    {status === "open" ? (
+                      <button
+                        onClick={() => {
+                          if (!confirm("Cancel this task? Any pending offers will be closed.")) return;
+                          cancelM.mutate(undefined);
+                        }}
+                        disabled={cancelM.isPending}
+                        className="w-full rounded-full border border-destructive/40 text-destructive py-2.5 text-sm font-bold hover:bg-destructive/5 disabled:opacity-50"
+                      >
+                        {cancelM.isPending ? "Cancelling…" : "Cancel task"}
+                      </button>
+                    ) : status !== "completed" && status !== "cancelled" ? (
+                      <div className="rounded-xl border border-border bg-muted/40 p-2.5 text-xs text-muted-foreground">
+                        Task is assigned — cancellation is locked. Use the workspace to coordinate or dispute.
+                      </div>
+                    ) : null}
                   </div>
+
                 ) : !token ? (
                   <Link to="/login" search={{ redirect: `/tasks/${taskId}` } as any} className="mt-5 block w-full rounded-full bg-primary py-3 text-sm font-bold text-primary-foreground hover:opacity-90">
                     Log in to make an offer
