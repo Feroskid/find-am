@@ -86,7 +86,8 @@ function NotificationsPage() {
             items.map((n: any, i: number) => {
               const id = n.id ?? n.notification_id ?? String(i);
               const read = !!(n.read || n.read_at);
-              const taskId = n.task_id ?? n.taskId;
+              const taskId = n.task_id ?? n.taskId ?? n.related_task_id;
+              const type = String(n.type ?? n.notification_type ?? "").toLowerCase();
               const handleClick = async () => {
                 if (!read) await mark({ data: { id: String(id), token: token! } }).catch(() => {});
               };
@@ -99,12 +100,31 @@ function NotificationsPage() {
                   </div>
                 </div>
               );
-              return taskId ? (
-                <Link key={id} to="/tasks/$taskId" params={{ taskId: String(taskId) }} onClick={handleClick} className="block">{body}</Link>
-              ) : (
-                <div key={id} onClick={handleClick} className="cursor-pointer">{body}</div>
+
+              // Route by type using related taskId.
+              if (taskId) {
+                if (type.includes("message") || type.includes("chat")) {
+                  return (
+                    <Link key={id} to="/tasks/$taskId/workspace" params={{ taskId: String(taskId) }} onClick={handleClick} className="block">{body}</Link>
+                  );
+                }
+                if (type.includes("application") || type.includes("offer") || type.includes("applicant")) {
+                  return (
+                    <Link key={id} to="/tasks/$taskId/applications" params={{ taskId: String(taskId) }} onClick={handleClick} className="block">{body}</Link>
+                  );
+                }
+                // release reminder / completion / generic task notifications -> task detail
+                return (
+                  <Link key={id} to="/tasks/$taskId" params={{ taskId: String(taskId) }} onClick={handleClick} className="block">{body}</Link>
+                );
+              }
+
+              // No taskId (ban, KYC, etc.) — go to dashboard.
+              return (
+                <Link key={id} to="/dashboard" onClick={handleClick} className="block">{body}</Link>
               );
             })
+
           )}
         </div>
       </main>
