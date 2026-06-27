@@ -59,11 +59,17 @@ function MyTasksPage() {
       <TaskHeader />
       <main className="mx-auto w-full max-w-5xl px-4 sm:px-6 py-8 flex-1">
         <div className="flex items-end justify-between flex-wrap gap-3">
-          <h1 className="font-display text-3xl sm:text-4xl text-ink">My tasks</h1>
-          <Link to="/post-task" className="inline-flex items-center gap-1.5 rounded-full bg-primary px-5 py-2.5 text-sm font-bold text-primary-foreground hover:opacity-90">
-            <Plus className="h-4 w-4" /> Post a task
-          </Link>
+          <div>
+            <h1 className="font-display text-3xl sm:text-4xl text-ink">{isPoster ? "My posted tasks" : "My assigned tasks"}</h1>
+            <p className="mt-1 text-sm text-muted-foreground">{isPoster ? "All tasks you've posted — open, assigned, and completed." : "Tasks where your offer was accepted, plus completed jobs."}</p>
+          </div>
+          {isPoster && (
+            <Link to="/post-task" className="inline-flex items-center gap-1.5 rounded-full bg-primary px-5 py-2.5 text-sm font-bold text-primary-foreground hover:opacity-90">
+              <Plus className="h-4 w-4" /> Post a task
+            </Link>
+          )}
         </div>
+
 
         <div className="mt-6 flex items-center gap-2 flex-wrap">
           <div className="flex items-center gap-2 rounded-full bg-muted px-3 py-2 flex-1 max-w-sm">
