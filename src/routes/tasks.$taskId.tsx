@@ -209,6 +209,17 @@ function TaskDetail() {
     },
   });
 
+  const cancelFn = useServerFn(cancelTask);
+  const cancelM = useMutation({
+    mutationFn: (reason?: string) => cancelFn({ data: { taskId, token: token!, reason } }),
+    onSuccess: (r) => {
+      if (r.ok) { toast.success("Task cancelled"); refetch(); }
+      else toast.error(r.error);
+    },
+  });
+
+
+
 
   const counterAmtNum = Number(counterAmt);
   const validCounter = counterAmtNum >= 100 && counterMsg.trim().length >= 5;
