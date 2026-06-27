@@ -16,10 +16,11 @@ export const Route = createFileRoute("/tasks/mine")({
 const FILTERS = ["All", "Open", "Assigned", "Completed", "Cancelled"] as const;
 
 function MyTasksPage() {
-  const { token, ready, user } = useAuth();
+  const { token, ready, user, mode } = useAuth();
   const navigate = useNavigate();
   const userTasks = useServerFn(getUserTasks);
   const myId = (user as any)?.user_id ?? (user as any)?.id;
+  const isPoster = mode === "poster";
   const [q, setQ] = useState("");
   const [filter, setFilter] = useState<(typeof FILTERS)[number]>("All");
 
@@ -28,10 +29,11 @@ function MyTasksPage() {
   }, [token, ready, navigate]);
 
   const myTasksQ = useQuery({
-    queryKey: ["my-tasks", myId],
+    queryKey: ["my-tasks", myId, mode],
     enabled: !!token && !!myId,
-    queryFn: () => userTasks({ data: { userId: String(myId), token } }),
+    queryFn: () => userTasks({ data: { userId: String(myId), token, role: isPoster ? "poster" : "tasker" } }),
   });
+
 
   const rows: any[] = (() => {
     const d: any = myTasksQ.data?.ok ? myTasksQ.data.data : null;
