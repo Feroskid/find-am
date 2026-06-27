@@ -16,10 +16,11 @@ export const Route = createFileRoute("/tasks/mine")({
 const FILTERS = ["All", "Open", "Assigned", "Completed", "Cancelled"] as const;
 
 function MyTasksPage() {
-  const { token, ready, user } = useAuth();
+  const { token, ready, user, mode } = useAuth();
   const navigate = useNavigate();
   const userTasks = useServerFn(getUserTasks);
   const myId = (user as any)?.user_id ?? (user as any)?.id;
+  const isPoster = mode === "poster";
   const [q, setQ] = useState("");
   const [filter, setFilter] = useState<(typeof FILTERS)[number]>("All");
 
@@ -28,10 +29,11 @@ function MyTasksPage() {
   }, [token, ready, navigate]);
 
   const myTasksQ = useQuery({
-    queryKey: ["my-tasks", myId],
+    queryKey: ["my-tasks", myId, mode],
     enabled: !!token && !!myId,
-    queryFn: () => userTasks({ data: { userId: String(myId), token } }),
+    queryFn: () => userTasks({ data: { userId: String(myId), token, role: isPoster ? "poster" : "tasker" } }),
   });
+
 
   const rows: any[] = (() => {
     const d: any = myTasksQ.data?.ok ? myTasksQ.data.data : null;
@@ -57,11 +59,17 @@ function MyTasksPage() {
       <TaskHeader />
       <main className="mx-auto w-full max-w-5xl px-4 sm:px-6 py-8 flex-1">
         <div className="flex items-end justify-between flex-wrap gap-3">
-          <h1 className="font-display text-3xl sm:text-4xl text-ink">My tasks</h1>
-          <Link to="/post-task" className="inline-flex items-center gap-1.5 rounded-full bg-primary px-5 py-2.5 text-sm font-bold text-primary-foreground hover:opacity-90">
-            <Plus className="h-4 w-4" /> Post a task
-          </Link>
+          <div>
+            <h1 className="font-display text-3xl sm:text-4xl text-ink">{isPoster ? "My posted tasks" : "My assigned tasks"}</h1>
+            <p className="mt-1 text-sm text-muted-foreground">{isPoster ? "All tasks you've posted — open, assigned, and completed." : "Tasks where your offer was accepted, plus completed jobs."}</p>
+          </div>
+          {isPoster && (
+            <Link to="/post-task" className="inline-flex items-center gap-1.5 rounded-full bg-primary px-5 py-2.5 text-sm font-bold text-primary-foreground hover:opacity-90">
+              <Plus className="h-4 w-4" /> Post a task
+            </Link>
+          )}
         </div>
+
 
         <div className="mt-6 flex items-center gap-2 flex-wrap">
           <div className="flex items-center gap-2 rounded-full bg-muted px-3 py-2 flex-1 max-w-sm">
@@ -90,12 +98,13 @@ function MyTasksPage() {
             <div className="flex items-center gap-2 text-muted-foreground py-12 justify-center"><Loader2 className="h-4 w-4 animate-spin" /> Loading…</div>
           ) : filtered.length === 0 ? (
             <div className="rounded-3xl border border-dashed border-border bg-card p-12 text-center">
-              <h2 className="font-display text-2xl text-ink">You haven't posted any tasks yet</h2>
-              <p className="mt-2 text-muted-foreground">Get started on Find-task by posting a task.</p>
-              <Link to="/post-task" className="mt-5 inline-flex items-center gap-1.5 rounded-full bg-primary px-6 py-2.5 text-sm font-bold text-primary-foreground hover:opacity-90">
-                <Plus className="h-4 w-4" /> Post a task
+              <h2 className="font-display text-2xl text-ink">{isPoster ? "You haven't posted any tasks yet" : "No assigned tasks yet"}</h2>
+              <p className="mt-2 text-muted-foreground">{isPoster ? "Get started on Find-task by posting a task." : "Browse open tasks and make an offer — accepted offers will appear here."}</p>
+              <Link to={isPoster ? "/post-task" : "/tasks/browse"} search={isPoster ? undefined : ({ q: "", category_id: 0, location: "", is_remote: 0, page: 1 } as any)} className="mt-5 inline-flex items-center gap-1.5 rounded-full bg-primary px-6 py-2.5 text-sm font-bold text-primary-foreground hover:opacity-90">
+                <Plus className="h-4 w-4" /> {isPoster ? "Post a task" : "Browse tasks"}
               </Link>
             </div>
+
           ) : (
             <ul className="grid gap-3">
               {filtered.map((t) => {

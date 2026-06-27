@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Clock, MapPin, Banknote, Globe } from "lucide-react";
+import { Clock, MapPin, Banknote, Globe, MessageSquare } from "lucide-react";
 
 export interface TaskCardData {
   id: string | number;
@@ -12,6 +12,7 @@ export interface TaskCardData {
   status?: string;
   is_remote?: number | boolean;
   poster_name?: string;
+  offers_count?: number;
 }
 
 /** Adapter — accepts the raw API row and normalises field names. */
@@ -27,8 +28,10 @@ export function toCardData(t: any): TaskCardData {
     status: t.status,
     is_remote: t.is_remote,
     poster_name: t.poster_name,
+    offers_count: t.offers_count ?? t.applications_count ?? t.applicants_count ?? t.offer_count ?? 0,
   };
 }
+
 
 function formatBudget(b: number | string | undefined) {
   if (b == null || b === "") return "—";
@@ -80,7 +83,11 @@ export function TaskCard({ task }: { task: TaskCardData }) {
             {task.status}
           </span>
         )}
+        <span className="inline-flex items-center gap-1 text-[11px] font-medium text-muted-foreground">
+          <MessageSquare className="h-3 w-3" /> {Number(task.offers_count ?? 0)} offer{Number(task.offers_count ?? 0) === 1 ? "" : "s"}
+        </span>
       </div>
     </Link>
   );
 }
+

@@ -2,14 +2,16 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Loader2, ArrowLeft, Send, CheckCircle2, AlertTriangle, Star, Banknote, Lock } from "lucide-react";
+import { Loader2, ArrowLeft, Send, CheckCircle2, AlertTriangle, Star, Banknote, Lock, MapPin, Navigation, Flag } from "lucide-react";
 import { toast } from "sonner";
 import { TaskHeader } from "@/components/TaskHeader";
 import { useAuth } from "@/lib/auth";
 import { roomSecret, encryptText, decryptText } from "@/lib/e2ee";
 import {
   getTask, listMessages, sendMessage, completeTask, disputeTask, rateTask,
+  getTaskLocation, toggleTaskLocation, markArrived,
 } from "@/lib/findtask.functions";
+
 
 export const Route = createFileRoute("/tasks/$taskId/workspace")({
   head: () => ({ meta: [{ title: "Task workspace — Find-task" }] }),
@@ -240,8 +242,119 @@ function WorkspacePage() {
               </button>
             </div>
           )}
+
+          {task && !task.is_remote && (status === "assigned" || status === "in_progress" || status === "accepted") && (
+            <LiveLocationPanel taskId={taskId} token={token!} isPoster={isPoster} />
+          )}
         </aside>
       </main>
     </div>
   );
 }
+
+function LiveLocationPanel({ taskId, token, isPoster }: { taskId: string; token: string; isPoster: boolean }) {
+  const getLoc = useServerFn(getTaskLocation);
+  const toggle = useServerFn(toggleTaskLocation);
+  const arrive = useServerFn(markArrived);
+
+  const locQ = useQuery({
+    queryKey: ["task", taskId, "location", token],
+    queryFn: () => getLoc({ data: { taskId, token } }),
+    refetchInterval: 15000,
+  });
+
+  const [sharing, setSharing] = useState(false);
+  const [pos, setPos] = useState<{ lat: number; lng: number } | null>(null);
+  const watchRef = useRef<number | null>(null);
+
+  // Start/stop browser geolocation watch when sharing is on.
+  useEffect(() => {
+    if (!sharing) {
+      if (watchRef.current != null && navigator.geolocation) {
+        navigator.geolocation.clearWatch(watchRef.current);
+        watchRef.current = null;
+      }
+      return;
+    }
+    if (!navigator.geolocation) {
+      toast.error("Geolocation isn't supported on this device.");
+      setSharing(false);
+      return;
+    }
+    watchRef.current = navigator.geolocation.watchPosition(
+      (p) => {
+        const next = { lat: p.coords.latitude, lng: p.coords.longitude };
+        setPos(next);
+        toggle({ data: { taskId, token, sharing: true, latitude: next.lat, longitude: next.lng } }).catch(() => {});
+      },
+      () => toast.error("Couldn't get your location."),
+      { enableHighAccuracy: true, maximumAge: 10_000, timeout: 15_000 },
+    );
+    return () => {
+      if (watchRef.current != null && navigator.geolocation) navigator.geolocation.clearWatch(watchRef.current);
+    };
+  }, [sharing, taskId, token, toggle]);
+
+  const data: any = locQ.data?.ok ? locQ.data.data : null;
+  const poster = data?.poster ?? data?.poster_location;
+  const tasker = data?.tasker ?? data?.tasker_location;
+  const other = isPoster ? tasker : poster;
+
+  const onToggle = async () => {
+    const next = !sharing;
+    setSharing(next);
+    if (!next) {
+      await toggle({ data: { taskId, token, sharing: false } }).catch(() => {});
+    }
+  };
+
+  const onArrived = async () => {
+    const here = pos;
+    const r: any = await arrive({ data: { taskId, token, ...(here ? { latitude: here.lat, longitude: here.lng } : {}) } });
+    if (r?.ok) toast.success("Marked arrived"); else toast.error(r?.error ?? "Could not mark arrived");
+  };
+
+  return (
+    <div className="rounded-2xl border border-border bg-card p-5 space-y-3">
+      <h3 className="font-semibold inline-flex items-center gap-2"><MapPin className="h-4 w-4 text-primary" /> Live location</h3>
+      <p className="text-xs text-muted-foreground">On-site task — share your live location with the {isPoster ? "tasker" : "poster"} to coordinate arrival.</p>
+
+      <button
+        onClick={onToggle}
+        className={`w-full inline-flex items-center justify-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold transition ${sharing ? "bg-emerald-500 text-white" : "bg-primary text-primary-foreground hover:opacity-90"}`}
+      >
+        <Navigation className="h-4 w-4" /> {sharing ? "Sharing live · Tap to stop" : "Share my location"}
+      </button>
+
+      {pos && (
+        <div className="text-[11px] text-muted-foreground">You: {pos.lat.toFixed(4)}, {pos.lng.toFixed(4)}</div>
+      )}
+
+      {other && (other.latitude ?? other.lat) != null && (
+        <div className="rounded-xl border border-border bg-muted/30 p-3 text-xs">
+          <div className="font-semibold text-ink">{isPoster ? "Tasker" : "Poster"} location</div>
+          <div className="text-muted-foreground mt-0.5">
+            {(other.latitude ?? other.lat)?.toFixed?.(4)}, {(other.longitude ?? other.lng)?.toFixed?.(4)}
+          </div>
+          <a
+            href={`https://www.google.com/maps?q=${other.latitude ?? other.lat},${other.longitude ?? other.lng}`}
+            target="_blank" rel="noopener noreferrer"
+            className="mt-1 inline-block text-primary font-semibold hover:underline"
+          >
+            Open in Google Maps →
+          </a>
+        </div>
+      )}
+
+      {!isPoster && (
+        <button
+          onClick={onArrived}
+          className="w-full inline-flex items-center justify-center gap-1.5 rounded-full border border-border px-4 py-2 text-sm font-semibold hover:bg-muted"
+        >
+          <Flag className="h-4 w-4" /> I've arrived
+        </button>
+      )}
+    </div>
+  );
+}
+

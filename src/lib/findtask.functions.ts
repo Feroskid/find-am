@@ -368,17 +368,33 @@ export const updateProfile = createServerFn({ method: "POST" })
 const UserId = z.union([z.number().int().positive(), z.string().min(1).max(64)]);
 export const getPublicUser = createServerFn({ method: "POST" })
   .inputValidator((i: unknown) => z.object({ userId: UserId }).parse(i))
-  .handler(async ({ data }) => call(`/user/${data.userId}`));
+  .handler(async ({ data }) => {
+    // The documented endpoint is /user/{user_id}/profile; fall back to /user/{user_id}.
+    const r = await call(`/user/${data.userId}/profile`);
+    if (r.ok || r.status !== 404) return r;
+    return call(`/user/${data.userId}`);
+  });
 
 export const getUserRatings = createServerFn({ method: "POST" })
   .inputValidator((i: unknown) => z.object({ userId: UserId }).parse(i))
   .handler(async ({ data }) => call(`/user/${data.userId}/ratings`));
 
 export const getUserTasks = createServerFn({ method: "POST" })
-  .inputValidator((i: unknown) => z.object({ userId: UserId, token: Token.optional() }).parse(i))
+  .inputValidator((i: unknown) =>
+    z.object({
+      userId: UserId,
+      token: Token.optional(),
+      role: z.enum(["poster", "tasker"]).optional(),
+    }).parse(i),
+  )
   .handler(async ({ data }) => {
-    const direct = await call(`/user/${data.userId}/tasks`, { token: data.token });
+    const role = data.role ?? "poster";
+    const path = role === "tasker"
+      ? `/user/${data.userId}/tasks?role=tasker`
+      : `/user/${data.userId}/tasks`;
+    const direct = await call(path, { token: data.token });
     if (direct.ok || direct.status !== 404) return direct;
+    // Fallback: search and filter client-side.
     const search = await call(`/task/search?limit=100&page=1`);
     if (!search.ok) return search;
     const list: any[] = (search.data as any)?.results ?? (search.data as any)?.tasks ?? [];
@@ -390,8 +406,75 @@ export const getUserTasks = createServerFn({ method: "POST" })
         return detail.ok ? ((detail.data as any)?.task ?? detail.data) : t;
       }),
     );
-    const tasks = details.filter((t: any) => String(t?.poster_id ?? t?.user_id ?? t?.owner_id ?? "") === String(data.userId));
+    const tasks = details.filter((t: any) => {
+      if (role === "tasker") {
+        return String(t?.tasker_id ?? t?.accepted_tasker_id ?? t?.assigned_to ?? "") === String(data.userId);
+      }
+      return String(t?.poster_id ?? t?.user_id ?? t?.owner_id ?? "") === String(data.userId);
+    });
     return { ok: true as const, data: { tasks } };
+  });
+
+// --- Task lifecycle: cancel --------------------------------------------
+export const cancelTask = createServerFn({ method: "POST" })
+  .inputValidator((i: unknown) =>
+    z.object({ taskId: TaskId, token: Token, reason: z.string().max(500).optional() }).parse(i),
+  )
+  .handler(async ({ data }) => {
+    // Try POST /task/{id}/cancel, then PATCH /task/{id} with status=cancelled.
+    const a = await call(`/task/${data.taskId}/cancel`, {
+      method: "POST",
+      token: data.token,
+      body: data.reason ? { reason: data.reason } : undefined,
+    });
+    if (a.ok || (a.status !== 404 && a.status !== 405)) return a;
+    return call(`/task/${data.taskId}`, {
+      method: "PATCH",
+      token: data.token,
+      body: { status: "cancelled", reason: data.reason ?? undefined },
+    });
+  });
+
+// --- Live location (task) ----------------------------------------------
+export const getTaskLocation = createServerFn({ method: "POST" })
+  .inputValidator((i: unknown) => z.object({ taskId: TaskId, token: Token }).parse(i))
+  .handler(async ({ data }) => call(`/task/${data.taskId}/location`, { token: data.token }));
+
+export const toggleTaskLocation = createServerFn({ method: "POST" })
+  .inputValidator((i: unknown) =>
+    z.object({
+      taskId: TaskId,
+      token: Token,
+      sharing: z.boolean().optional(),
+      latitude: z.number().optional(),
+      longitude: z.number().optional(),
+    }).parse(i),
+  )
+  .handler(async ({ data }) => {
+    const { taskId, token, ...body } = data;
+    return call(`/task/${taskId}/location/toggle`, {
+      method: "POST",
+      token,
+      body: Object.keys(body).length ? body : undefined,
+    });
+  });
+
+export const markArrived = createServerFn({ method: "POST" })
+  .inputValidator((i: unknown) =>
+    z.object({
+      taskId: TaskId,
+      token: Token,
+      latitude: z.number().optional(),
+      longitude: z.number().optional(),
+    }).parse(i),
+  )
+  .handler(async ({ data }) => {
+    const { taskId, token, ...body } = data;
+    return call(`/task/${taskId}/arrived`, {
+      method: "POST",
+      token,
+      body: Object.keys(body).length ? body : undefined,
+    });
   });
 
 // --- Payments (Paystack) ------------------------------------------------
@@ -414,3 +497,4 @@ export const releaseEscrow = createServerFn({ method: "POST" })
   .handler(async ({ data }) =>
     call(`/task/${data.taskId}/release`, { method: "POST", token: data.token }),
   );
+
