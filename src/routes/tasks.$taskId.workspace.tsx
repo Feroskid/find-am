@@ -2,14 +2,16 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Loader2, ArrowLeft, Send, CheckCircle2, AlertTriangle, Star, Banknote, Lock } from "lucide-react";
+import { Loader2, ArrowLeft, Send, CheckCircle2, AlertTriangle, Star, Banknote, Lock, MapPin, Navigation, Flag } from "lucide-react";
 import { toast } from "sonner";
 import { TaskHeader } from "@/components/TaskHeader";
 import { useAuth } from "@/lib/auth";
 import { roomSecret, encryptText, decryptText } from "@/lib/e2ee";
 import {
   getTask, listMessages, sendMessage, completeTask, disputeTask, rateTask,
+  getTaskLocation, toggleTaskLocation, markArrived,
 } from "@/lib/findtask.functions";
+
 
 export const Route = createFileRoute("/tasks/$taskId/workspace")({
   head: () => ({ meta: [{ title: "Task workspace — Find-task" }] }),
