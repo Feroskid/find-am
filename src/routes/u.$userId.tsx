@@ -21,7 +21,7 @@ function PublicProfilePage() {
   const rQ = useQuery({ queryKey: ["pu", userId, "r"], queryFn: () => rFn({ data: { userId } }) });
   const tQ = useQuery({ queryKey: ["pu", userId, "t"], queryFn: () => tFn({ data: { userId } }) });
 
-  const u: any = uQ.data?.ok ? ((uQ.data.data as any)?.user ?? uQ.data.data) : null;
+  const u: any = uQ.data?.ok ? ((uQ.data.data as any)?.profile ?? (uQ.data.data as any)?.user ?? uQ.data.data) : null;
   const ratingsData: any = rQ.data?.ok ? rQ.data.data : null;
   const categoryRatings: any[] = ratingsData?.category_ratings ?? ratingsData?.ratings_by_category ?? u?.category_ratings ?? [];
   const badges: any[] = ratingsData?.badges ?? u?.badges ?? [];
