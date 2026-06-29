@@ -81,8 +81,11 @@ function TaskListItem({ t, active, onHover }: { t: any; active?: boolean; onHove
       <div className="mt-2 flex items-center gap-1.5 text-xs font-semibold">
         <StatusDot s={status} />
         <span className={"capitalize " + statusStyle(status)}>{status.replace("_", " ")}</span>
-        <span className="text-muted-foreground">· {offers} offer{Number(offers) === 1 ? "" : "s"}</span>
+        {Number(offers) > 0 && (
+          <span className="text-muted-foreground">· {offers} offer{Number(offers) === 1 ? "" : "s"}</span>
+        )}
       </div>
+
     </Link>
   );
 }
