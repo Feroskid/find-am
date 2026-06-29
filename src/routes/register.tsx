@@ -27,7 +27,7 @@ function RegisterPage() {
     if (token) navigate({ to: "/dashboard", replace: true });
   }, [token, navigate]);
 
-  const [form, setForm] = useState({ name: "", email: "", phone: "", password: "", confirm: "" });
+  const [form, setForm] = useState({ name: "", email: "", phone: "", password: "", confirm: "", account_type: "individual" as "individual" | "business" });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -44,7 +44,7 @@ function RegisterPage() {
     setLoading(true);
     try {
       const { confirm: _c, ...payload } = form;
-      const res = await reg({ data: { ...payload, account_type: "individual" } });
+      const res = await reg({ data: payload });
       if (!res.ok) { setError(res.error); return; }
       const loginRes = await login({ data: { email: form.email, password: form.password } });
       if (loginRes.ok) setAuth({ token: pickToken(loginRes.data), user: pickUser(loginRes.data) });
