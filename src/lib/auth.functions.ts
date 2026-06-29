@@ -8,7 +8,7 @@ const RegisterSchema = z.object({
   email: z.string().email().max(255),
   phone: z.string().min(6).max(32),
   password: z.string().min(6).max(128),
-  account_type: z.enum(["individual", "business"]).default("individual"),
+  account_type: z.enum(["individual", "company"]).default("individual"),
 });
 
 const LoginSchema = z.object({
