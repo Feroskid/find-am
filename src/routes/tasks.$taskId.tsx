@@ -893,6 +893,7 @@ function OfferCard({
 }) {
 
   const name = offer.applicant_name ?? offer.tasker_name ?? offer.user_name ?? offer.name ?? "Tasker";
+  const applicantId = offer.applicant_id ?? offer.tasker_id ?? offer.user_id ?? null;
   const rating = offer.rating ?? "5.0";
   const ratings = offer.ratings_count ?? offer.review_count ?? 0;
   const completion = offer.completion_rate ?? "100%";
@@ -903,15 +904,24 @@ function OfferCard({
   const amount = Number(offer.amount ?? offer.price ?? parsedAmt ?? taskBudget);
   const [showReplies, setShowReplies] = useState(false);
 
+  const AvatarEl = (
+    <div className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-primary/10 font-display text-lg text-primary">
+      {String(name).charAt(0).toUpperCase()}
+    </div>
+  );
+
   return (
     <article className={"rounded-2xl border bg-card p-5 " + (declined ? "border-destructive/30 opacity-70" : "border-border")}>
       <div className="flex items-start gap-3">
-        <div className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-primary/10 font-display text-lg text-primary">
-          {String(name).charAt(0).toUpperCase()}
-        </div>
+        {applicantId ? (
+          <Link to="/u/$userId" params={{ userId: String(applicantId) }} className="shrink-0 hover:opacity-80">{AvatarEl}</Link>
+        ) : AvatarEl}
         <div className="min-w-0 flex-1">
           <div className="font-bold text-ink inline-flex items-center gap-1.5">
-            {name} <BadgeCheck className="h-4 w-4 text-primary" />
+            {applicantId ? (
+              <Link to="/u/$userId" params={{ userId: String(applicantId) }} className="hover:text-primary hover:underline">{name}</Link>
+            ) : name}
+            <BadgeCheck className="h-4 w-4 text-primary" />
             {isMine && <span className="ml-1 text-[10px] uppercase tracking-wider rounded-full bg-primary/10 text-primary px-2 py-0.5">You</span>}
             {declined && <span className="ml-1 text-[10px] uppercase tracking-wider rounded-full bg-destructive/10 text-destructive px-2 py-0.5">Declined</span>}
           </div>

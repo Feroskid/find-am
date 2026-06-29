@@ -27,7 +27,7 @@ function RegisterPage() {
     if (token) navigate({ to: "/dashboard", replace: true });
   }, [token, navigate]);
 
-  const [form, setForm] = useState({ name: "", email: "", phone: "", password: "", confirm: "", account_type: "individual" as "individual" | "business" });
+  const [form, setForm] = useState({ name: "", email: "", phone: "", password: "", confirm: "", account_type: "individual" as "individual" | "company" });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -97,9 +97,9 @@ function RegisterPage() {
                     <div className="text-xs text-muted-foreground">Post tasks and earn as a tasker.</div>
                   </button>
                   <button type="button"
-                    onClick={() => update("account_type", "business")}
-                    className={"rounded-xl border px-3 py-2.5 text-sm text-left transition " + (form.account_type === "business" ? "border-primary bg-primary/10" : "border-border hover:border-primary/40")}>
-                    <div className="font-semibold">Business</div>
+                    onClick={() => update("account_type", "company")}
+                    className={"rounded-xl border px-3 py-2.5 text-sm text-left transition " + (form.account_type === "company" ? "border-primary bg-primary/10" : "border-border hover:border-primary/40")}>
+                    <div className="font-semibold">Company</div>
                     <div className="text-xs text-muted-foreground">Hire taskers on behalf of a company.</div>
                   </button>
                 </div>
