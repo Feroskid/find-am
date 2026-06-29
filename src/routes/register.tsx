@@ -86,6 +86,24 @@ function RegisterPage() {
                   onChange={(e) => update("phone", e.target.value)}
                   className="input-with-icon" autoComplete="tel" placeholder="+234…" />
               </IconField>
+
+              <div>
+                <span className="block text-sm font-medium mb-1.5">I want to…</span>
+                <div className="grid grid-cols-2 gap-2">
+                  <button type="button"
+                    onClick={() => update("account_type", "individual")}
+                    className={"rounded-xl border px-3 py-2.5 text-sm text-left transition " + (form.account_type === "individual" ? "border-primary bg-primary/10" : "border-border hover:border-primary/40")}>
+                    <div className="font-semibold">Personal</div>
+                    <div className="text-xs text-muted-foreground">Post tasks and earn as a tasker.</div>
+                  </button>
+                  <button type="button"
+                    onClick={() => update("account_type", "business")}
+                    className={"rounded-xl border px-3 py-2.5 text-sm text-left transition " + (form.account_type === "business" ? "border-primary bg-primary/10" : "border-border hover:border-primary/40")}>
+                    <div className="font-semibold">Business</div>
+                    <div className="text-xs text-muted-foreground">Hire taskers on behalf of a company.</div>
+                  </button>
+                </div>
+              </div>
               <label className="block">
                 <span className="block text-sm font-medium mb-1.5">Password</span>
                 <PasswordInput required minLength={6} maxLength={128} value={form.password}
