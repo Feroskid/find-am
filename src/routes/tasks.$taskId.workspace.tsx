@@ -118,10 +118,8 @@ function WorkspacePage() {
 
   if (!token) return null;
   const status = String(task?.status ?? "").toLowerCase();
-  const posterId = task?.poster_id ?? task?.user_id ?? task?.owner_id;
-  const taskerIdOnTask = task?.tasker_id ?? task?.accepted_tasker_id ?? task?.assigned_to;
   const isPoster = posterId !== undefined && String(posterId) === String(myId);
-  const isTasker = taskerIdOnTask !== undefined && String(taskerIdOnTask) === String(myId);
+  const isTasker = taskerId !== undefined && String(taskerId) === String(myId);
   const AWAITING = ["completed_by_tasker", "pending_release", "awaiting_release", "work_submitted", "submitted"];
   const COMPLETED = ["completed", "released", "paid_out", "paid"];
   const IN_PROGRESS = ["assigned", "accepted", "in_progress", "active"];
