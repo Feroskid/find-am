@@ -11,8 +11,9 @@ import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 import {
-  getTask, applyToTask, acceptApplicant, sendMessage, listMessages, listTaskApplications, cancelTask,
+  getTask, applyToTask, acceptApplicant, sendMessage, listMessages, listTaskApplications, cancelTask, getMyApplications,
 } from "@/lib/findtask.functions";
+
 
 import { useAuth } from "@/lib/auth";
 import {
@@ -99,16 +100,34 @@ function TaskDetail() {
     return d?.applications ?? d?.applicants ?? d?.results ?? (Array.isArray(d) ? d : []);
   })();
 
+  // Tasker (non-poster) fetches /my-applications so their own offer always shows on this task.
+  const myAppsFn = useServerFn(getMyApplications);
+  const myAppsQ = useQuery({
+    queryKey: ["my-apps", token],
+    enabled: !!token && !isPoster && !!task,
+    queryFn: () => myAppsFn({ data: { token: token! } }),
+  });
+  const myOwnApp: any = (() => {
+    const r = myAppsQ.data;
+    if (!r?.ok) return null;
+    const d: any = r.data;
+    const list: any[] = d?.applications ?? d?.results ?? (Array.isArray(d) ? d : []);
+    return list.find((a) => String(a.task_id ?? a.task?.task_id ?? a.task?.id) === String(taskId)) ?? null;
+  })();
+
   // Merge: prefer fetched apps (poster), fall back to embedded on task, dedupe by applicant.
   const embeddedOffers: any[] = task?.applications ?? task?.offers ?? [];
   const mergedOffers: any[] = (() => {
     const byId = new Map<string, any>();
-    [...embeddedOffers, ...fetchedApps].forEach((o, i) => {
+    const all = [...embeddedOffers, ...fetchedApps];
+    if (myOwnApp) all.push({ ...myOwnApp, applicant_id: myOwnApp.applicant_id ?? myOwnApp.user_id ?? myId, applicant_name: myOwnApp.applicant_name ?? (user as any)?.name ?? "You" });
+    all.forEach((o, i) => {
       const k = String(o.applicant_id ?? o.tasker_id ?? o.user_id ?? o.id ?? `idx-${i}`);
       byId.set(k, { ...(byId.get(k) ?? {}), ...o });
     });
     return Array.from(byId.values());
   })();
+
 
   // Visibility: poster sees all; everyone else sees only their own offer.
   const offers: any[] = isPoster

@@ -5,6 +5,7 @@ import { Loader2, MapPin, Star, Award, ShieldCheck, User } from "lucide-react";
 import { TaskHeader } from "@/components/TaskHeader";
 import { TaskCard, toCardData } from "@/components/TaskCard";
 import { getPublicUser } from "@/lib/findtask.functions";
+import { useAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/u/$userId")({
   head: () => ({ meta: [{ title: "Profile — Find-task" }] }),
@@ -13,9 +14,14 @@ export const Route = createFileRoute("/u/$userId")({
 
 function PublicProfilePage() {
   const { userId } = Route.useParams();
+  const { token } = useAuth();
   const uFn = useServerFn(getPublicUser);
 
-  const uQ = useQuery({ queryKey: ["pu", userId], queryFn: () => uFn({ data: { userId } }) });
+  const uQ = useQuery({
+    queryKey: ["pu", userId, token ? "auth" : "anon"],
+    queryFn: () => uFn({ data: { userId, token: token ?? undefined } }),
+  });
+
 
   const raw: any = uQ.data?.ok ? uQ.data.data : null;
   const u: any = raw?.profile ?? raw?.user ?? raw ?? null;

@@ -83,9 +83,12 @@ export function TaskCard({ task }: { task: TaskCardData }) {
             {task.status}
           </span>
         )}
-        <span className="inline-flex items-center gap-1 text-[11px] font-medium text-muted-foreground">
-          <MessageSquare className="h-3 w-3" /> {Number(task.offers_count ?? 0)} offer{Number(task.offers_count ?? 0) === 1 ? "" : "s"}
-        </span>
+        {Number(task.offers_count ?? 0) > 0 && (
+          <span className="inline-flex items-center gap-1 text-[11px] font-medium text-muted-foreground">
+            <MessageSquare className="h-3 w-3" /> {Number(task.offers_count)} offer{Number(task.offers_count) === 1 ? "" : "s"}
+          </span>
+        )}
+
       </div>
     </Link>
   );

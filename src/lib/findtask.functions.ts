@@ -460,8 +460,9 @@ export const updateProfile = createServerFn({ method: "POST" })
 // The only spec'd public-user endpoint is /user/{user_id}/profile. Tasks and
 // ratings come embedded in that response.
 export const getPublicUser = createServerFn({ method: "POST" })
-  .inputValidator((i: unknown) => z.object({ userId: UserId }).parse(i))
-  .handler(async ({ data }) => call(`/user/${data.userId}/profile`));
+  .inputValidator((i: unknown) => z.object({ userId: UserId, token: Token.optional() }).parse(i))
+  .handler(async ({ data }) => call(`/user/${data.userId}/profile`, { token: data.token }));
+
 
 // Legacy aliases kept so existing UI keeps compiling. Both now return
 // the relevant slice of /user/{id}/profile.
