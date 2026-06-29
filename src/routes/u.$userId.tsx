@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Loader2, MapPin, Star, Award, ShieldCheck, User } from "lucide-react";
 import { TaskHeader } from "@/components/TaskHeader";
 import { TaskCard, toCardData } from "@/components/TaskCard";
-import { getPublicUser, getUserRatings, getUserTasks } from "@/lib/findtask.functions";
+import { getPublicUser } from "@/lib/findtask.functions";
 
 export const Route = createFileRoute("/u/$userId")({
   head: () => ({ meta: [{ title: "Profile — Find-task" }] }),
@@ -14,21 +14,16 @@ export const Route = createFileRoute("/u/$userId")({
 function PublicProfilePage() {
   const { userId } = Route.useParams();
   const uFn = useServerFn(getPublicUser);
-  const rFn = useServerFn(getUserRatings);
-  const tFn = useServerFn(getUserTasks);
 
   const uQ = useQuery({ queryKey: ["pu", userId], queryFn: () => uFn({ data: { userId } }) });
-  const rQ = useQuery({ queryKey: ["pu", userId, "r"], queryFn: () => rFn({ data: { userId } }) });
-  const tQ = useQuery({ queryKey: ["pu", userId, "t"], queryFn: () => tFn({ data: { userId } }) });
 
-  const u: any = uQ.data?.ok ? ((uQ.data.data as any)?.profile ?? (uQ.data.data as any)?.user ?? uQ.data.data) : null;
-  const ratingsData: any = rQ.data?.ok ? rQ.data.data : null;
-  const categoryRatings: any[] = ratingsData?.category_ratings ?? ratingsData?.ratings_by_category ?? u?.category_ratings ?? [];
-  const badges: any[] = ratingsData?.badges ?? u?.badges ?? [];
+  const raw: any = uQ.data?.ok ? uQ.data.data : null;
+  const u: any = raw?.profile ?? raw?.user ?? raw ?? null;
+  const categoryRatings: any[] = u?.category_ratings ?? u?.ratings_by_category ?? [];
+  const badges: any[] = u?.badges ?? [];
   const tasks: any[] = (() => {
-    if (!tQ.data?.ok) return [];
-    const d: any = tQ.data.data;
-    return d?.tasks ?? d?.results ?? (Array.isArray(d) ? d : []);
+    const t = u?.tasks ?? u?.recent_tasks ?? u?.posted_tasks ?? [];
+    return Array.isArray(t) ? t : [];
   })();
 
   return (
