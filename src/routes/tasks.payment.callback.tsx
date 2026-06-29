@@ -4,13 +4,15 @@ import { useEffect, useState } from "react";
 import { z } from "zod";
 import { CheckCircle2, Loader2, XCircle } from "lucide-react";
 import { TaskHeader } from "@/components/TaskHeader";
-import { paymentCallback } from "@/lib/findtask.functions";
+import { paymentCallback, sendMessage, getTask } from "@/lib/findtask.functions";
+import { useAuth } from "@/lib/auth";
 
 const Search = z.object({
   tx_ref: z.string().optional(),
   transaction_id: z.string().optional(),
   status: z.string().optional(),
   task_id: z.string().optional(),
+  tasker_id: z.string().optional(),
 });
 
 export const Route = createFileRoute("/tasks/payment/callback")({
@@ -22,7 +24,10 @@ export const Route = createFileRoute("/tasks/payment/callback")({
 function PaymentCallbackPage() {
   const search = Route.useSearch();
   const navigate = useNavigate();
+  const { token } = useAuth();
   const cb = useServerFn(paymentCallback);
+  const send = useServerFn(sendMessage);
+  const fetchTask = useServerFn(getTask);
   const [stage, setStage] = useState<"working" | "ok" | "fail">("working");
   const [msg, setMsg] = useState<string>("Confirming your payment with Flutterwave…");
 
@@ -39,7 +44,18 @@ function PaymentCallbackPage() {
       const r = await cb({ data: { tx_ref, transaction_id, status } });
       if (r.ok && /success|paid|completed/i.test(status)) {
         setStage("ok");
-        setMsg("Payment confirmed. Escrow funded — the tasker has been notified.");
+        setMsg("Payment confirmed. Escrow funded — opening the conversation with your tasker.");
+        // Fire-and-forget: open a chat thread with the tasker.
+        if (token && search.task_id) {
+          try {
+            let title = "this task";
+            try {
+              const tr: any = await fetchTask({ data: { taskId: search.task_id } });
+              title = tr?.data?.task?.title ?? tr?.data?.title ?? title;
+            } catch {}
+            await send({ data: { taskId: search.task_id, token, message_text: `🎉 Offer accepted! Your offer on "${title}" has been accepted and payment is held in escrow. Let's coordinate next steps here.` } });
+          } catch {}
+        }
       } else if (r.ok) {
         setStage("fail");
         setMsg(`Payment status: ${status}. No funds were captured.`);
@@ -48,7 +64,8 @@ function PaymentCallbackPage() {
         setMsg(r.error || "Could not confirm payment.");
       }
     })();
-  }, [search.tx_ref, search.transaction_id, search.status, cb]);
+  }, [search.tx_ref, search.transaction_id, search.status, search.task_id, cb, send, fetchTask, token]);
+
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
