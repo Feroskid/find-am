@@ -9,6 +9,7 @@ import { useAuth } from "@/lib/auth";
 import { roomSecret, encryptText, decryptText } from "@/lib/e2ee";
 import {
   getTask, listMessages, sendMessage, completeTask, disputeTask, rateTask,
+  releaseEscrow,
   getTaskLocation, toggleTaskLocation, markArrived,
 } from "@/lib/findtask.functions";
 
@@ -36,6 +37,7 @@ function WorkspacePage() {
   const mFn = useServerFn(listMessages);
   const sFn = useServerFn(sendMessage);
   const cFn = useServerFn(completeTask);
+  const relFn = useServerFn(releaseEscrow);
   const dFn = useServerFn(disputeTask);
   const rFn = useServerFn(rateTask);
 
@@ -91,7 +93,15 @@ function WorkspacePage() {
   });
   const completeM = useMutation({
     mutationFn: () => cFn({ data: { taskId, token: token! } }),
-    onSuccess: (r) => r.ok ? (toast.success("Task marked complete."), setShowRate(true), taskQ.refetch()) : toast.error(r.error),
+    onSuccess: (r) => r.ok
+      ? (toast.success("Marked complete. Poster has been notified to release payment."), taskQ.refetch())
+      : toast.error(r.error),
+  });
+  const releaseM = useMutation({
+    mutationFn: () => relFn({ data: { taskId, token: token! } }),
+    onSuccess: (r) => r.ok
+      ? (toast.success("Payment released to the tasker."), setShowRate(true), taskQ.refetch())
+      : toast.error(r.error),
   });
   const disputeM = useMutation({
     mutationFn: () => dFn({ data: { taskId, reason: disputeReason.trim(), token: token! } }),
@@ -108,8 +118,14 @@ function WorkspacePage() {
 
   if (!token) return null;
   const status = String(task?.status ?? "").toLowerCase();
-  const isPoster = task && (task.poster_id ?? task.user_id ?? task.owner_id) !== undefined
-    && String(task.poster_id ?? task.user_id ?? task.owner_id) === String(myId);
+  const isPoster = posterId !== undefined && String(posterId) === String(myId);
+  const isTasker = taskerId !== undefined && String(taskerId) === String(myId);
+  const AWAITING = ["completed_by_tasker", "pending_release", "awaiting_release", "work_submitted", "submitted"];
+  const COMPLETED = ["completed", "released", "paid_out", "paid"];
+  const IN_PROGRESS = ["assigned", "accepted", "in_progress", "active"];
+  const awaitingRelease = AWAITING.includes(status) || Boolean(task?.tasker_marked_complete);
+  const isCompleted = COMPLETED.includes(status);
+  const inProgress = IN_PROGRESS.includes(status);
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -182,12 +198,31 @@ function WorkspacePage() {
 
           <div className="rounded-2xl border border-border bg-card p-5 space-y-2">
             <h3 className="font-semibold">Actions</h3>
-            {isPoster && status !== "completed" && (
+
+            {isTasker && inProgress && !awaitingRelease && (
               <button onClick={() => completeM.mutate()} disabled={completeM.isPending} className="w-full inline-flex items-center justify-center gap-1.5 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-50">
-                {completeM.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />} Mark complete & release
+                {completeM.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />} Mark task as complete
               </button>
             )}
-            {status === "completed" && (
+
+            {isTasker && awaitingRelease && (
+              <div className="rounded-lg border border-border bg-muted/40 p-3 text-xs text-muted-foreground">
+                You've marked this task complete. Awaiting the poster to release payment.
+              </div>
+            )}
+
+            {isPoster && awaitingRelease && (
+              <>
+                <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-3 text-xs text-foreground/80">
+                  The tasker has marked this task complete. Review the work, then release payment to finish.
+                </div>
+                <button onClick={() => releaseM.mutate()} disabled={releaseM.isPending} className="w-full inline-flex items-center justify-center gap-1.5 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-50">
+                  {releaseM.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Banknote className="h-4 w-4" />} Release payment
+                </button>
+              </>
+            )}
+
+            {isCompleted && (
               <button onClick={() => setShowRate(true)} className="w-full inline-flex items-center justify-center gap-1.5 rounded-full border border-border px-4 py-2 text-sm font-semibold hover:bg-muted">
                 <Star className="h-4 w-4" /> Leave a rating
               </button>
