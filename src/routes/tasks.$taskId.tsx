@@ -420,10 +420,8 @@ function TaskDetail() {
                       (tab === "questions" ? "bg-ink text-background" : "text-muted-foreground")
                     }
                   >
-                    {status === "open" ? "Questions" : "Messages"}
-                    {status === "open" && (
-                      <span className="ml-1 opacity-70">{liveQuestions.length}</span>
-                    )}
+                    Messages
+                    <span className="ml-1 opacity-70">{liveQuestions.length}</span>
                   </button>
 
                 </div>
@@ -494,12 +492,12 @@ function TaskDetail() {
                             value={question}
                             onChange={(e) => setQuestion(e.target.value)}
                             rows={3}
-                            placeholder={isPoster ? "Answer a tasker's question…" : "Ask the poster a question…"}
+                            placeholder={isPoster ? "Send a message to the tasker…" : "Send a message to the poster…"}
                             className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
                           />
                           <div className="mt-2 flex items-center justify-between">
                             <span className="text-[11px] text-muted-foreground">
-                              {isPoster ? "Only you (the poster) can answer questions here." : "The poster will be notified."}
+                              {isPoster ? "The tasker will be notified." : "The poster will be notified."}
                             </span>
                             <button
                               onClick={() => askM.mutate()}
@@ -507,13 +505,13 @@ function TaskDetail() {
                               className="inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-bold text-primary-foreground hover:opacity-90 disabled:opacity-50"
                             >
                               {askM.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
-                              {isPoster ? "Post answer" : "Post question"}
+                              Send message
                             </button>
                           </div>
                         </div>
                       )}
                       {liveQuestions.length === 0 ? (
-                        <div className="rounded-2xl border border-dashed border-border p-8 text-center text-muted-foreground">No questions yet.</div>
+                        <div className="rounded-2xl border border-dashed border-border p-8 text-center text-muted-foreground">No messages yet.</div>
                       ) : (
                         liveQuestions.map((q, i) => <QuestionCard key={i} q={q} posterId={posterId} />)
                       )}
