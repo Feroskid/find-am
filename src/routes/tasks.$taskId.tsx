@@ -420,8 +420,12 @@ function TaskDetail() {
                       (tab === "questions" ? "bg-ink text-background" : "text-muted-foreground")
                     }
                   >
-                    Questions <span className="ml-1 opacity-70">{liveQuestions.length}</span>
+                    {status === "open" ? "Questions" : "Messages"}
+                    {status === "open" && (
+                      <span className="ml-1 opacity-70">{liveQuestions.length}</span>
+                    )}
                   </button>
+
                 </div>
 
                 <div className="mt-6 space-y-5">
