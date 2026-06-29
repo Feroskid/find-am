@@ -487,33 +487,58 @@ export const getUserTasks = createServerFn({ method: "POST" })
     }).parse(i),
   )
   .handler(async ({ data }) => {
-    // Tasker's own activity has a first-class endpoint.
+    // Tasker's own activity: hydrate each application with its full task.
     if (data.role === "tasker" && data.token) {
       const r = await call(`/my-applications`, { token: data.token });
       if (r.ok) {
         const rd: any = r.data ?? {};
         const apps: any[] = rd.applications ?? rd.results ?? (Array.isArray(rd) ? rd : []);
-        return {
-          ok: true as const,
-          data: { tasks: apps.map((a) => a.task ?? a).filter(Boolean) },
-        };
+        const hydrated = await Promise.all(
+          apps.map(async (a: any) => {
+            const embedded = a.task ?? null;
+            const tid = embedded?.task_id ?? embedded?.id ?? a.task_id;
+            let full: any = embedded;
+            if (tid && (!embedded?.title || embedded?.title === "Untitled task")) {
+              const tr = await call(`/task/${tid}`);
+              if (tr.ok) full = (tr.data as any)?.task ?? tr.data ?? embedded;
+            }
+            // Carry the application status alongside the task status.
+            return full ? { ...full, my_application_status: a.status ?? a.application_status } : null;
+          }),
+        );
+        return { ok: true as const, data: { tasks: hydrated.filter(Boolean) } };
       }
     }
-    // Profile may embed tasks. Otherwise filter /task/search by poster id.
+    // Poster path: combine profile-embedded tasks with paginated search filter.
+    const collected = new Map<string, any>();
     const prof = await call(`/user/${data.userId}/profile`);
     if (prof.ok) {
       const p: any = prof.data ?? {};
-      const tasks = p.tasks ?? p.profile?.tasks ?? p.posted_tasks ?? null;
-      if (Array.isArray(tasks)) return { ok: true as const, data: { tasks } };
+      const tasks = p.tasks ?? p.profile?.tasks ?? p.posted_tasks ?? [];
+      if (Array.isArray(tasks)) {
+        tasks.forEach((t: any) => {
+          const k = String(t.task_id ?? t.id ?? "");
+          if (k) collected.set(k, t);
+        });
+      }
     }
-    const search = await call(`/task/search?limit=100&page=1`);
-    if (!search.ok) return search;
-    const list: any[] = (search.data as any)?.results ?? (search.data as any)?.tasks ?? [];
-    const tasks = list.filter((t: any) =>
-      String(t?.poster_id ?? t?.user_id ?? t?.owner_id ?? "") === String(data.userId),
-    );
-    return { ok: true as const, data: { tasks } };
+    // Walk a few pages of /task/search to grab open tasks owned by this user.
+    for (let page = 1; page <= 5; page++) {
+      const search = await call(`/task/search?limit=50&page=${page}`);
+      if (!search.ok) break;
+      const list: any[] = (search.data as any)?.results ?? (search.data as any)?.tasks ?? [];
+      if (!list.length) break;
+      list.forEach((t: any) => {
+        if (String(t?.poster_id ?? t?.user_id ?? t?.owner_id ?? "") === String(data.userId)) {
+          const k = String(t.task_id ?? t.id ?? "");
+          if (k) collected.set(k, { ...(collected.get(k) ?? {}), ...t });
+        }
+      });
+      if (list.length < 50) break;
+    }
+    return { ok: true as const, data: { tasks: Array.from(collected.values()) } };
   });
+
 
 // ---- Task lifecycle: cancel --------------------------------------------
 export const cancelTask = createServerFn({ method: "POST" })

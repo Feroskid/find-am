@@ -38,6 +38,7 @@ import { Route as AuthVerifyEmailRouteImport } from './routes/auth.verify-email'
 import { Route as TasksPaymentCallbackRouteImport } from './routes/tasks.payment.callback'
 import { Route as TasksTaskIdWorkspaceRouteImport } from './routes/tasks.$taskId.workspace'
 import { Route as TasksTaskIdApplicationsRouteImport } from './routes/tasks.$taskId.applications'
+import { Route as TaskPaymentCallbackRouteImport } from './routes/task.payment.callback'
 import { Route as ApiPublicSearchRouteImport } from './routes/api/public/search'
 
 const WalletRoute = WalletRouteImport.update({
@@ -185,6 +186,11 @@ const TasksTaskIdApplicationsRoute = TasksTaskIdApplicationsRouteImport.update({
   path: '/applications',
   getParentRoute: () => TasksTaskIdRoute,
 } as any)
+const TaskPaymentCallbackRoute = TaskPaymentCallbackRouteImport.update({
+  id: '/task/payment/callback',
+  path: '/task/payment/callback',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicSearchRoute = ApiPublicSearchRouteImport.update({
   id: '/api/public/search',
   path: '/api/public/search',
@@ -219,6 +225,7 @@ export interface FileRoutesByFullPath {
   '/u/$userId': typeof UUserIdRoute
   '/tasks/': typeof TasksIndexRoute
   '/api/public/search': typeof ApiPublicSearchRoute
+  '/task/payment/callback': typeof TaskPaymentCallbackRoute
   '/tasks/$taskId/applications': typeof TasksTaskIdApplicationsRoute
   '/tasks/$taskId/workspace': typeof TasksTaskIdWorkspaceRoute
   '/tasks/payment/callback': typeof TasksPaymentCallbackRoute
@@ -250,6 +257,7 @@ export interface FileRoutesByTo {
   '/u/$userId': typeof UUserIdRoute
   '/tasks': typeof TasksIndexRoute
   '/api/public/search': typeof ApiPublicSearchRoute
+  '/task/payment/callback': typeof TaskPaymentCallbackRoute
   '/tasks/$taskId/applications': typeof TasksTaskIdApplicationsRoute
   '/tasks/$taskId/workspace': typeof TasksTaskIdWorkspaceRoute
   '/tasks/payment/callback': typeof TasksPaymentCallbackRoute
@@ -283,6 +291,7 @@ export interface FileRoutesById {
   '/u/$userId': typeof UUserIdRoute
   '/tasks/': typeof TasksIndexRoute
   '/api/public/search': typeof ApiPublicSearchRoute
+  '/task/payment/callback': typeof TaskPaymentCallbackRoute
   '/tasks/$taskId/applications': typeof TasksTaskIdApplicationsRoute
   '/tasks/$taskId/workspace': typeof TasksTaskIdWorkspaceRoute
   '/tasks/payment/callback': typeof TasksPaymentCallbackRoute
@@ -317,6 +326,7 @@ export interface FileRouteTypes {
     | '/u/$userId'
     | '/tasks/'
     | '/api/public/search'
+    | '/task/payment/callback'
     | '/tasks/$taskId/applications'
     | '/tasks/$taskId/workspace'
     | '/tasks/payment/callback'
@@ -348,6 +358,7 @@ export interface FileRouteTypes {
     | '/u/$userId'
     | '/tasks'
     | '/api/public/search'
+    | '/task/payment/callback'
     | '/tasks/$taskId/applications'
     | '/tasks/$taskId/workspace'
     | '/tasks/payment/callback'
@@ -380,6 +391,7 @@ export interface FileRouteTypes {
     | '/u/$userId'
     | '/tasks/'
     | '/api/public/search'
+    | '/task/payment/callback'
     | '/tasks/$taskId/applications'
     | '/tasks/$taskId/workspace'
     | '/tasks/payment/callback'
@@ -407,6 +419,7 @@ export interface RootRouteChildren {
   AuthVerifyEmailRoute: typeof AuthVerifyEmailRoute
   UUserIdRoute: typeof UUserIdRoute
   ApiPublicSearchRoute: typeof ApiPublicSearchRoute
+  TaskPaymentCallbackRoute: typeof TaskPaymentCallbackRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -614,6 +627,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TasksTaskIdApplicationsRouteImport
       parentRoute: typeof TasksTaskIdRoute
     }
+    '/task/payment/callback': {
+      id: '/task/payment/callback'
+      path: '/task/payment/callback'
+      fullPath: '/task/payment/callback'
+      preLoaderRoute: typeof TaskPaymentCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/search': {
       id: '/api/public/search'
       path: '/api/public/search'
@@ -682,17 +702,8 @@ const rootRouteChildren: RootRouteChildren = {
   AuthVerifyEmailRoute: AuthVerifyEmailRoute,
   UUserIdRoute: UUserIdRoute,
   ApiPublicSearchRoute: ApiPublicSearchRoute,
+  TaskPaymentCallbackRoute: TaskPaymentCallbackRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

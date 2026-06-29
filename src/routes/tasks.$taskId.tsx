@@ -420,8 +420,12 @@ function TaskDetail() {
                       (tab === "questions" ? "bg-ink text-background" : "text-muted-foreground")
                     }
                   >
-                    Questions <span className="ml-1 opacity-70">{liveQuestions.length}</span>
+                    {status === "open" ? "Questions" : "Messages"}
+                    {status === "open" && (
+                      <span className="ml-1 opacity-70">{liveQuestions.length}</span>
+                    )}
                   </button>
+
                 </div>
 
                 <div className="mt-6 space-y-5">
@@ -554,9 +558,19 @@ function TaskDetail() {
                         {cancelM.isPending ? "Cancelling…" : "Cancel task"}
                       </button>
                     ) : status !== "completed" && status !== "cancelled" ? (
-                      <div className="rounded-xl border border-border bg-muted/40 p-2.5 text-xs text-muted-foreground">
-                        Task is assigned — cancellation is locked. Use the workspace to coordinate or dispute.
-                      </div>
+                      <>
+                        <div className="rounded-xl border border-border bg-muted/40 p-2.5 text-xs text-muted-foreground">
+                          Task is assigned — cancellation is locked. Use the workspace to coordinate or open a dispute.
+                        </div>
+                        <Link
+                          to="/tasks/$taskId/workspace"
+                          params={{ taskId }}
+                          search={{ dispute: 1 } as any}
+                          className="block w-full rounded-full border border-destructive/40 text-destructive py-2.5 text-sm font-bold hover:bg-destructive/5"
+                        >
+                          Open dispute
+                        </Link>
+                      </>
                     ) : null}
                   </div>
 
@@ -565,9 +579,21 @@ function TaskDetail() {
                     Log in to make an offer
                   </Link>
                 ) : myApplication ? (
-                  <Link to="/tasks/$taskId/workspace" params={{ taskId }} className="mt-5 block w-full rounded-full border border-primary text-primary py-3 text-sm font-bold hover:bg-primary/5">
-                    Offer sent · Open conversation
-                  </Link>
+                  <div className="mt-5 space-y-2">
+                    <Link to="/tasks/$taskId/workspace" params={{ taskId }} className="block w-full rounded-full border border-primary text-primary py-3 text-sm font-bold hover:bg-primary/5">
+                      {status !== "open" ? "Open conversation" : "Offer sent · Open conversation"}
+                    </Link>
+                    {status !== "open" && status !== "completed" && status !== "cancelled" && (
+                      <Link
+                        to="/tasks/$taskId/workspace"
+                        params={{ taskId }}
+                        search={{ dispute: 1 } as any}
+                        className="block w-full rounded-full border border-destructive/40 text-destructive py-2.5 text-sm font-bold hover:bg-destructive/5"
+                      >
+                        Open dispute
+                      </Link>
+                    )}
+                  </div>
                 ) : status !== "open" ? (
                   <div className="mt-5 rounded-xl border border-border bg-muted/40 p-3 text-sm text-muted-foreground capitalize">
                     Task is {status}
@@ -577,6 +603,7 @@ function TaskDetail() {
                     Make an offer
                   </button>
                 )}
+
               </div>
 
               <button
