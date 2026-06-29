@@ -37,6 +37,7 @@ function WorkspacePage() {
   const mFn = useServerFn(listMessages);
   const sFn = useServerFn(sendMessage);
   const cFn = useServerFn(completeTask);
+  const relFn = useServerFn(releaseEscrow);
   const dFn = useServerFn(disputeTask);
   const rFn = useServerFn(rateTask);
 
