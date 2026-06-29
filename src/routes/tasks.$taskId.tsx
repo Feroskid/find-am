@@ -184,12 +184,12 @@ function TaskDetail() {
     },
   });
 
-  // Pending payment / accept flow
+  // Pending payment / accept flow — backend may return a Flutterwave
+  // checkout URL from PUT /task/{id}/accept/{tasker_id}; if so we redirect
+  // the poster there and finalise via /task/payment/callback on return.
   const [payFor, setPayFor] = useState<any | null>(null);
-  const [payStage, setPayStage] = useState<"confirm" | "processing" | "verifying" | "accepting" | "done">("confirm");
+  const [payStage, setPayStage] = useState<"confirm" | "processing" | "done">("confirm");
   const [payError, setPayError] = useState<string | null>(null);
-  const initEscrow = useServerFn(initiateEscrow);
-  const verifyPay = useServerFn(verifyPayment);
 
   const acceptM = useMutation({
     mutationFn: async (taskerId: string | number) => {
