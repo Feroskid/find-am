@@ -185,14 +185,14 @@ function WalletPage() {
         open={showKyc}
         onOpenChange={setShowKyc}
         banks={banks}
-        kycFn={(args) => kycFn({ data: { ...args, token: token! } })}
+        kycFn={(args: any) => kycFn({ data: { ...args, token: token! } })}
         onDone={() => { bQ.refetch(); }}
       />
       <BankDialog
         open={showBank}
         onOpenChange={setShowBank}
         banks={banks}
-        bankFn={(args) => bankFn({ data: { ...args, token: token! } })}
+        bankFn={(args: any) => bankFn({ data: { ...args, token: token! } })}
         onDone={() => { bQ.refetch(); }}
       />
     </div>
