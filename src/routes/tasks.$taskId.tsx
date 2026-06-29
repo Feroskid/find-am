@@ -19,6 +19,8 @@ import { useAuth } from "@/lib/auth";
 import {
   parseOfferAmount, parseReplyTarget, parseCounterTarget, isDecline, stripHeaders, formatOfferMessage,
 } from "@/lib/offerParse";
+import { FeeBreakdown } from "@/components/FeeBreakdown";
+import { computeFees, formatNaira } from "@/lib/fees";
 
 export const Route = createFileRoute("/tasks/$taskId")({
   head: ({ params }) => ({
