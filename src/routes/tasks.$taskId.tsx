@@ -773,16 +773,23 @@ function TaskDetail() {
               Pay securely with <span className="font-semibold text-ink">Flutterwave</span>. Funds are held in escrow and only released to the tasker after the task is completed.
             </DialogDescription>
           </DialogHeader>
-          {payFor && (
-            <div className="rounded-2xl border border-border bg-muted/40 p-4 text-sm">
-              <div className="flex justify-between"><span className="text-muted-foreground">Tasker</span><span className="font-semibold text-ink">{payFor.applicant_name ?? payFor.tasker_name ?? payFor.name ?? "Tasker"}</span></div>
-              <div className="flex justify-between mt-1"><span className="text-muted-foreground">Task</span><span className="font-semibold text-ink truncate ml-2">{task?.title}</span></div>
-              <div className="mt-3 border-t border-border pt-3 flex justify-between items-baseline">
-                <span className="text-xs uppercase tracking-wider text-muted-foreground">Total to pay</span>
-                <span className="font-display text-2xl text-ink">₦{Number(payFor.amount ?? payFor.price ?? parseOfferAmount(payFor.message) ?? task?.budget ?? 0).toLocaleString()}</span>
+          {payFor && (() => {
+            const base = Number(payFor.amount ?? payFor.price ?? parseOfferAmount(payFor.message) ?? task?.budget ?? 0);
+            const fees = computeFees(base);
+            return (
+              <div className="space-y-3">
+                <div className="rounded-2xl border border-border bg-muted/40 p-4 text-sm">
+                  <div className="flex justify-between"><span className="text-muted-foreground">Tasker</span><span className="font-semibold text-ink">{payFor.applicant_name ?? payFor.tasker_name ?? payFor.name ?? "Tasker"}</span></div>
+                  <div className="flex justify-between mt-1"><span className="text-muted-foreground">Task</span><span className="font-semibold text-ink truncate ml-2">{task?.title}</span></div>
+                </div>
+                <FeeBreakdown budget={base} />
+                <div className="rounded-xl bg-primary/10 px-4 py-3 flex justify-between items-baseline">
+                  <span className="text-xs uppercase tracking-wider font-bold text-primary">Total to pay</span>
+                  <span className="font-display text-2xl text-ink">{formatNaira(fees.total)}</span>
+                </div>
               </div>
-            </div>
-          )}
+            );
+          })()}
           {payError && (
             <div className="rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-xs text-destructive">{payError}</div>
           )}
@@ -800,29 +807,36 @@ function TaskDetail() {
                 setPayError(null);
                 setPayStage("processing");
                 try {
-                  // Backend's PUT /task/{id}/accept/{tasker_id} either accepts
-                  // immediately or returns a Flutterwave checkout URL we must
-                  // redirect to. /task/payment/callback finalises the escrow.
+                  // PUT /task/{id}/accept/{tasker_id} returns:
+                  // { message, task_id, tasker_id, payment_link, tx_ref, ... }
+                  // We redirect to payment_link; Flutterwave returns the user
+                  // to /tasks/payment/callback which finalises escrow + opens chat.
                   const r: any = await acceptM.mutateAsync(payFor._taskerId);
-                  const d: any = r?.data ?? {};
-                  const url = d.payment_url ?? d.checkout_url ?? d.authorization_url ?? d.link ?? d.url;
+                  if (!r?.ok) {
+                    setPayError(r?.error ?? "Could not start payment.");
+                    setPayStage("confirm");
+                    return;
+                  }
+                  const d: any = r.data ?? {};
+                  const url = d.payment_link ?? d.payment_url ?? d.checkout_url ?? d.authorization_url ?? d.link ?? d.url;
                   if (url) {
+                    // Tag the return URL with the task id so the callback can route back.
+                    try {
+                      const u = new URL(url);
+                      const ret = `${window.location.origin}/tasks/payment/callback?task_id=${encodeURIComponent(String(taskId))}&tasker_id=${encodeURIComponent(String(payFor._taskerId))}`;
+                      // Flutterwave hosted checkout reads `redirect_url` from the link itself; we just navigate.
+                      u; ret;
+                    } catch {}
                     setPayStage("done");
                     window.location.href = url;
                     return;
                   }
-                  // No payment URL — accept already finalised (no escrow needed
-                  // or already paid). Decline any other open offers.
-                  for (const other of mergedOffers) {
-                    const oid = other.applicant_id ?? other.tasker_id ?? other.user_id;
-                    if (String(oid) !== String(payFor._taskerId)) {
-                      try { await declineM.mutateAsync(other); } catch {}
-                    }
-                  }
+                  // No link — backend already finalised (e.g. free / pre-paid).
                   setPayStage("done");
-                  toast.success("Tasker accepted");
+                  toast.success(d.message ?? "Tasker accepted");
                   setPayFor(null);
                   setPayStage("confirm");
+                  refetch(); appsQ.refetch();
                 } catch (e: any) {
                   setPayError(e?.message ?? "Payment failed");
                   setPayStage("confirm");
@@ -834,7 +848,7 @@ function TaskDetail() {
               {payStage === "processing" && <Loader2 className="h-4 w-4 animate-spin" />}
               {payStage === "processing" && "Opening Flutterwave…"}
               {payStage === "confirm" && "Pay & accept"}
-              {payStage === "done" && "Done"}
+              {payStage === "done" && "Redirecting…"}
             </button>
           </DialogFooter>
         </DialogContent>
