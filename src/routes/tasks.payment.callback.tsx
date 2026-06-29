@@ -4,13 +4,15 @@ import { useEffect, useState } from "react";
 import { z } from "zod";
 import { CheckCircle2, Loader2, XCircle } from "lucide-react";
 import { TaskHeader } from "@/components/TaskHeader";
-import { paymentCallback } from "@/lib/findtask.functions";
+import { paymentCallback, sendMessage, getTask } from "@/lib/findtask.functions";
+import { useAuth } from "@/lib/auth";
 
 const Search = z.object({
   tx_ref: z.string().optional(),
   transaction_id: z.string().optional(),
   status: z.string().optional(),
   task_id: z.string().optional(),
+  tasker_id: z.string().optional(),
 });
 
 export const Route = createFileRoute("/tasks/payment/callback")({
