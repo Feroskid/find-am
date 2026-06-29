@@ -118,8 +118,16 @@ function WorkspacePage() {
 
   if (!token) return null;
   const status = String(task?.status ?? "").toLowerCase();
-  const isPoster = task && (task.poster_id ?? task.user_id ?? task.owner_id) !== undefined
-    && String(task.poster_id ?? task.user_id ?? task.owner_id) === String(myId);
+  const posterId = task?.poster_id ?? task?.user_id ?? task?.owner_id;
+  const taskerIdOnTask = task?.tasker_id ?? task?.accepted_tasker_id ?? task?.assigned_to;
+  const isPoster = posterId !== undefined && String(posterId) === String(myId);
+  const isTasker = taskerIdOnTask !== undefined && String(taskerIdOnTask) === String(myId);
+  const AWAITING = ["completed_by_tasker", "pending_release", "awaiting_release", "work_submitted", "submitted"];
+  const COMPLETED = ["completed", "released", "paid_out", "paid"];
+  const IN_PROGRESS = ["assigned", "accepted", "in_progress", "active"];
+  const awaitingRelease = AWAITING.includes(status) || Boolean(task?.tasker_marked_complete);
+  const isCompleted = COMPLETED.includes(status);
+  const inProgress = IN_PROGRESS.includes(status);
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
