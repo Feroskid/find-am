@@ -27,7 +27,7 @@ function RegisterPage() {
     if (token) navigate({ to: "/dashboard", replace: true });
   }, [token, navigate]);
 
-  const [form, setForm] = useState({ name: "", email: "", phone: "", password: "", confirm: "" });
+  const [form, setForm] = useState({ name: "", email: "", phone: "", password: "", confirm: "", account_type: "individual" as "individual" | "business" });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -44,7 +44,7 @@ function RegisterPage() {
     setLoading(true);
     try {
       const { confirm: _c, ...payload } = form;
-      const res = await reg({ data: { ...payload, account_type: "individual" } });
+      const res = await reg({ data: payload });
       if (!res.ok) { setError(res.error); return; }
       const loginRes = await login({ data: { email: form.email, password: form.password } });
       if (loginRes.ok) setAuth({ token: pickToken(loginRes.data), user: pickUser(loginRes.data) });
@@ -86,6 +86,24 @@ function RegisterPage() {
                   onChange={(e) => update("phone", e.target.value)}
                   className="input-with-icon" autoComplete="tel" placeholder="+234…" />
               </IconField>
+
+              <div>
+                <span className="block text-sm font-medium mb-1.5">I want to…</span>
+                <div className="grid grid-cols-2 gap-2">
+                  <button type="button"
+                    onClick={() => update("account_type", "individual")}
+                    className={"rounded-xl border px-3 py-2.5 text-sm text-left transition " + (form.account_type === "individual" ? "border-primary bg-primary/10" : "border-border hover:border-primary/40")}>
+                    <div className="font-semibold">Personal</div>
+                    <div className="text-xs text-muted-foreground">Post tasks and earn as a tasker.</div>
+                  </button>
+                  <button type="button"
+                    onClick={() => update("account_type", "business")}
+                    className={"rounded-xl border px-3 py-2.5 text-sm text-left transition " + (form.account_type === "business" ? "border-primary bg-primary/10" : "border-border hover:border-primary/40")}>
+                    <div className="font-semibold">Business</div>
+                    <div className="text-xs text-muted-foreground">Hire taskers on behalf of a company.</div>
+                  </button>
+                </div>
+              </div>
               <label className="block">
                 <span className="block text-sm font-medium mb-1.5">Password</span>
                 <PasswordInput required minLength={6} maxLength={128} value={form.password}

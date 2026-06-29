@@ -46,11 +46,12 @@ async function call<T = any>(
 }
 
 const Token = z.string().min(8).max(4096);
-// API task IDs are integers; accept numeric strings too.
 const TaskId = z.union([z.number().int().positive(), z.string().regex(/^\d+$/)]);
 const TaskerId = z.union([z.number().int().positive(), z.string().min(1).max(64)]);
+const UserId = z.union([z.number().int().positive(), z.string().min(1).max(64)]);
+const MilestoneId = z.union([z.number().int().positive(), z.string().regex(/^\d+$/)]);
 
-// --- Categories ----------------------------------------------------------
+// ---- Categories ---------------------------------------------------------
 export const getCategories = createServerFn({ method: "GET" }).handler(
   async () => call("/task/categories"),
 );
@@ -59,7 +60,7 @@ export const getSubCategories = createServerFn({ method: "POST" })
   .inputValidator((i: unknown) => z.object({ parentId: z.number().int().positive() }).parse(i))
   .handler(async ({ data }) => call(`/task/categories?parent=${data.parentId}`));
 
-// --- Auth helpers --------------------------------------------------------
+// ---- Auth helpers -------------------------------------------------------
 export const verifyEmail = createServerFn({ method: "POST" })
   .inputValidator((i: unknown) => z.object({ token: z.string().min(1).max(4096) }).parse(i))
   .handler(async ({ data }) =>
@@ -68,16 +69,10 @@ export const verifyEmail = createServerFn({ method: "POST" })
 
 export const resendVerification = createServerFn({ method: "POST" })
   .inputValidator((i: unknown) =>
-    z.object({
-      email: z.string().email().max(200).optional(),
-      token: Token,
-    }).parse(i),
+    z.object({ email: z.string().email().max(200).optional(), token: Token }).parse(i),
   )
   .handler(async ({ data }) =>
-    call(`/auth/resend-verification`, {
-      method: "POST",
-      token: data.token,
-    }),
+    call(`/auth/resend-verification`, { method: "POST", token: data.token }),
   );
 
 export const checkEmailVerification = createServerFn({ method: "POST" })
@@ -111,7 +106,21 @@ export const resetPassword = createServerFn({ method: "POST" })
     }),
   );
 
-// --- Browse / search tasks ----------------------------------------------
+export const registerBank = createServerFn({ method: "POST" })
+  .inputValidator((i: unknown) =>
+    z.object({
+      bank_code: z.string().min(2).max(20),
+      account_number: z.string().min(5).max(20),
+      account_name: z.string().min(2).max(120),
+      token: Token,
+    }).parse(i),
+  )
+  .handler(async ({ data }) => {
+    const { token, ...body } = data;
+    return call(`/auth/register-bank`, { method: "POST", body, token });
+  });
+
+// ---- Browse / search tasks ---------------------------------------------
 const BrowseSchema = z.object({
   q: z.string().max(200).optional(),
   category_id: z.number().int().positive().optional(),
@@ -135,12 +144,14 @@ export const listTasks = createServerFn({ method: "POST" })
     return call(`/task/search${qs ? `?${qs}` : ""}`);
   });
 
-// --- Get task ------------------------------------------------------------
+// ---- Single task --------------------------------------------------------
 export const getTask = createServerFn({ method: "POST" })
   .inputValidator((i: unknown) => z.object({ taskId: TaskId }).parse(i))
   .handler(async ({ data }) => call(`/task/${data.taskId}`));
 
-// --- Create task ---------------------------------------------------------
+// ---- Create task --------------------------------------------------------
+// API spec (TaskPost): title, description, budget, category_id, location_text,
+// location_lat, location_lng, is_remote, deadline, quantity, is_milestone, milestones[].
 const CreateTaskSchema = z.object({
   title: z.string().min(4).max(140),
   description: z.string().min(10).max(4000),
@@ -164,59 +175,68 @@ const CreateTaskSchema = z.object({
 export const createTask = createServerFn({ method: "POST" })
   .inputValidator((i: unknown) => CreateTaskSchema.parse(i))
   .handler(async ({ data }) => {
-    const { token, latitude, longitude, milestones, ...rest } = data;
+    const { token, latitude, longitude, milestones, state, city, location_text, ...rest } = data;
     const body: Record<string, unknown> = { ...rest };
-    if (latitude !== undefined) {
-      body.latitude = latitude;
-      body.location_lat = latitude;
-    }
-    if (longitude !== undefined) {
-      body.longitude = longitude;
-      body.location_lng = longitude;
-    }
+    if (latitude !== undefined) body.location_lat = latitude;
+    if (longitude !== undefined) body.location_lng = longitude;
+    // Compose a display location_text if not supplied so on-site tasks always show one.
+    const composed = location_text ?? [city, state].filter(Boolean).join(", ");
+    if (composed) body.location_text = composed;
     if (milestones && milestones.length > 0) {
       body.milestones = milestones;
-      body.has_milestones = 1;
-      body.quantity = 1; // milestone tasks are single-tasker only
+      body.is_milestone = 1;
+      body.quantity = 1;
     }
     return call("/task/post", { method: "POST", body, token });
   });
 
-// --- Apply to a task -----------------------------------------------------
+// ---- Apply --------------------------------------------------------------
 export const applyToTask = createServerFn({ method: "POST" })
   .inputValidator((i: unknown) =>
     z.object({
       taskId: TaskId,
       message: z.string().min(2).max(2000).optional(),
+      earliest_start: z.string().max(64).optional(),
       token: Token,
     }).parse(i),
   )
   .handler(async ({ data }) => {
+    const body: Record<string, unknown> = { message: data.message ?? "" };
+    if (data.earliest_start) body.earliest_start = data.earliest_start;
     const res = await call(`/task/${data.taskId}/apply`, {
       method: "POST",
-      body: { message: data.message ?? "" },
+      body,
       token: data.token,
     });
     if (!res.ok && res.status >= 500) {
       return {
         ok: false as const,
         status: res.status,
-        error: "The offer could not be submitted because the task offer service returned a server error. Please try another task or try again shortly.",
+        error: "The offer could not be submitted because the task service returned a server error. Please try again shortly.",
       };
     }
     return res;
   });
 
+// ---- Tasker's own applications -----------------------------------------
+export const getMyApplications = createServerFn({ method: "POST" })
+  .inputValidator((i: unknown) => z.object({ token: Token }).parse(i))
+  .handler(async ({ data }) => call(`/my-applications`, { token: data.token }));
 
+// ---- Conversations inbox -----------------------------------------------
+export const getMyConversations = createServerFn({ method: "POST" })
+  .inputValidator((i: unknown) => z.object({ token: Token }).parse(i))
+  .handler(async ({ data }) => call(`/my-conversations`, { token: data.token }));
 
-// --- List applications for a task (poster) -------------------------------
+// ---- Applications (poster) ---------------------------------------------
 export const listTaskApplications = createServerFn({ method: "POST" })
   .inputValidator((i: unknown) => z.object({ taskId: TaskId, token: Token }).parse(i))
   .handler(async ({ data }) =>
     call(`/task/${data.taskId}/applications`, { token: data.token }),
   );
 
-// --- Accept a tasker (PUT /task/{id}/accept/{tasker_id}) -----------------
+// ---- Accept tasker (PUT) -----------------------------------------------
+// Backend may return a payment_url / authorization_url for Flutterwave.
 export const acceptApplicant = createServerFn({ method: "POST" })
   .inputValidator((i: unknown) =>
     z.object({ taskId: TaskId, taskerId: TaskerId, token: Token }).parse(i),
@@ -228,31 +248,49 @@ export const acceptApplicant = createServerFn({ method: "POST" })
     }),
   );
 
-// --- Complete ------------------------------------------------------------
+// ---- Complete -----------------------------------------------------------
 export const completeTask = createServerFn({ method: "POST" })
   .inputValidator((i: unknown) => z.object({ taskId: TaskId, token: Token }).parse(i))
   .handler(async ({ data }) =>
     call(`/task/${data.taskId}/complete`, { method: "POST", token: data.token }),
   );
 
-// --- Dispute -------------------------------------------------------------
+// ---- Dispute ------------------------------------------------------------
 export const disputeTask = createServerFn({ method: "POST" })
   .inputValidator((i: unknown) =>
     z.object({
       taskId: TaskId,
       reason: z.string().min(5).max(2000),
+      evidence_urls: z.array(z.string().url().max(2048)).max(10).optional(),
       token: Token,
     }).parse(i),
   )
-  .handler(async ({ data }) =>
-    call(`/task/${data.taskId}/dispute`, {
+  .handler(async ({ data }) => {
+    const body: Record<string, unknown> = { reason: data.reason };
+    if (data.evidence_urls?.length) body.evidence_urls = data.evidence_urls;
+    return call(`/task/${data.taskId}/dispute`, {
       method: "POST",
-      body: { reason: data.reason },
+      body,
       token: data.token,
-    }),
-  );
+    });
+  });
 
-// --- Rate ----------------------------------------------------------------
+// ---- Report task --------------------------------------------------------
+export const reportTask = createServerFn({ method: "POST" })
+  .inputValidator((i: unknown) =>
+    z.object({
+      taskId: TaskId,
+      reason: z.string().min(3).max(500),
+      description: z.string().max(2000).optional(),
+      token: Token,
+    }).parse(i),
+  )
+  .handler(async ({ data }) => {
+    const { taskId, token, ...body } = data;
+    return call(`/task/${taskId}/report`, { method: "POST", body, token });
+  });
+
+// ---- Rate ---------------------------------------------------------------
 export const rateTask = createServerFn({ method: "POST" })
   .inputValidator((i: unknown) =>
     z.object({
@@ -270,7 +308,7 @@ export const rateTask = createServerFn({ method: "POST" })
     }),
   );
 
-// --- Messages ------------------------------------------------------------
+// ---- Messages -----------------------------------------------------------
 export const listMessages = createServerFn({ method: "POST" })
   .inputValidator((i: unknown) => z.object({ taskId: TaskId, token: Token }).parse(i))
   .handler(async ({ data }) =>
@@ -282,18 +320,43 @@ export const sendMessage = createServerFn({ method: "POST" })
     z.object({
       taskId: TaskId,
       message_text: z.string().min(1).max(4000),
+      attachment_url: z.string().url().max(2048).optional(),
       token: Token,
     }).parse(i),
   )
+  .handler(async ({ data }) => {
+    const { taskId, token, ...body } = data;
+    return call(`/task/${taskId}/message`, { method: "POST", body, token });
+  });
+
+// ---- Milestones ---------------------------------------------------------
+export const getMilestones = createServerFn({ method: "POST" })
+  .inputValidator((i: unknown) => z.object({ taskId: TaskId, token: Token.optional() }).parse(i))
+  .handler(async ({ data }) => call(`/task/${data.taskId}/milestones`, { token: data.token }));
+
+export const completeMilestone = createServerFn({ method: "POST" })
+  .inputValidator((i: unknown) =>
+    z.object({ taskId: TaskId, milestoneId: MilestoneId, token: Token }).parse(i),
+  )
   .handler(async ({ data }) =>
-    call(`/task/${data.taskId}/message`, {
+    call(`/task/${data.taskId}/milestone/${data.milestoneId}/complete`, {
       method: "POST",
-      body: { message_text: data.message_text },
       token: data.token,
     }),
   );
 
-// --- Notifications -------------------------------------------------------
+export const releaseMilestone = createServerFn({ method: "POST" })
+  .inputValidator((i: unknown) =>
+    z.object({ taskId: TaskId, milestoneId: MilestoneId, token: Token }).parse(i),
+  )
+  .handler(async ({ data }) =>
+    call(`/task/${data.taskId}/milestone/${data.milestoneId}/release`, {
+      method: "POST",
+      token: data.token,
+    }),
+  );
+
+// ---- Notifications ------------------------------------------------------
 export const listNotifications = createServerFn({ method: "POST" })
   .inputValidator((i: unknown) => z.object({ token: Token }).parse(i))
   .handler(async ({ data }) => call(`/notifications`, { token: data.token }));
@@ -318,14 +381,25 @@ export const markAllNotificationsRead = createServerFn({ method: "POST" })
     call(`/notifications/read-all`, { method: "POST", token: data.token }),
   );
 
-// --- Wallet --------------------------------------------------------------
+// ---- Wallet -------------------------------------------------------------
 export const walletBalance = createServerFn({ method: "POST" })
   .inputValidator((i: unknown) => z.object({ token: Token }).parse(i))
   .handler(async ({ data }) => call(`/wallet/balance`, { token: data.token }));
 
+// /wallet/transactions is not in the OpenAPI spec; the /wallet/balance
+// response often embeds recent ledger entries. We try the dedicated endpoint
+// and gracefully fall back to whatever ships with /wallet/balance.
 export const walletTransactions = createServerFn({ method: "POST" })
   .inputValidator((i: unknown) => z.object({ token: Token }).parse(i))
-  .handler(async ({ data }) => call(`/wallet/transactions`, { token: data.token }));
+  .handler(async ({ data }) => {
+    const r = await call(`/wallet/transactions`, { token: data.token });
+    if (r.ok || r.status !== 404) return r;
+    const b = await call(`/wallet/balance`, { token: data.token });
+    if (!b.ok) return b;
+    const bd: any = b.data ?? {};
+    const list = bd.transactions ?? bd.recent ?? bd.history ?? [];
+    return { ok: true as const, data: { transactions: list } };
+  });
 
 export const withdrawFunds = createServerFn({ method: "POST" })
   .inputValidator((i: unknown) =>
@@ -341,7 +415,25 @@ export const withdrawFunds = createServerFn({ method: "POST" })
     return call(`/wallet/withdraw`, { method: "POST", body, token });
   });
 
-// --- Profile (self) ------------------------------------------------------
+export const listBanks = createServerFn({ method: "GET" }).handler(
+  async () => call(`/banks`),
+);
+
+export const verifyKyc = createServerFn({ method: "POST" })
+  .inputValidator((i: unknown) =>
+    z.object({
+      bvn: z.string().regex(/^\d{11}$/, "BVN must be 11 digits"),
+      bank_code: z.string().min(2).max(20),
+      account_number: z.string().min(5).max(20),
+      token: Token,
+    }).parse(i),
+  )
+  .handler(async ({ data }) => {
+    const { token, ...body } = data;
+    return call(`/wallet/verify-kyc`, { method: "POST", body, token });
+  });
+
+// ---- Profile (self) ----------------------------------------------------
 export const getMe = createServerFn({ method: "POST" })
   .inputValidator((i: unknown) => z.object({ token: Token }).parse(i))
   .handler(async ({ data }) => call(`/auth/me`, { token: data.token }));
@@ -364,20 +456,26 @@ export const updateProfile = createServerFn({ method: "POST" })
     return call(`/auth/profile`, { method: "PUT", body, token });
   });
 
-// --- Public user --------------------------------------------------------
-const UserId = z.union([z.number().int().positive(), z.string().min(1).max(64)]);
+// ---- Public user --------------------------------------------------------
+// The only spec'd public-user endpoint is /user/{user_id}/profile. Tasks and
+// ratings come embedded in that response.
 export const getPublicUser = createServerFn({ method: "POST" })
   .inputValidator((i: unknown) => z.object({ userId: UserId }).parse(i))
-  .handler(async ({ data }) => {
-    // The documented endpoint is /user/{user_id}/profile; fall back to /user/{user_id}.
-    const r = await call(`/user/${data.userId}/profile`);
-    if (r.ok || r.status !== 404) return r;
-    return call(`/user/${data.userId}`);
-  });
+  .handler(async ({ data }) => call(`/user/${data.userId}/profile`));
 
+// Legacy aliases kept so existing UI keeps compiling. Both now return
+// the relevant slice of /user/{id}/profile.
 export const getUserRatings = createServerFn({ method: "POST" })
   .inputValidator((i: unknown) => z.object({ userId: UserId }).parse(i))
-  .handler(async ({ data }) => call(`/user/${data.userId}/ratings`));
+  .handler(async ({ data }) => {
+    const r = await call(`/user/${data.userId}/profile`);
+    if (!r.ok) return r;
+    const p: any = r.data ?? {};
+    const ratings = p.ratings ?? p.profile?.ratings ?? [];
+    const category_ratings = p.category_ratings ?? p.profile?.category_ratings ?? [];
+    const badges = p.badges ?? p.profile?.badges ?? [];
+    return { ok: true as const, data: { ratings, category_ratings, badges } };
+  });
 
 export const getUserTasks = createServerFn({ method: "POST" })
   .inputValidator((i: unknown) =>
@@ -388,57 +486,65 @@ export const getUserTasks = createServerFn({ method: "POST" })
     }).parse(i),
   )
   .handler(async ({ data }) => {
-    const role = data.role ?? "poster";
-    const path = role === "tasker"
-      ? `/user/${data.userId}/tasks?role=tasker`
-      : `/user/${data.userId}/tasks`;
-    const direct = await call(path, { token: data.token });
-    if (direct.ok || direct.status !== 404) return direct;
-    // Fallback: search and filter client-side.
+    // Tasker's own activity has a first-class endpoint.
+    if (data.role === "tasker" && data.token) {
+      const r = await call(`/my-applications`, { token: data.token });
+      if (r.ok) {
+        const rd: any = r.data ?? {};
+        const apps: any[] = rd.applications ?? rd.results ?? (Array.isArray(rd) ? rd : []);
+        return {
+          ok: true as const,
+          data: { tasks: apps.map((a) => a.task ?? a).filter(Boolean) },
+        };
+      }
+    }
+    // Profile may embed tasks. Otherwise filter /task/search by poster id.
+    const prof = await call(`/user/${data.userId}/profile`);
+    if (prof.ok) {
+      const p: any = prof.data ?? {};
+      const tasks = p.tasks ?? p.profile?.tasks ?? p.posted_tasks ?? null;
+      if (Array.isArray(tasks)) return { ok: true as const, data: { tasks } };
+    }
     const search = await call(`/task/search?limit=100&page=1`);
     if (!search.ok) return search;
     const list: any[] = (search.data as any)?.results ?? (search.data as any)?.tasks ?? [];
-    const details = await Promise.all(
-      list.map(async (t: any) => {
-        const id = t.task_id ?? t.id;
-        if (id == null) return t;
-        const detail = await call(`/task/${id}`);
-        return detail.ok ? ((detail.data as any)?.task ?? detail.data) : t;
-      }),
+    const tasks = list.filter((t: any) =>
+      String(t?.poster_id ?? t?.user_id ?? t?.owner_id ?? "") === String(data.userId),
     );
-    const tasks = details.filter((t: any) => {
-      if (role === "tasker") {
-        return String(t?.tasker_id ?? t?.accepted_tasker_id ?? t?.assigned_to ?? "") === String(data.userId);
-      }
-      return String(t?.poster_id ?? t?.user_id ?? t?.owner_id ?? "") === String(data.userId);
-    });
     return { ok: true as const, data: { tasks } };
   });
 
-// --- Task lifecycle: cancel --------------------------------------------
+// ---- Task lifecycle: cancel --------------------------------------------
 export const cancelTask = createServerFn({ method: "POST" })
   .inputValidator((i: unknown) =>
     z.object({ taskId: TaskId, token: Token, reason: z.string().max(500).optional() }).parse(i),
   )
-  .handler(async ({ data }) => {
-    // Try POST /task/{id}/cancel, then PATCH /task/{id} with status=cancelled.
-    const a = await call(`/task/${data.taskId}/cancel`, {
+  .handler(async ({ data }) =>
+    call(`/task/${data.taskId}/cancel`, {
       method: "POST",
       token: data.token,
       body: data.reason ? { reason: data.reason } : undefined,
-    });
-    if (a.ok || (a.status !== 404 && a.status !== 405)) return a;
-    return call(`/task/${data.taskId}`, {
-      method: "PATCH",
-      token: data.token,
-      body: { status: "cancelled", reason: data.reason ?? undefined },
-    });
-  });
+    }),
+  );
 
-// --- Live location (task) ----------------------------------------------
+// ---- Live location -----------------------------------------------------
 export const getTaskLocation = createServerFn({ method: "POST" })
   .inputValidator((i: unknown) => z.object({ taskId: TaskId, token: Token }).parse(i))
   .handler(async ({ data }) => call(`/task/${data.taskId}/location`, { token: data.token }));
+
+export const recordLocation = createServerFn({ method: "POST" })
+  .inputValidator((i: unknown) =>
+    z.object({
+      taskId: TaskId,
+      token: Token,
+      latitude: z.number().min(-90).max(90),
+      longitude: z.number().min(-180).max(180),
+    }).parse(i),
+  )
+  .handler(async ({ data }) => {
+    const { taskId, token, ...body } = data;
+    return call(`/task/${taskId}/location`, { method: "POST", token, body });
+  });
 
 export const toggleTaskLocation = createServerFn({ method: "POST" })
   .inputValidator((i: unknown) =>
@@ -477,20 +583,27 @@ export const markArrived = createServerFn({ method: "POST" })
     });
   });
 
-// --- Payments (Paystack) ------------------------------------------------
-export const initiateEscrow = createServerFn({ method: "POST" })
-  .inputValidator((i: unknown) => z.object({ taskId: TaskId, token: Token }).parse(i))
-  .handler(async ({ data }) =>
-    call(`/payments/escrow/${data.taskId}`, { method: "POST", token: data.token }),
-  );
-
-export const verifyPayment = createServerFn({ method: "POST" })
+// ---- Payments (Flutterwave) --------------------------------------------
+// The escrow checkout URL is created server-side when the poster accepts a
+// tasker (PUT /task/{id}/accept/{tasker_id}). After paying, Flutterwave
+// redirects to GET /task/payment/callback?tx_ref&transaction_id&status,
+// which finalises the escrow on the backend.
+export const paymentCallback = createServerFn({ method: "POST" })
   .inputValidator((i: unknown) =>
-    z.object({ reference: z.string().min(4).max(200), token: Token }).parse(i),
+    z.object({
+      tx_ref: z.string().min(1).max(200),
+      transaction_id: z.string().min(1).max(200),
+      status: z.string().min(1).max(40),
+    }).parse(i),
   )
-  .handler(async ({ data }) =>
-    call(`/payments/verify/${data.reference}`, { token: data.token }),
-  );
+  .handler(async ({ data }) => {
+    const qs = new URLSearchParams({
+      tx_ref: data.tx_ref,
+      transaction_id: data.transaction_id,
+      status: data.status,
+    }).toString();
+    return call(`/task/payment/callback?${qs}`);
+  });
 
 export const releaseEscrow = createServerFn({ method: "POST" })
   .inputValidator((i: unknown) => z.object({ taskId: TaskId, token: Token }).parse(i))
@@ -498,3 +611,18 @@ export const releaseEscrow = createServerFn({ method: "POST" })
     call(`/task/${data.taskId}/release`, { method: "POST", token: data.token }),
   );
 
+// Deprecated aliases — kept temporarily so older imports compile. They now
+// rely on the accept response to surface a Flutterwave checkout URL.
+export const initiateEscrow = acceptApplicant;
+export const verifyPayment = createServerFn({ method: "POST" })
+  .inputValidator((i: unknown) =>
+    z.object({ reference: z.string().min(1).max(200), token: Token }).parse(i),
+  )
+  .handler(async ({ data }) => {
+    // No standalone verify endpoint in the spec; payment is finalised by the
+    // Flutterwave callback. Treat any call as "pending" so callers stop polling.
+    return {
+      ok: true as const,
+      data: { reference: data.reference, status: "pending", verified: false },
+    };
+  });
