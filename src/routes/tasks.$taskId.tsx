@@ -212,19 +212,12 @@ function TaskDetail() {
 
   const acceptM = useMutation({
     mutationFn: async (taskerId: string | number) => {
-      const r = await accept({ data: { taskId, taskerId, token: token! } });
-      if (r.ok) {
-        try {
-          const offer = mergedOffers.find((o) => String(o.applicant_id ?? o.tasker_id ?? o.user_id) === String(taskerId));
-          const toName = offer?.applicant_name ?? offer?.tasker_name ?? offer?.name ?? "there";
-          await send({ data: { taskId, token: token!, message_text: `🎉 Offer accepted! Hi ${toName}, your offer on "${task?.title ?? "this task"}" has been accepted and payment is held in escrow. Let's coordinate next steps here.` } });
-        } catch {}
-      }
-      return r;
+      return await accept({ data: { taskId, taskerId, token: token! } });
     },
     onSuccess: (r) => {
-      if (r.ok) { toast.success("Tasker accepted — conversation opened"); refetch(); appsQ.refetch(); qaQ.refetch(); }
-      else toast.error(r.error);
+      if (!r.ok) toast.error(r.error);
+      // The intro message + task refetch run on /tasks/payment/callback
+      // after Flutterwave confirms payment.
     },
   });
 
