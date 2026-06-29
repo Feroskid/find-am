@@ -131,7 +131,7 @@ function MyTasksPage() {
                         </span>
                         <span className="inline-flex items-center gap-1"><Clock className="h-3.5 w-3.5" />{t.deadline ? new Date(t.deadline).toLocaleDateString() : "Flexible"}</span>
                         <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 font-semibold text-primary capitalize">{status.replace("_", " ")}</span>
-                        <span>· {offers} offer{Number(offers) === 1 ? "" : "s"}</span>
+                        {Number(offers) > 0 && <span>· {offers} offer{Number(offers) === 1 ? "" : "s"}</span>}
                       </div>
                     </Link>
                   </li>
