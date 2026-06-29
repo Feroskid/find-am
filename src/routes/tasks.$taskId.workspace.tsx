@@ -93,7 +93,15 @@ function WorkspacePage() {
   });
   const completeM = useMutation({
     mutationFn: () => cFn({ data: { taskId, token: token! } }),
-    onSuccess: (r) => r.ok ? (toast.success("Task marked complete."), setShowRate(true), taskQ.refetch()) : toast.error(r.error),
+    onSuccess: (r) => r.ok
+      ? (toast.success("Marked complete. Poster has been notified to release payment."), taskQ.refetch())
+      : toast.error(r.error),
+  });
+  const releaseM = useMutation({
+    mutationFn: () => relFn({ data: { taskId, token: token! } }),
+    onSuccess: (r) => r.ok
+      ? (toast.success("Payment released to the tasker."), setShowRate(true), taskQ.refetch())
+      : toast.error(r.error),
   });
   const disputeM = useMutation({
     mutationFn: () => dFn({ data: { taskId, reason: disputeReason.trim(), token: token! } }),
