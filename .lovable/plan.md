@@ -1,52 +1,40 @@
-## 1. Fix Flutterwave callback 404 (`/task/payment/callback`)
+## Goal
 
-The backend sends users to `/task/payment/callback` (singular) — our route is at `/tasks/payment/callback`. Flutterwave's return URL is fixed server-side, so we mirror the route at the singular path.
+Replace the single "Mark complete & release" button in the task workspace with a two-step flow that matches the backend:
 
-- Create `src/routes/task.payment.callback.tsx` with `createFileRoute("/task/payment/callback")`. It reuses the existing component logic from `tasks.payment.callback.tsx`.
-- Since the backend's URL doesn't carry `task_id`/`tasker_id`, parse them from `tx_ref` (format `findtask-{taskId}-{hash}`) to drive the "Back to task" link and to fire the automated inbox message to the tasker.
-- On successful callback: call `paymentCallback`, then `sendMessage` with the offer-accepted intro (already implemented), then redirect to `/tasks/$taskId` after 2s so the user lands on the task page (and Accept/Decline disappear because status is now `assigned`).
-- Keep the old `/tasks/payment/callback` route as a thin re-export so both work.
+1. **Tasker** taps **Mark task as complete** → `POST /task/{id}/complete`
+2. **Poster** then sees **Release payment** → `POST /task/{id}/release`
+3. Task is only treated as **Completed** after the release call succeeds
+4. Confirm the **Raise dispute** button is correctly wired to `POST /task/{id}/dispute` for both roles
 
-## 2. Task detail: Questions → Messages, hide Accept/Decline post-payment
+All three server functions already exist in `src/lib/findtask.functions.ts` (`completeTask`, `releaseEscrow`, `disputeTask`). No backend/server-function changes needed — this is a UI wiring change.
 
-In `src/routes/tasks.$taskId.tsx`:
-- When `task.status !== "open"` (i.e. assigned / in_progress / completed): rename the "Questions" tab label to **"Messages"**, drop the count badge, and restrict access to the poster + the assigned tasker (everyone else sees "Messaging unlocks when you're assigned").
-- Hide both **Accept** and **Decline** buttons on every offer card whenever `task.status !== "open"` (currently Accept is gated on `status === "open"` but Decline isn't).
-- Replace the sidebar "Cancel task" CTA with a **"Open dispute"** button when the task is `assigned`/`in_progress`, visible to both poster and the assigned tasker. Wire it to the existing dispute server function (or a placeholder that routes to `/tasks/$taskId/workspace#dispute` if none exists).
+## Changes
 
-## 3. Dashboard KPIs + "My posted tasks" not showing (poster)
+### `src/routes/tasks.$taskId.workspace.tsx`
 
-In `src/routes/dashboard.tsx`:
-- The poster KPIs already read from `getUserTasks?role=poster`. The list comes back empty when the backend endpoint 404s for some accounts. Add a fallback: if `myTasksQ` returns `ok:false` or an empty list, refetch via `listTasks({ poster_id: myId, limit: 100 })` and merge.
-- KPI counts include all statuses (`open`, `assigned`, `in_progress`, `completed`) → "Posted" = total length; "In escrow" = `assigned` + `in_progress` + `accepted` + `escrow`; "Completed" = `completed`. Already structured this way — fix relies on (a) above returning real data.
-- Keep the same fix path for the **"My posted tasks"** list section (it shares `myTasks`).
+- Add a `releaseEscrow` server-fn binding alongside the existing `completeTask` / `disputeTask` / `rateTask` bindings.
+- Derive role + stage from the task payload:
+  - `isTasker` = current user id matches `tasker_id / accepted_tasker_id / assigned_to`
+  - `isPoster` = current user id matches `poster_id / user_id / owner_id`
+  - `awaitingRelease` = status is one of `completed_by_tasker`, `pending_release`, `awaiting_release`, `work_submitted`, `submitted`, or backend flag `tasker_marked_complete`
+  - `isCompleted` = status is `completed` / `released` / `paid_out`
+- Replace the current single Actions block with role/stage-aware buttons:
+  - **Tasker, status assigned/in_progress/accepted** → `Mark task as complete` (calls `completeTask`). On success: toast "Poster notified — awaiting payment release", refetch task. Do NOT open the rating modal here.
+  - **Poster, awaitingRelease** → primary `Release payment` button (calls `releaseEscrow`). On success: toast "Payment released", refetch task, open the rating modal.
+  - **Poster, awaitingRelease** → secondary helper text: "The tasker has marked this task complete. Review the work, then release payment to finish."
+  - **Poster, status assigned/in_progress and NOT awaitingRelease** → no complete button (poster can no longer self-complete; waits for tasker).
+  - **isCompleted** → "Leave a rating" button (existing behavior preserved).
+- Keep the existing **Raise a dispute** flow visible to both roles whenever the task is assigned / in_progress / awaiting_release / completed-but-not-rated; verify it posts `{ reason }` (and optional `evidence_urls`) to `/task/{id}/dispute` via `disputeTask` — current wiring already does this, so just confirm and leave intact.
+- Add lightweight loading + disabled states (`Loader2` spinner) on the new Release/Complete buttons, mirroring existing patterns.
 
-## 4. Tasker "My tasks" shows "Untitled task"
+### `src/routes/tasks.$taskId.tsx` (task detail page)
 
-The tasker's `getUserTasks?role=tasker` returns **application** objects, not task objects, so `.title` is missing.
+- The detail page currently shows an "Open dispute" button for assigned tasks; leave it as-is (it routes to the workspace where the dispute textarea lives). No endpoint change needed.
+- If a "Mark complete" button exists on this page for posters, remove it so completion only happens from the workspace via the new two-step flow.
 
-In `src/routes/tasks.mine.tsx` (and the same shape used in dashboard if needed):
-- Map each item: if `item.title` is missing but `item.task_id` exists, hydrate via `getTask({ taskId })` in a `useQueries` batch and use the returned task's title/budget/location/status.
-- Cache hydrated tasks under `["task", id]` so they're reused on the detail page.
+## Out of scope
 
-## 5. Messages page lists assigned + completed tasks
-
-Replace the empty-state-only `src/routes/messages.tsx` with a real list:
-- Fetch `getUserTasks` for both roles (poster + tasker) for the signed-in user; filter to statuses `assigned`, `in_progress`, `completed`.
-- Render each as a row: title, counterparty name, last activity, status pill, linking to `/tasks/$taskId/workspace` (or `/tasks/$taskId` if no workspace).
-- Show empty state only when both lists are empty.
-
-## 6. Verify
-
-- Manually hit `/task/payment/callback?status=completed&tx_ref=findtask-17-test&transaction_id=1` to confirm no 404 and that the intro message is sent.
-- Sign in as the test poster, open dashboard → confirm "Posted" count > 0 and "My posted tasks" list populated.
-- Sign in as test tasker, open `/tasks/mine` → confirm real titles instead of "Untitled task".
-- Open an assigned task → confirm Questions tab now reads "Messages", Accept/Decline gone, Dispute visible.
-
-## Files touched
-- New: `src/routes/task.payment.callback.tsx`
-- Edit: `src/routes/tasks.payment.callback.tsx` (extract shared component or re-export)
-- Edit: `src/routes/tasks.$taskId.tsx` (tab rename, hide buttons, dispute CTA)
-- Edit: `src/routes/dashboard.tsx` (poster fallback fetch)
-- Edit: `src/routes/tasks.mine.tsx` (hydrate titles)
-- Edit: `src/routes/messages.tsx` (real list)
+- No changes to fees, payment-callback route, messaging, or notifications.
+- No new server functions; the three endpoints are already implemented.
+- No design-system / token changes.

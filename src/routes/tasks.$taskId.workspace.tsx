@@ -9,6 +9,7 @@ import { useAuth } from "@/lib/auth";
 import { roomSecret, encryptText, decryptText } from "@/lib/e2ee";
 import {
   getTask, listMessages, sendMessage, completeTask, disputeTask, rateTask,
+  releaseEscrow,
   getTaskLocation, toggleTaskLocation, markArrived,
 } from "@/lib/findtask.functions";
 
