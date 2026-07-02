@@ -365,6 +365,10 @@ function LiveLocationPanel({ taskId, token, isPoster }: { taskId: string; token:
         <Navigation className="h-4 w-4" /> {sharing ? "Sharing live · Tap to stop" : "Share my location"}
       </button>
 
+      {inactiveNotice && (
+        <div className="rounded-xl border border-border bg-muted/40 p-3 text-[11px] text-muted-foreground">{inactiveNotice}</div>
+      )}
+
       {pos && (
         <div className="text-[11px] text-muted-foreground">You: {pos.lat.toFixed(4)}, {pos.lng.toFixed(4)}</div>
       )}
