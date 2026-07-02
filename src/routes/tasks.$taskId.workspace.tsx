@@ -331,6 +331,10 @@ function LiveLocationPanel({ taskId, token, isPoster }: { taskId: string; token:
   }, [sharing, taskId, token, toggle]);
 
   const data: any = locQ.data?.ok ? locQ.data.data : null;
+  const locErr: string = !locQ.data?.ok ? String((locQ.data as any)?.error ?? "") : "";
+  const inactiveNotice = /only.*active.*(ongoing|assigned|in.progress)|not.*active|no active|inactive/i.test(locErr)
+    ? "Live location is only active while this task is in progress."
+    : "";
   const poster = data?.poster ?? data?.poster_location;
   const tasker = data?.tasker ?? data?.tasker_location;
   const other = isPoster ? tasker : poster;
@@ -360,6 +364,10 @@ function LiveLocationPanel({ taskId, token, isPoster }: { taskId: string; token:
       >
         <Navigation className="h-4 w-4" /> {sharing ? "Sharing live · Tap to stop" : "Share my location"}
       </button>
+
+      {inactiveNotice && (
+        <div className="rounded-xl border border-border bg-muted/40 p-3 text-[11px] text-muted-foreground">{inactiveNotice}</div>
+      )}
 
       {pos && (
         <div className="text-[11px] text-muted-foreground">You: {pos.lat.toFixed(4)}, {pos.lng.toFixed(4)}</div>

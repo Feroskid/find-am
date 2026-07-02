@@ -32,6 +32,21 @@ function PublicProfilePage() {
     return Array.isArray(t) ? t : [];
   })();
 
+  const has = (v: any) => v !== undefined && v !== null && v !== "" && !(typeof v === "number" && Number.isNaN(v));
+  const employer = {
+    posted: u?.tasks_posted ?? u?.posted_count,
+    completion: u?.completion_rate,
+    rating: u?.employer_rating ?? u?.poster_rating,
+  };
+  const tasker = {
+    completed: u?.tasks_completed ?? u?.completed_count,
+    success: u?.success_rate,
+    response: u?.response_rate,
+    rating: u?.tasker_rating ?? u?.rating,
+  };
+  const hasEmployerStats = has(employer.posted) || has(employer.completion) || has(employer.rating);
+  const hasTaskerStats = has(tasker.completed) || has(tasker.success) || has(tasker.response) || has(tasker.rating) || categoryRatings.length > 0 || badges.length > 0;
+
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <TaskHeader />
@@ -66,48 +81,58 @@ function PublicProfilePage() {
             </header>
 
             <div className="mt-8 grid gap-6 md:grid-cols-2">
-              <section className="rounded-2xl border border-border bg-card p-5">
-                <h2 className="font-semibold inline-flex items-center gap-2"><User className="h-4 w-4" /> As employer</h2>
-                <dl className="mt-3 grid grid-cols-2 gap-3 text-sm">
-                  <Stat label="Tasks posted" value={u.tasks_posted ?? u.posted_count ?? 0} />
-                  <Stat label="Completion rate" value={u.completion_rate != null ? `${u.completion_rate}%` : "—"} />
-                  <Stat label="Employer rating" value={u.employer_rating ?? "—"} star />
-                </dl>
-              </section>
+              {hasEmployerStats ? (
+                <section className="rounded-2xl border border-border bg-card p-5">
+                  <h2 className="font-semibold inline-flex items-center gap-2"><User className="h-4 w-4" /> As employer</h2>
+                  <dl className="mt-3 grid grid-cols-2 gap-3 text-sm">
+                    {has(employer.posted) && <Stat label="Tasks posted" value={employer.posted} />}
+                    {has(employer.completion) && <Stat label="Completion rate" value={`${employer.completion}%`} />}
+                    {has(employer.rating) && <Stat label="Employer rating" value={employer.rating} star />}
+                  </dl>
+                </section>
+              ) : null}
 
-              <section className="rounded-2xl border border-border bg-card p-5">
-                <h2 className="font-semibold inline-flex items-center gap-2"><Award className="h-4 w-4" /> As tasker</h2>
-                <dl className="mt-3 grid grid-cols-2 gap-3 text-sm">
-                  <Stat label="Tasks completed" value={u.tasks_completed ?? u.completed_count ?? 0} />
-                  <Stat label="Success rate" value={u.success_rate != null ? `${u.success_rate}%` : "—"} />
-                  <Stat label="Response rate" value={u.response_rate != null ? `${u.response_rate}%` : "—"} />
-                  <Stat label="Overall rating" value={u.tasker_rating ?? "—"} star />
-                </dl>
+              {hasTaskerStats ? (
+                <section className="rounded-2xl border border-border bg-card p-5">
+                  <h2 className="font-semibold inline-flex items-center gap-2"><Award className="h-4 w-4" /> As tasker</h2>
+                  <dl className="mt-3 grid grid-cols-2 gap-3 text-sm">
+                    {has(tasker.completed) && <Stat label="Tasks completed" value={tasker.completed} />}
+                    {has(tasker.success) && <Stat label="Success rate" value={`${tasker.success}%`} />}
+                    {has(tasker.response) && <Stat label="Response rate" value={`${tasker.response}%`} />}
+                    {has(tasker.rating) && <Stat label="Overall rating" value={tasker.rating} star />}
+                  </dl>
 
-                {categoryRatings.length > 0 && (
-                  <>
-                    <div className="mt-4 text-xs uppercase tracking-wide text-muted-foreground">Category ratings</div>
-                    <ul className="mt-1 space-y-1 text-sm">
-                      {categoryRatings.map((c: any, i: number) => (
-                        <li key={i} className="flex justify-between">
-                          <span className="text-foreground/80">{c.category_name ?? c.name}</span>
-                          <span className="font-medium inline-flex items-center gap-0.5">{c.rating?.toFixed?.(1) ?? c.rating} <Star className="h-3 w-3 fill-amber-400 text-amber-400" /></span>
-                        </li>
+                  {categoryRatings.length > 0 && (
+                    <>
+                      <div className="mt-4 text-xs uppercase tracking-wide text-muted-foreground">Category ratings</div>
+                      <ul className="mt-1 space-y-1 text-sm">
+                        {categoryRatings.map((c: any, i: number) => (
+                          <li key={i} className="flex justify-between">
+                            <span className="text-foreground/80">{c.category_name ?? c.name}</span>
+                            <span className="font-medium inline-flex items-center gap-0.5">{c.rating?.toFixed?.(1) ?? c.rating} <Star className="h-3 w-3 fill-amber-400 text-amber-400" /></span>
+                          </li>
+                        ))}
+                      </ul>
+                    </>
+                  )}
+
+                  {badges.length > 0 && (
+                    <div className="mt-4 flex flex-wrap gap-1.5">
+                      {badges.map((b: any, i: number) => (
+                        <span key={i} className="inline-flex items-center gap-1 rounded-full bg-primary/10 text-primary px-2 py-0.5 text-[11px] font-semibold">
+                          <Award className="h-3 w-3" /> {b.name ?? b.category_name ?? b.badge_name}
+                        </span>
                       ))}
-                    </ul>
-                  </>
-                )}
+                    </div>
+                  )}
+                </section>
+              ) : null}
 
-                {badges.length > 0 && (
-                  <div className="mt-4 flex flex-wrap gap-1.5">
-                    {badges.map((b: any, i: number) => (
-                      <span key={i} className="inline-flex items-center gap-1 rounded-full bg-primary/10 text-primary px-2 py-0.5 text-[11px] font-semibold">
-                        <Award className="h-3 w-3" /> {b.name ?? b.category_name ?? b.badge_name}
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </section>
+              {!hasEmployerStats && !hasTaskerStats && (
+                <div className="md:col-span-2 rounded-2xl border border-dashed border-border p-6 text-sm text-muted-foreground text-center">
+                  This user hasn't built up a public reputation yet.
+                </div>
+              )}
             </div>
 
             {tasks.length > 0 && (
