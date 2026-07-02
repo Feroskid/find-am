@@ -32,6 +32,21 @@ function PublicProfilePage() {
     return Array.isArray(t) ? t : [];
   })();
 
+  const has = (v: any) => v !== undefined && v !== null && v !== "" && !(typeof v === "number" && Number.isNaN(v));
+  const employer = {
+    posted: u?.tasks_posted ?? u?.posted_count,
+    completion: u?.completion_rate,
+    rating: u?.employer_rating ?? u?.poster_rating,
+  };
+  const tasker = {
+    completed: u?.tasks_completed ?? u?.completed_count,
+    success: u?.success_rate,
+    response: u?.response_rate,
+    rating: u?.tasker_rating ?? u?.rating,
+  };
+  const hasEmployerStats = has(employer.posted) || has(employer.completion) || has(employer.rating);
+  const hasTaskerStats = has(tasker.completed) || has(tasker.success) || has(tasker.response) || has(tasker.rating) || categoryRatings.length > 0 || badges.length > 0;
+
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <TaskHeader />
