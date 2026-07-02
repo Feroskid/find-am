@@ -331,6 +331,10 @@ function LiveLocationPanel({ taskId, token, isPoster }: { taskId: string; token:
   }, [sharing, taskId, token, toggle]);
 
   const data: any = locQ.data?.ok ? locQ.data.data : null;
+  const locErr: string = !locQ.data?.ok ? String((locQ.data as any)?.error ?? "") : "";
+  const inactiveNotice = /only.*active.*(ongoing|assigned|in.progress)|not.*active|no active|inactive/i.test(locErr)
+    ? "Live location is only active while this task is in progress."
+    : "";
   const poster = data?.poster ?? data?.poster_location;
   const tasker = data?.tasker ?? data?.tasker_location;
   const other = isPoster ? tasker : poster;
