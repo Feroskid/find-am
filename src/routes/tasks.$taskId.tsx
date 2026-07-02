@@ -135,7 +135,12 @@ function TaskDetail() {
   const offers: any[] = isPoster
     ? mergedOffers
     : mergedOffers.filter((o) => String(o.applicant_id ?? o.tasker_id ?? o.user_id) === String(myId));
-  const totalOfferCount = mergedOffers.length;
+  // Prefer explicit backend count so non-posters (who can't fetch the private
+  // application list) still see the same number the browse card shows.
+  const backendOfferCount = Number(
+    task?.offers_count ?? task?.applications_count ?? task?.applicants_count ?? task?.offer_count ?? 0,
+  );
+  const totalOfferCount = Math.max(mergedOffers.length, backendOfferCount || 0);
 
   const myApplication: any = (() => {
     if (!mergedOffers.length) return null;
