@@ -95,8 +95,17 @@ export function Footer() {
           </div>
         </div>
 
-        <div className="mt-6 text-xs text-background/60">
-          Integer Tech Ltd © {new Date().getFullYear()}. All rights reserved. Find-task is operated by Integer Tech Ltd · 🇳🇬 Nigeria
+        <div className="mt-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between text-xs text-background/60">
+          <div>
+            Integer Tech Ltd © {new Date().getFullYear()}. All rights reserved. Find-task is operated by Integer Tech Ltd · 🇳🇬 Nigeria
+          </div>
+          <nav className="flex flex-wrap items-center gap-x-5 gap-y-2 font-semibold text-background/85">
+            <Link to="/terms" className="hover:text-background hover:underline">Terms &amp; Conditions</Link>
+            <span className="text-background/30">·</span>
+            <Link to="/privacy" className="hover:text-background hover:underline">Privacy Policy</Link>
+            <span className="text-background/30">·</span>
+            <Link to="/community" className="hover:text-background hover:underline">Community Guidelines</Link>
+          </nav>
         </div>
       </div>
     </footer>
