@@ -28,17 +28,23 @@ import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as CommunityRouteImport } from './routes/community'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as TasksIndexRouteImport } from './routes/tasks.index'
+import { Route as CommunityIndexRouteImport } from './routes/community.index'
 import { Route as UUserIdRouteImport } from './routes/u.$userId'
 import { Route as TasksOffersRouteImport } from './routes/tasks.offers'
 import { Route as TasksMineRouteImport } from './routes/tasks.mine'
 import { Route as TasksCategoriesRouteImport } from './routes/tasks.categories'
 import { Route as TasksBrowseRouteImport } from './routes/tasks.browse'
 import { Route as TasksTaskIdRouteImport } from './routes/tasks.$taskId'
+import { Route as MessagesTaskIdRouteImport } from './routes/messages.$taskId'
+import { Route as CommunityNewRouteImport } from './routes/community.new'
+import { Route as CommunityAuthRouteImport } from './routes/community.auth'
 import { Route as AuthVerifyEmailRouteImport } from './routes/auth.verify-email'
 import { Route as TasksPaymentCallbackRouteImport } from './routes/tasks.payment.callback'
 import { Route as TasksTaskIdWorkspaceRouteImport } from './routes/tasks.$taskId.workspace'
 import { Route as TasksTaskIdApplicationsRouteImport } from './routes/tasks.$taskId.applications'
 import { Route as TaskPaymentCallbackRouteImport } from './routes/task.payment.callback'
+import { Route as CommunityTThreadIdRouteImport } from './routes/community.t.$threadId'
+import { Route as CommunityCSlugRouteImport } from './routes/community.c.$slug'
 import { Route as ApiPublicSearchRouteImport } from './routes/api/public/search'
 
 const WalletRoute = WalletRouteImport.update({
@@ -136,6 +142,11 @@ const TasksIndexRoute = TasksIndexRouteImport.update({
   path: '/',
   getParentRoute: () => TasksRoute,
 } as any)
+const CommunityIndexRoute = CommunityIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => CommunityRoute,
+} as any)
 const UUserIdRoute = UUserIdRouteImport.update({
   id: '/u/$userId',
   path: '/u/$userId',
@@ -166,6 +177,21 @@ const TasksTaskIdRoute = TasksTaskIdRouteImport.update({
   path: '/$taskId',
   getParentRoute: () => TasksRoute,
 } as any)
+const MessagesTaskIdRoute = MessagesTaskIdRouteImport.update({
+  id: '/$taskId',
+  path: '/$taskId',
+  getParentRoute: () => MessagesRoute,
+} as any)
+const CommunityNewRoute = CommunityNewRouteImport.update({
+  id: '/new',
+  path: '/new',
+  getParentRoute: () => CommunityRoute,
+} as any)
+const CommunityAuthRoute = CommunityAuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => CommunityRoute,
+} as any)
 const AuthVerifyEmailRoute = AuthVerifyEmailRouteImport.update({
   id: '/auth/verify-email',
   path: '/auth/verify-email',
@@ -191,6 +217,16 @@ const TaskPaymentCallbackRoute = TaskPaymentCallbackRouteImport.update({
   path: '/task/payment/callback',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CommunityTThreadIdRoute = CommunityTThreadIdRouteImport.update({
+  id: '/t/$threadId',
+  path: '/t/$threadId',
+  getParentRoute: () => CommunityRoute,
+} as any)
+const CommunityCSlugRoute = CommunityCSlugRouteImport.update({
+  id: '/c/$slug',
+  path: '/c/$slug',
+  getParentRoute: () => CommunityRoute,
+} as any)
 const ApiPublicSearchRoute = ApiPublicSearchRouteImport.update({
   id: '/api/public/search',
   path: '/api/public/search',
@@ -199,12 +235,12 @@ const ApiPublicSearchRoute = ApiPublicSearchRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/community': typeof CommunityRoute
+  '/community': typeof CommunityRouteWithChildren
   '/dashboard': typeof DashboardRoute
   '/explore': typeof ExploreRoute
   '/login': typeof LoginRoute
   '/map': typeof MapRoute
-  '/messages': typeof MessagesRoute
+  '/messages': typeof MessagesRouteWithChildren
   '/notifications': typeof NotificationsRoute
   '/post-task': typeof PostTaskRoute
   '/privacy': typeof PrivacyRoute
@@ -217,14 +253,20 @@ export interface FileRoutesByFullPath {
   '/verify-email': typeof VerifyEmailRoute
   '/wallet': typeof WalletRoute
   '/auth/verify-email': typeof AuthVerifyEmailRoute
+  '/community/auth': typeof CommunityAuthRoute
+  '/community/new': typeof CommunityNewRoute
+  '/messages/$taskId': typeof MessagesTaskIdRoute
   '/tasks/$taskId': typeof TasksTaskIdRouteWithChildren
   '/tasks/browse': typeof TasksBrowseRoute
   '/tasks/categories': typeof TasksCategoriesRoute
   '/tasks/mine': typeof TasksMineRoute
   '/tasks/offers': typeof TasksOffersRoute
   '/u/$userId': typeof UUserIdRoute
+  '/community/': typeof CommunityIndexRoute
   '/tasks/': typeof TasksIndexRoute
   '/api/public/search': typeof ApiPublicSearchRoute
+  '/community/c/$slug': typeof CommunityCSlugRoute
+  '/community/t/$threadId': typeof CommunityTThreadIdRoute
   '/task/payment/callback': typeof TaskPaymentCallbackRoute
   '/tasks/$taskId/applications': typeof TasksTaskIdApplicationsRoute
   '/tasks/$taskId/workspace': typeof TasksTaskIdWorkspaceRoute
@@ -232,12 +274,11 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/community': typeof CommunityRoute
   '/dashboard': typeof DashboardRoute
   '/explore': typeof ExploreRoute
   '/login': typeof LoginRoute
   '/map': typeof MapRoute
-  '/messages': typeof MessagesRoute
+  '/messages': typeof MessagesRouteWithChildren
   '/notifications': typeof NotificationsRoute
   '/post-task': typeof PostTaskRoute
   '/privacy': typeof PrivacyRoute
@@ -249,14 +290,20 @@ export interface FileRoutesByTo {
   '/verify-email': typeof VerifyEmailRoute
   '/wallet': typeof WalletRoute
   '/auth/verify-email': typeof AuthVerifyEmailRoute
+  '/community/auth': typeof CommunityAuthRoute
+  '/community/new': typeof CommunityNewRoute
+  '/messages/$taskId': typeof MessagesTaskIdRoute
   '/tasks/$taskId': typeof TasksTaskIdRouteWithChildren
   '/tasks/browse': typeof TasksBrowseRoute
   '/tasks/categories': typeof TasksCategoriesRoute
   '/tasks/mine': typeof TasksMineRoute
   '/tasks/offers': typeof TasksOffersRoute
   '/u/$userId': typeof UUserIdRoute
+  '/community': typeof CommunityIndexRoute
   '/tasks': typeof TasksIndexRoute
   '/api/public/search': typeof ApiPublicSearchRoute
+  '/community/c/$slug': typeof CommunityCSlugRoute
+  '/community/t/$threadId': typeof CommunityTThreadIdRoute
   '/task/payment/callback': typeof TaskPaymentCallbackRoute
   '/tasks/$taskId/applications': typeof TasksTaskIdApplicationsRoute
   '/tasks/$taskId/workspace': typeof TasksTaskIdWorkspaceRoute
@@ -265,12 +312,12 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/community': typeof CommunityRoute
+  '/community': typeof CommunityRouteWithChildren
   '/dashboard': typeof DashboardRoute
   '/explore': typeof ExploreRoute
   '/login': typeof LoginRoute
   '/map': typeof MapRoute
-  '/messages': typeof MessagesRoute
+  '/messages': typeof MessagesRouteWithChildren
   '/notifications': typeof NotificationsRoute
   '/post-task': typeof PostTaskRoute
   '/privacy': typeof PrivacyRoute
@@ -283,14 +330,20 @@ export interface FileRoutesById {
   '/verify-email': typeof VerifyEmailRoute
   '/wallet': typeof WalletRoute
   '/auth/verify-email': typeof AuthVerifyEmailRoute
+  '/community/auth': typeof CommunityAuthRoute
+  '/community/new': typeof CommunityNewRoute
+  '/messages/$taskId': typeof MessagesTaskIdRoute
   '/tasks/$taskId': typeof TasksTaskIdRouteWithChildren
   '/tasks/browse': typeof TasksBrowseRoute
   '/tasks/categories': typeof TasksCategoriesRoute
   '/tasks/mine': typeof TasksMineRoute
   '/tasks/offers': typeof TasksOffersRoute
   '/u/$userId': typeof UUserIdRoute
+  '/community/': typeof CommunityIndexRoute
   '/tasks/': typeof TasksIndexRoute
   '/api/public/search': typeof ApiPublicSearchRoute
+  '/community/c/$slug': typeof CommunityCSlugRoute
+  '/community/t/$threadId': typeof CommunityTThreadIdRoute
   '/task/payment/callback': typeof TaskPaymentCallbackRoute
   '/tasks/$taskId/applications': typeof TasksTaskIdApplicationsRoute
   '/tasks/$taskId/workspace': typeof TasksTaskIdWorkspaceRoute
@@ -318,14 +371,20 @@ export interface FileRouteTypes {
     | '/verify-email'
     | '/wallet'
     | '/auth/verify-email'
+    | '/community/auth'
+    | '/community/new'
+    | '/messages/$taskId'
     | '/tasks/$taskId'
     | '/tasks/browse'
     | '/tasks/categories'
     | '/tasks/mine'
     | '/tasks/offers'
     | '/u/$userId'
+    | '/community/'
     | '/tasks/'
     | '/api/public/search'
+    | '/community/c/$slug'
+    | '/community/t/$threadId'
     | '/task/payment/callback'
     | '/tasks/$taskId/applications'
     | '/tasks/$taskId/workspace'
@@ -333,7 +392,6 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/community'
     | '/dashboard'
     | '/explore'
     | '/login'
@@ -350,14 +408,20 @@ export interface FileRouteTypes {
     | '/verify-email'
     | '/wallet'
     | '/auth/verify-email'
+    | '/community/auth'
+    | '/community/new'
+    | '/messages/$taskId'
     | '/tasks/$taskId'
     | '/tasks/browse'
     | '/tasks/categories'
     | '/tasks/mine'
     | '/tasks/offers'
     | '/u/$userId'
+    | '/community'
     | '/tasks'
     | '/api/public/search'
+    | '/community/c/$slug'
+    | '/community/t/$threadId'
     | '/task/payment/callback'
     | '/tasks/$taskId/applications'
     | '/tasks/$taskId/workspace'
@@ -383,14 +447,20 @@ export interface FileRouteTypes {
     | '/verify-email'
     | '/wallet'
     | '/auth/verify-email'
+    | '/community/auth'
+    | '/community/new'
+    | '/messages/$taskId'
     | '/tasks/$taskId'
     | '/tasks/browse'
     | '/tasks/categories'
     | '/tasks/mine'
     | '/tasks/offers'
     | '/u/$userId'
+    | '/community/'
     | '/tasks/'
     | '/api/public/search'
+    | '/community/c/$slug'
+    | '/community/t/$threadId'
     | '/task/payment/callback'
     | '/tasks/$taskId/applications'
     | '/tasks/$taskId/workspace'
@@ -399,12 +469,12 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  CommunityRoute: typeof CommunityRoute
+  CommunityRoute: typeof CommunityRouteWithChildren
   DashboardRoute: typeof DashboardRoute
   ExploreRoute: typeof ExploreRoute
   LoginRoute: typeof LoginRoute
   MapRoute: typeof MapRoute
-  MessagesRoute: typeof MessagesRoute
+  MessagesRoute: typeof MessagesRouteWithChildren
   NotificationsRoute: typeof NotificationsRoute
   PostTaskRoute: typeof PostTaskRoute
   PrivacyRoute: typeof PrivacyRoute
@@ -557,6 +627,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TasksIndexRouteImport
       parentRoute: typeof TasksRoute
     }
+    '/community/': {
+      id: '/community/'
+      path: '/'
+      fullPath: '/community/'
+      preLoaderRoute: typeof CommunityIndexRouteImport
+      parentRoute: typeof CommunityRoute
+    }
     '/u/$userId': {
       id: '/u/$userId'
       path: '/u/$userId'
@@ -599,6 +676,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TasksTaskIdRouteImport
       parentRoute: typeof TasksRoute
     }
+    '/messages/$taskId': {
+      id: '/messages/$taskId'
+      path: '/$taskId'
+      fullPath: '/messages/$taskId'
+      preLoaderRoute: typeof MessagesTaskIdRouteImport
+      parentRoute: typeof MessagesRoute
+    }
+    '/community/new': {
+      id: '/community/new'
+      path: '/new'
+      fullPath: '/community/new'
+      preLoaderRoute: typeof CommunityNewRouteImport
+      parentRoute: typeof CommunityRoute
+    }
+    '/community/auth': {
+      id: '/community/auth'
+      path: '/auth'
+      fullPath: '/community/auth'
+      preLoaderRoute: typeof CommunityAuthRouteImport
+      parentRoute: typeof CommunityRoute
+    }
     '/auth/verify-email': {
       id: '/auth/verify-email'
       path: '/auth/verify-email'
@@ -634,6 +732,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TaskPaymentCallbackRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/community/t/$threadId': {
+      id: '/community/t/$threadId'
+      path: '/t/$threadId'
+      fullPath: '/community/t/$threadId'
+      preLoaderRoute: typeof CommunityTThreadIdRouteImport
+      parentRoute: typeof CommunityRoute
+    }
+    '/community/c/$slug': {
+      id: '/community/c/$slug'
+      path: '/c/$slug'
+      fullPath: '/community/c/$slug'
+      preLoaderRoute: typeof CommunityCSlugRouteImport
+      parentRoute: typeof CommunityRoute
+    }
     '/api/public/search': {
       id: '/api/public/search'
       path: '/api/public/search'
@@ -643,6 +755,38 @@ declare module '@tanstack/react-router' {
     }
   }
 }
+
+interface CommunityRouteChildren {
+  CommunityAuthRoute: typeof CommunityAuthRoute
+  CommunityNewRoute: typeof CommunityNewRoute
+  CommunityIndexRoute: typeof CommunityIndexRoute
+  CommunityCSlugRoute: typeof CommunityCSlugRoute
+  CommunityTThreadIdRoute: typeof CommunityTThreadIdRoute
+}
+
+const CommunityRouteChildren: CommunityRouteChildren = {
+  CommunityAuthRoute: CommunityAuthRoute,
+  CommunityNewRoute: CommunityNewRoute,
+  CommunityIndexRoute: CommunityIndexRoute,
+  CommunityCSlugRoute: CommunityCSlugRoute,
+  CommunityTThreadIdRoute: CommunityTThreadIdRoute,
+}
+
+const CommunityRouteWithChildren = CommunityRoute._addFileChildren(
+  CommunityRouteChildren,
+)
+
+interface MessagesRouteChildren {
+  MessagesTaskIdRoute: typeof MessagesTaskIdRoute
+}
+
+const MessagesRouteChildren: MessagesRouteChildren = {
+  MessagesTaskIdRoute: MessagesTaskIdRoute,
+}
+
+const MessagesRouteWithChildren = MessagesRoute._addFileChildren(
+  MessagesRouteChildren,
+)
 
 interface TasksTaskIdRouteChildren {
   TasksTaskIdApplicationsRoute: typeof TasksTaskIdApplicationsRoute
@@ -682,12 +826,12 @@ const TasksRouteWithChildren = TasksRoute._addFileChildren(TasksRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  CommunityRoute: CommunityRoute,
+  CommunityRoute: CommunityRouteWithChildren,
   DashboardRoute: DashboardRoute,
   ExploreRoute: ExploreRoute,
   LoginRoute: LoginRoute,
   MapRoute: MapRoute,
-  MessagesRoute: MessagesRoute,
+  MessagesRoute: MessagesRouteWithChildren,
   NotificationsRoute: NotificationsRoute,
   PostTaskRoute: PostTaskRoute,
   PrivacyRoute: PrivacyRoute,
@@ -707,13 +851,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

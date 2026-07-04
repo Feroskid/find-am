@@ -206,16 +206,17 @@ function Home() {
           </section>
         </main>
 
-        <footer className="mt-auto bg-primary-soft/60 px-6 py-4 flex flex-wrap justify-between text-sm text-muted-foreground">
-          <div className="flex gap-6">
-            <span>{t.footerAbout}</span>
-            <span>{t.advertising}</span>
-            <span>{t.business}</span>
+        <footer className="relative z-10 mt-auto bg-primary-soft/60 px-6 py-4 flex flex-wrap justify-between text-sm text-muted-foreground">
+          <div className="flex flex-wrap gap-6">
+            <Link to="/terms" className="hover:text-foreground hover:underline">{t.footerAbout}</Link>
+            <Link to="/community" className="hover:text-foreground hover:underline">{t.advertising}</Link>
+            <Link to="/community" className="hover:text-foreground hover:underline">{t.business}</Link>
+            <Link to="/community" className="hover:text-foreground hover:underline">Community</Link>
           </div>
-          <div className="flex gap-6">
-            <span>{t.privacy}</span>
-            <span>{t.terms}</span>
-            <span>{t.settings}</span>
+          <div className="flex flex-wrap gap-6">
+            <Link to="/privacy" className="hover:text-foreground hover:underline">{t.privacy}</Link>
+            <Link to="/terms" className="hover:text-foreground hover:underline">{t.terms}</Link>
+            <Link to="/profile" className="hover:text-foreground hover:underline">{t.settings}</Link>
           </div>
         </footer>
       </div>
