@@ -34,6 +34,7 @@ import { Route as TasksMineRouteImport } from './routes/tasks.mine'
 import { Route as TasksCategoriesRouteImport } from './routes/tasks.categories'
 import { Route as TasksBrowseRouteImport } from './routes/tasks.browse'
 import { Route as TasksTaskIdRouteImport } from './routes/tasks.$taskId'
+import { Route as MessagesTaskIdRouteImport } from './routes/messages.$taskId'
 import { Route as AuthVerifyEmailRouteImport } from './routes/auth.verify-email'
 import { Route as TasksPaymentCallbackRouteImport } from './routes/tasks.payment.callback'
 import { Route as TasksTaskIdWorkspaceRouteImport } from './routes/tasks.$taskId.workspace'
@@ -166,6 +167,11 @@ const TasksTaskIdRoute = TasksTaskIdRouteImport.update({
   path: '/$taskId',
   getParentRoute: () => TasksRoute,
 } as any)
+const MessagesTaskIdRoute = MessagesTaskIdRouteImport.update({
+  id: '/$taskId',
+  path: '/$taskId',
+  getParentRoute: () => MessagesRoute,
+} as any)
 const AuthVerifyEmailRoute = AuthVerifyEmailRouteImport.update({
   id: '/auth/verify-email',
   path: '/auth/verify-email',
@@ -204,7 +210,7 @@ export interface FileRoutesByFullPath {
   '/explore': typeof ExploreRoute
   '/login': typeof LoginRoute
   '/map': typeof MapRoute
-  '/messages': typeof MessagesRoute
+  '/messages': typeof MessagesRouteWithChildren
   '/notifications': typeof NotificationsRoute
   '/post-task': typeof PostTaskRoute
   '/privacy': typeof PrivacyRoute
@@ -217,6 +223,7 @@ export interface FileRoutesByFullPath {
   '/verify-email': typeof VerifyEmailRoute
   '/wallet': typeof WalletRoute
   '/auth/verify-email': typeof AuthVerifyEmailRoute
+  '/messages/$taskId': typeof MessagesTaskIdRoute
   '/tasks/$taskId': typeof TasksTaskIdRouteWithChildren
   '/tasks/browse': typeof TasksBrowseRoute
   '/tasks/categories': typeof TasksCategoriesRoute
@@ -237,7 +244,7 @@ export interface FileRoutesByTo {
   '/explore': typeof ExploreRoute
   '/login': typeof LoginRoute
   '/map': typeof MapRoute
-  '/messages': typeof MessagesRoute
+  '/messages': typeof MessagesRouteWithChildren
   '/notifications': typeof NotificationsRoute
   '/post-task': typeof PostTaskRoute
   '/privacy': typeof PrivacyRoute
@@ -249,6 +256,7 @@ export interface FileRoutesByTo {
   '/verify-email': typeof VerifyEmailRoute
   '/wallet': typeof WalletRoute
   '/auth/verify-email': typeof AuthVerifyEmailRoute
+  '/messages/$taskId': typeof MessagesTaskIdRoute
   '/tasks/$taskId': typeof TasksTaskIdRouteWithChildren
   '/tasks/browse': typeof TasksBrowseRoute
   '/tasks/categories': typeof TasksCategoriesRoute
@@ -270,7 +278,7 @@ export interface FileRoutesById {
   '/explore': typeof ExploreRoute
   '/login': typeof LoginRoute
   '/map': typeof MapRoute
-  '/messages': typeof MessagesRoute
+  '/messages': typeof MessagesRouteWithChildren
   '/notifications': typeof NotificationsRoute
   '/post-task': typeof PostTaskRoute
   '/privacy': typeof PrivacyRoute
@@ -283,6 +291,7 @@ export interface FileRoutesById {
   '/verify-email': typeof VerifyEmailRoute
   '/wallet': typeof WalletRoute
   '/auth/verify-email': typeof AuthVerifyEmailRoute
+  '/messages/$taskId': typeof MessagesTaskIdRoute
   '/tasks/$taskId': typeof TasksTaskIdRouteWithChildren
   '/tasks/browse': typeof TasksBrowseRoute
   '/tasks/categories': typeof TasksCategoriesRoute
@@ -318,6 +327,7 @@ export interface FileRouteTypes {
     | '/verify-email'
     | '/wallet'
     | '/auth/verify-email'
+    | '/messages/$taskId'
     | '/tasks/$taskId'
     | '/tasks/browse'
     | '/tasks/categories'
@@ -350,6 +360,7 @@ export interface FileRouteTypes {
     | '/verify-email'
     | '/wallet'
     | '/auth/verify-email'
+    | '/messages/$taskId'
     | '/tasks/$taskId'
     | '/tasks/browse'
     | '/tasks/categories'
@@ -383,6 +394,7 @@ export interface FileRouteTypes {
     | '/verify-email'
     | '/wallet'
     | '/auth/verify-email'
+    | '/messages/$taskId'
     | '/tasks/$taskId'
     | '/tasks/browse'
     | '/tasks/categories'
@@ -404,7 +416,7 @@ export interface RootRouteChildren {
   ExploreRoute: typeof ExploreRoute
   LoginRoute: typeof LoginRoute
   MapRoute: typeof MapRoute
-  MessagesRoute: typeof MessagesRoute
+  MessagesRoute: typeof MessagesRouteWithChildren
   NotificationsRoute: typeof NotificationsRoute
   PostTaskRoute: typeof PostTaskRoute
   PrivacyRoute: typeof PrivacyRoute
@@ -599,6 +611,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TasksTaskIdRouteImport
       parentRoute: typeof TasksRoute
     }
+    '/messages/$taskId': {
+      id: '/messages/$taskId'
+      path: '/$taskId'
+      fullPath: '/messages/$taskId'
+      preLoaderRoute: typeof MessagesTaskIdRouteImport
+      parentRoute: typeof MessagesRoute
+    }
     '/auth/verify-email': {
       id: '/auth/verify-email'
       path: '/auth/verify-email'
@@ -644,6 +663,18 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface MessagesRouteChildren {
+  MessagesTaskIdRoute: typeof MessagesTaskIdRoute
+}
+
+const MessagesRouteChildren: MessagesRouteChildren = {
+  MessagesTaskIdRoute: MessagesTaskIdRoute,
+}
+
+const MessagesRouteWithChildren = MessagesRoute._addFileChildren(
+  MessagesRouteChildren,
+)
+
 interface TasksTaskIdRouteChildren {
   TasksTaskIdApplicationsRoute: typeof TasksTaskIdApplicationsRoute
   TasksTaskIdWorkspaceRoute: typeof TasksTaskIdWorkspaceRoute
@@ -687,7 +718,7 @@ const rootRouteChildren: RootRouteChildren = {
   ExploreRoute: ExploreRoute,
   LoginRoute: LoginRoute,
   MapRoute: MapRoute,
-  MessagesRoute: MessagesRoute,
+  MessagesRoute: MessagesRouteWithChildren,
   NotificationsRoute: NotificationsRoute,
   PostTaskRoute: PostTaskRoute,
   PrivacyRoute: PrivacyRoute,
