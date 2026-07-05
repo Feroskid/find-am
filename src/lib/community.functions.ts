@@ -155,3 +155,116 @@ export const listMyNotifications = createServerFn({ method: "GET" })
     if (error) return { ok: false as const, error: error.message };
     return { ok: true as const, data: data ?? [] };
   });
+
+export const markCommunityNotifRead = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: unknown) => z.object({ id: z.string().uuid().optional(), all: z.boolean().optional() }).parse(i))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    let q: any = (supabase.from as any)("community_notifications").update({ is_read: true }).eq("user_id", userId);
+    if (data.id) q = q.eq("id", data.id);
+    const { error } = await q;
+    if (error) return { ok: false as const, error: error.message };
+    return { ok: true as const };
+  });
+
+export const getProfileByUsername = createServerFn({ method: "POST" })
+  .inputValidator((i: unknown) => z.object({ username: z.string().min(1).max(60) }).parse(i))
+  .handler(async ({ data }) => {
+    const sb = publicClient();
+    const { data: prof } = await (sb.from as any)("community_profiles")
+      .select("id, username, display_name, avatar_url, bio, signature, rank, points, thread_count, post_count, created_at")
+      .eq("username", data.username).maybeSingle();
+    if (!prof) return { ok: false as const, error: "Not found" };
+    const { data: threads } = await (sb.from as any)("community_threads")
+      .select("id, title, slug, reply_count, score, created_at")
+      .eq("author_id", prof.id).order("created_at", { ascending: false }).limit(20);
+    return { ok: true as const, data: { profile: prof, threads: threads ?? [] } };
+  });
+
+export const updateCommunityProfile = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: unknown) => z.object({
+    display_name: z.string().min(1).max(60).optional(),
+    username: z.string().regex(/^[a-z0-9_]{3,30}$/).optional(),
+    bio: z.string().max(500).optional(),
+    signature: z.string().max(200).optional(),
+    avatar_url: z.string().url().max(500).optional(),
+  }).parse(i))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { error } = await (supabase.from as any)("community_profiles")
+      .update({ ...data, updated_at: new Date().toISOString() }).eq("id", userId);
+    if (error) return { ok: false as const, error: error.message };
+    return { ok: true as const };
+  });
+
+export const reportContent = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: unknown) => z.object({
+    targetType: z.enum(["thread", "post", "user"]),
+    targetId: z.string().uuid(),
+    reason: z.string().min(3).max(500),
+  }).parse(i))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { error } = await (supabase.from as any)("community_reports")
+      .insert({ reporter_id: userId, target_type: data.targetType, target_id: data.targetId, reason: data.reason });
+    if (error) return { ok: false as const, error: error.message };
+    return { ok: true as const };
+  });
+
+export const listOpenReports = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+    const { data: isMod } = await (supabase.rpc as any)("is_community_mod", { _user_id: userId });
+    if (!isMod) return { ok: false as const, error: "Forbidden" };
+    const { data } = await (supabase.from as any)("community_reports")
+      .select("*").eq("status", "open").order("created_at", { ascending: false }).limit(100);
+    return { ok: true as const, data: data ?? [] };
+  });
+
+export const moderateThread = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: unknown) => z.object({
+    threadId: z.string().uuid(),
+    action: z.enum(["lock", "unlock", "pin", "unpin", "delete"]),
+  }).parse(i))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { data: isMod } = await (supabase.rpc as any)("is_community_mod", { _user_id: userId });
+    if (!isMod) return { ok: false as const, error: "Forbidden" };
+    const patch: any = {};
+    if (data.action === "lock") patch.is_locked = true;
+    if (data.action === "unlock") patch.is_locked = false;
+    if (data.action === "pin") patch.is_pinned = true;
+    if (data.action === "unpin") patch.is_pinned = false;
+    if (data.action === "delete") patch.is_deleted = true;
+    const { error } = await (supabase.from as any)("community_threads").update(patch).eq("id", data.threadId);
+    if (error) return { ok: false as const, error: error.message };
+    return { ok: true as const };
+  });
+
+export const resolveReport = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: unknown) => z.object({ reportId: z.string().uuid(), status: z.enum(["resolved", "dismissed"]) }).parse(i))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { data: isMod } = await (supabase.rpc as any)("is_community_mod", { _user_id: userId });
+    if (!isMod) return { ok: false as const, error: "Forbidden" };
+    const { error } = await (supabase.from as any)("community_reports")
+      .update({ status: data.status })
+      .eq("id", data.reportId);
+    if (error) return { ok: false as const, error: error.message };
+    return { ok: true as const };
+  });
+
+export const unreadCommunityCount = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+    const { count } = await (supabase.from as any)("community_notifications")
+      .select("id", { count: "exact", head: true }).eq("user_id", userId).eq("is_read", false);
+    return { ok: true as const, data: { count: count ?? 0 } };
+  });
