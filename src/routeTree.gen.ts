@@ -25,7 +25,6 @@ import { Route as MapRouteImport } from './routes/map'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ExploreRouteImport } from './routes/explore'
 import { Route as DashboardRouteImport } from './routes/dashboard'
-import { Route as CommunityRouteImport } from './routes/community'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as TasksIndexRouteImport } from './routes/tasks.index'
 import { Route as CommunityIndexRouteImport } from './routes/community.index'
@@ -127,11 +126,6 @@ const DashboardRoute = DashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
-const CommunityRoute = CommunityRouteImport.update({
-  id: '/community',
-  path: '/community',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -143,9 +137,9 @@ const TasksIndexRoute = TasksIndexRouteImport.update({
   getParentRoute: () => TasksRoute,
 } as any)
 const CommunityIndexRoute = CommunityIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => CommunityRoute,
+  id: '/community/',
+  path: '/community/',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const UUserIdRoute = UUserIdRouteImport.update({
   id: '/u/$userId',
@@ -183,14 +177,14 @@ const MessagesTaskIdRoute = MessagesTaskIdRouteImport.update({
   getParentRoute: () => MessagesRoute,
 } as any)
 const CommunityNewRoute = CommunityNewRouteImport.update({
-  id: '/new',
-  path: '/new',
-  getParentRoute: () => CommunityRoute,
+  id: '/community/new',
+  path: '/community/new',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const CommunityAuthRoute = CommunityAuthRouteImport.update({
-  id: '/auth',
-  path: '/auth',
-  getParentRoute: () => CommunityRoute,
+  id: '/community/auth',
+  path: '/community/auth',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AuthVerifyEmailRoute = AuthVerifyEmailRouteImport.update({
   id: '/auth/verify-email',
@@ -218,14 +212,14 @@ const TaskPaymentCallbackRoute = TaskPaymentCallbackRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const CommunityTThreadIdRoute = CommunityTThreadIdRouteImport.update({
-  id: '/t/$threadId',
-  path: '/t/$threadId',
-  getParentRoute: () => CommunityRoute,
+  id: '/community/t/$threadId',
+  path: '/community/t/$threadId',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const CommunityCSlugRoute = CommunityCSlugRouteImport.update({
-  id: '/c/$slug',
-  path: '/c/$slug',
-  getParentRoute: () => CommunityRoute,
+  id: '/community/c/$slug',
+  path: '/community/c/$slug',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicSearchRoute = ApiPublicSearchRouteImport.update({
   id: '/api/public/search',
@@ -235,7 +229,6 @@ const ApiPublicSearchRoute = ApiPublicSearchRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/community': typeof CommunityRouteWithChildren
   '/dashboard': typeof DashboardRoute
   '/explore': typeof ExploreRoute
   '/login': typeof LoginRoute
@@ -312,7 +305,6 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/community': typeof CommunityRouteWithChildren
   '/dashboard': typeof DashboardRoute
   '/explore': typeof ExploreRoute
   '/login': typeof LoginRoute
@@ -353,7 +345,6 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/community'
     | '/dashboard'
     | '/explore'
     | '/login'
@@ -429,7 +420,6 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
-    | '/community'
     | '/dashboard'
     | '/explore'
     | '/login'
@@ -469,7 +459,6 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  CommunityRoute: typeof CommunityRouteWithChildren
   DashboardRoute: typeof DashboardRoute
   ExploreRoute: typeof ExploreRoute
   LoginRoute: typeof LoginRoute
@@ -487,8 +476,13 @@ export interface RootRouteChildren {
   VerifyEmailRoute: typeof VerifyEmailRoute
   WalletRoute: typeof WalletRoute
   AuthVerifyEmailRoute: typeof AuthVerifyEmailRoute
+  CommunityAuthRoute: typeof CommunityAuthRoute
+  CommunityNewRoute: typeof CommunityNewRoute
   UUserIdRoute: typeof UUserIdRoute
+  CommunityIndexRoute: typeof CommunityIndexRoute
   ApiPublicSearchRoute: typeof ApiPublicSearchRoute
+  CommunityCSlugRoute: typeof CommunityCSlugRoute
+  CommunityTThreadIdRoute: typeof CommunityTThreadIdRoute
   TaskPaymentCallbackRoute: typeof TaskPaymentCallbackRoute
 }
 
@@ -606,13 +600,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/community': {
-      id: '/community'
-      path: '/community'
-      fullPath: '/community'
-      preLoaderRoute: typeof CommunityRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/': {
       id: '/'
       path: '/'
@@ -629,10 +616,10 @@ declare module '@tanstack/react-router' {
     }
     '/community/': {
       id: '/community/'
-      path: '/'
+      path: '/community'
       fullPath: '/community/'
       preLoaderRoute: typeof CommunityIndexRouteImport
-      parentRoute: typeof CommunityRoute
+      parentRoute: typeof rootRouteImport
     }
     '/u/$userId': {
       id: '/u/$userId'
@@ -685,17 +672,17 @@ declare module '@tanstack/react-router' {
     }
     '/community/new': {
       id: '/community/new'
-      path: '/new'
+      path: '/community/new'
       fullPath: '/community/new'
       preLoaderRoute: typeof CommunityNewRouteImport
-      parentRoute: typeof CommunityRoute
+      parentRoute: typeof rootRouteImport
     }
     '/community/auth': {
       id: '/community/auth'
-      path: '/auth'
+      path: '/community/auth'
       fullPath: '/community/auth'
       preLoaderRoute: typeof CommunityAuthRouteImport
-      parentRoute: typeof CommunityRoute
+      parentRoute: typeof rootRouteImport
     }
     '/auth/verify-email': {
       id: '/auth/verify-email'
@@ -734,17 +721,17 @@ declare module '@tanstack/react-router' {
     }
     '/community/t/$threadId': {
       id: '/community/t/$threadId'
-      path: '/t/$threadId'
+      path: '/community/t/$threadId'
       fullPath: '/community/t/$threadId'
       preLoaderRoute: typeof CommunityTThreadIdRouteImport
-      parentRoute: typeof CommunityRoute
+      parentRoute: typeof rootRouteImport
     }
     '/community/c/$slug': {
       id: '/community/c/$slug'
-      path: '/c/$slug'
+      path: '/community/c/$slug'
       fullPath: '/community/c/$slug'
       preLoaderRoute: typeof CommunityCSlugRouteImport
-      parentRoute: typeof CommunityRoute
+      parentRoute: typeof rootRouteImport
     }
     '/api/public/search': {
       id: '/api/public/search'
@@ -755,26 +742,6 @@ declare module '@tanstack/react-router' {
     }
   }
 }
-
-interface CommunityRouteChildren {
-  CommunityAuthRoute: typeof CommunityAuthRoute
-  CommunityNewRoute: typeof CommunityNewRoute
-  CommunityIndexRoute: typeof CommunityIndexRoute
-  CommunityCSlugRoute: typeof CommunityCSlugRoute
-  CommunityTThreadIdRoute: typeof CommunityTThreadIdRoute
-}
-
-const CommunityRouteChildren: CommunityRouteChildren = {
-  CommunityAuthRoute: CommunityAuthRoute,
-  CommunityNewRoute: CommunityNewRoute,
-  CommunityIndexRoute: CommunityIndexRoute,
-  CommunityCSlugRoute: CommunityCSlugRoute,
-  CommunityTThreadIdRoute: CommunityTThreadIdRoute,
-}
-
-const CommunityRouteWithChildren = CommunityRoute._addFileChildren(
-  CommunityRouteChildren,
-)
 
 interface MessagesRouteChildren {
   MessagesTaskIdRoute: typeof MessagesTaskIdRoute
@@ -826,7 +793,6 @@ const TasksRouteWithChildren = TasksRoute._addFileChildren(TasksRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  CommunityRoute: CommunityRouteWithChildren,
   DashboardRoute: DashboardRoute,
   ExploreRoute: ExploreRoute,
   LoginRoute: LoginRoute,
@@ -844,8 +810,13 @@ const rootRouteChildren: RootRouteChildren = {
   VerifyEmailRoute: VerifyEmailRoute,
   WalletRoute: WalletRoute,
   AuthVerifyEmailRoute: AuthVerifyEmailRoute,
+  CommunityAuthRoute: CommunityAuthRoute,
+  CommunityNewRoute: CommunityNewRoute,
   UUserIdRoute: UUserIdRoute,
+  CommunityIndexRoute: CommunityIndexRoute,
   ApiPublicSearchRoute: ApiPublicSearchRoute,
+  CommunityCSlugRoute: CommunityCSlugRoute,
+  CommunityTThreadIdRoute: CommunityTThreadIdRoute,
   TaskPaymentCallbackRoute: TaskPaymentCallbackRoute,
 }
 export const routeTree = rootRouteImport
