@@ -45,6 +45,8 @@ export function CommunityShell({ children }: { children: ReactNode }) {
                   <span className="font-semibold">{profile?.display_name ?? profile?.username ?? "You"}</span>
                   <span className="text-[10px] text-[#E5A54B] font-bold uppercase">{profile?.rank ?? "Newbie"} · {profile?.points ?? 0}pts</span>
                 </div>
+                <Link to="/community/settings" className="hidden sm:inline text-[10px] text-black/50 hover:text-black/80 mt-0.5">Settings</Link>
+                </div>
                 <button onClick={signOut} className="p-2 rounded-lg hover:bg-black/5" aria-label="Sign out"><LogOut className="h-4 w-4" /></button>
               </div>
             </>
