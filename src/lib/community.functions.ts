@@ -254,7 +254,7 @@ export const resolveReport = createServerFn({ method: "POST" })
     const { data: isMod } = await (supabase.rpc as any)("is_community_mod", { _user_id: userId });
     if (!isMod) return { ok: false as const, error: "Forbidden" };
     const { error } = await (supabase.from as any)("community_reports")
-      .update({ status: data.status, resolved_by: userId, resolved_at: new Date().toISOString() })
+      .update({ status: data.status })
       .eq("id", data.reportId);
     if (error) return { ok: false as const, error: error.message };
     return { ok: true as const };
