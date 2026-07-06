@@ -268,3 +268,99 @@ export const unreadCommunityCount = createServerFn({ method: "GET" })
       .select("id", { count: "exact", head: true }).eq("user_id", userId).eq("is_read", false);
     return { ok: true as const, data: { count: count ?? 0 } };
   });
+
+// ---- Bookmarks --------------------------------------------------------
+export const toggleBookmark = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: unknown) => z.object({ threadId: z.string().uuid() }).parse(i))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { data: existing } = await (supabase.from as any)("community_bookmarks")
+      .select("id").eq("user_id", userId).eq("thread_id", data.threadId).maybeSingle();
+    if (existing) {
+      await (supabase.from as any)("community_bookmarks").delete().eq("id", existing.id);
+      return { ok: true as const, data: { bookmarked: false } };
+    }
+    const { error } = await (supabase.from as any)("community_bookmarks")
+      .insert({ user_id: userId, thread_id: data.threadId });
+    if (error) return { ok: false as const, error: error.message };
+    return { ok: true as const, data: { bookmarked: true } };
+  });
+
+export const isBookmarked = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: unknown) => z.object({ threadId: z.string().uuid() }).parse(i))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { data: existing } = await (supabase.from as any)("community_bookmarks")
+      .select("id").eq("user_id", userId).eq("thread_id", data.threadId).maybeSingle();
+    return { ok: true as const, data: { bookmarked: !!existing } };
+  });
+
+export const listMyBookmarks = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+    const { data } = await (supabase.from as any)("community_bookmarks")
+      .select("thread_id, created_at, community_threads(id, title, slug, reply_count, score, created_at)")
+      .eq("user_id", userId).order("created_at", { ascending: false }).limit(50);
+    return { ok: true as const, data: data ?? [] };
+  });
+
+// ---- Accept answer ----------------------------------------------------
+export const acceptAnswer = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: unknown) => z.object({ threadId: z.string().uuid(), postId: z.string().uuid() }).parse(i))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { data: thread } = await (supabase.from as any)("community_threads").select("author_id, accepted_post_id").eq("id", data.threadId).maybeSingle();
+    if (!thread) return { ok: false as const, error: "Thread not found" };
+    if (thread.author_id !== userId) return { ok: false as const, error: "Only the thread author can accept" };
+    if (thread.accepted_post_id === data.postId) {
+      await (supabase.from as any)("community_threads").update({ accepted_post_id: null }).eq("id", data.threadId);
+      return { ok: true as const, data: { accepted: null } };
+    }
+    const { data: post } = await (supabase.from as any)("community_posts").select("author_id").eq("id", data.postId).maybeSingle();
+    if (!post) return { ok: false as const, error: "Reply not found" };
+    await (supabase.from as any)("community_threads").update({ accepted_post_id: data.postId }).eq("id", data.threadId);
+    if (post.author_id && post.author_id !== userId) {
+      await (supabase.rpc as any)("community_bump_points", { _user: post.author_id, _delta: 5 });
+      await (supabase.from as any)("community_notifications").insert({
+        user_id: post.author_id, type: "accepted",
+        payload: { thread_id: data.threadId, post_id: data.postId },
+      });
+    }
+    return { ok: true as const, data: { accepted: data.postId } };
+  });
+
+// ---- Moderation target snippet ----------------------------------------
+export const getReportTarget = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: unknown) => z.object({ targetType: z.enum(["thread","post","user"]), targetId: z.string().uuid() }).parse(i))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { data: isMod } = await (supabase.rpc as any)("is_community_mod", { _user_id: userId });
+    if (!isMod) return { ok: false as const, error: "Forbidden" };
+    if (data.targetType === "thread") {
+      const { data: t } = await (supabase.from as any)("community_threads").select("id, title, body_md, author_id, is_locked, is_pinned").eq("id", data.targetId).maybeSingle();
+      return { ok: true as const, data: { kind: "thread", target: t } };
+    }
+    if (data.targetType === "post") {
+      const { data: p } = await (supabase.from as any)("community_posts").select("id, body_md, author_id, thread_id").eq("id", data.targetId).maybeSingle();
+      return { ok: true as const, data: { kind: "post", target: p } };
+    }
+    const { data: u } = await (supabase.from as any)("community_profiles").select("id, username, display_name, rank, points").eq("id", data.targetId).maybeSingle();
+    return { ok: true as const, data: { kind: "user", target: u } };
+  });
+
+export const listReportsByStatus = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: unknown) => z.object({ status: z.enum(["open","resolved","dismissed"]).default("open") }).parse(i))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { data: isMod } = await (supabase.rpc as any)("is_community_mod", { _user_id: userId });
+    if (!isMod) return { ok: false as const, error: "Forbidden" };
+    const { data: rows } = await (supabase.from as any)("community_reports")
+      .select("*").eq("status", data.status).order("created_at", { ascending: false }).limit(100);
+    return { ok: true as const, data: rows ?? [] };
+  });
