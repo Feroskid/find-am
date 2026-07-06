@@ -1,87 +1,111 @@
-## 1. Footer Terms/Privacy clickability fix
+## Scope
 
-- Verify `/terms` and `/privacy` routes exist and render.
-- In `src/components/Footer.tsx`, ensure the legal links use `<Link to="/terms">` / `<Link to="/privacy">` (they do, but the parent container may be blocking clicks on the homepage — check for overlapping absolute elements on `/`).
-- If an overlay on the index route is intercepting pointer events over the footer, add `relative z-10` (or fix the overlay's `pointer-events-none`) so the links become clickable from the homepage.
+Seven changes across the homepage footer, community forum, messages, and task escrow release flow.
 
-## 2. Messages inbox → WhatsApp-style
+---
 
-Rebuild `src/routes/messages.tsx` as a two-pane inbox reading `/my-conversations`:
+### 1. Footer "About" → "Contact Us" + new Contact page
 
-- **Left pane (conversation list)**: circular avatar (initials fallback), other party name, task title as subtitle, last message preview truncated, right side shows relative time + unread count badge. Active row highlighted. Search box at top.
-- **Right pane (chat)**: sticky header (avatar, name, task link, status), scrollable message area with WhatsApp-style bubbles (outgoing = primary tint right-aligned, incoming = muted left-aligned, timestamp + read tick under each bubble, grouped by day with date separators), sticky composer at bottom with textarea + send button.
-- **Mobile**: list is full-screen, tapping a row pushes to chat view (`/messages/$taskId` — new route) with a back arrow. Desktop: side-by-side (list ~360px, chat fills).
-- Reuses existing `sendMessage`, `listMessages`, `getConversations` server fns. Polls every 8s while thread open.
-- Task workspace "Messages" tab keeps its own inline thread (no merge in v1).
+- `src/routes/index.tsx`: rename the footer "About" link to "Contact Us" pointing to `/contact`.
+- New route `src/routes/contact.tsx`:
+  - Head metadata (title, description, og tags).
+  - Form fields: name, email, subject, message (zod-validated, length limits).
+  - On submit, build a `mailto:integerpj@gmail.com?subject=…&body=…` URL with `encodeURIComponent`, then `window.location.href = mailto` so the user's default mail app opens.
+  - Same visual language as the rest of Find-Am (dark hero, warm accents), plus a small "Or email us directly" fallback link.
 
-New route: `src/routes/messages.$taskId.tsx` for the chat pane.
+---
 
-## 3. Full Forum Community ("Find-Task Community")
+### 2. Community — more features
 
-Fully separate account system from Find-Am, powered by Lovable Cloud (Supabase). Enable Lovable Cloud, then:
+Building on what already exists:
 
-### Database (migration)
-- `community_profiles` (id=auth.uid, username unique, display_name, avatar_url, bio, signature, points int default 0, rank text default 'Newbie', created_at)
-- `community_categories` (id, slug, name, description, icon, sort_order, thread_count, post_count)
-- `community_threads` (id, category_id fk, author_id fk, title, slug, body_md, is_pinned, is_locked, view_count, reply_count, last_reply_at, created_at)
-- `community_posts` (id, thread_id fk, author_id fk, body_md, parent_id nullable, created_at, edited_at)
-- `community_votes` (id, user_id, target_type enum('thread','post'), target_id, value smallint check in (-1,1), unique(user_id,target_type,target_id))
-- `community_notifications` (id, user_id, type, payload jsonb, is_read, created_at)
-- `community_reports` (id, reporter_id, target_type, target_id, reason, status, created_at)
-- `community_roles` via existing `user_roles` pattern with app_role additions: `community_admin`, `community_moderator` (separate table `community_user_roles` to keep it isolated from Find-Am roles; uses `has_community_role()` security-definer fn)
-- GRANTs + RLS on every table per rules.
+- **Rich thread composer**: category picker, markdown preview toggle, tag chips (stored as `text[]` on `community_threads`, new migration adds `tags` column + GIN index).
+- **Thread page upgrades**: upvote/downvote wired to `community_votes` (already exists), "accept answer" for the thread author (adds `accepted_post_id` column to `community_threads` + `+5` points bump for accepted replies).
+- **Pin/lock badges** rendered on category + thread pages.
+- **Reply threading (1 level)**: use existing `parent_id` on `community_posts` to show nested replies.
+- **Category sidebar** on `/community` with counts + "trending this week" list (threads ordered by score + recent activity).
+- **User mentions** (`@username`) in posts: parse on render, link to `/community/u/$username`, insert a `mention` notification row.
+- **Bookmarks**: new `community_bookmarks` table (user_id, thread_id) + toggle button on thread page + a "Bookmarks" tab on the profile.
 
-### Auth (separate)
-- Community sign-up/login lives at `/community/auth` — uses Supabase email/password + optional Google.
-- On first login, a trigger creates a `community_profiles` row.
-- Community routes read Supabase session; Find-Am's own token system is untouched. A user can be signed into both independently.
+---
 
-### Ranks (points-driven)
-- Points formula (server-side trigger on insert/update of posts/threads/votes):
-  - +2 per thread created, +1 per reply, +2 per upvote received, −1 per downvote received, +5 per accepted answer (future).
-- Rank tiers (function `compute_rank(points)`):
-  - 0–24 Newbie · 25–99 Contributor · 100–299 Regular · 300–999 Veteran · 1000–2999 Expert · 3000+ Legend
-- Rank badge shown next to username everywhere.
+### 3. Messages — make list rows clickable + WhatsApp-style chat
 
-### Routes (`src/routes/community.*`)
-- `/community` — landing: category grid, latest threads, top contributors, join CTA.
-- `/community/auth` — sign in / sign up (community-only).
-- `/community/c/$slug` — category thread list w/ sort (latest, top, unanswered), pagination, "New thread" button.
-- `/community/t/$threadId` — thread view: OP card, replies list, vote arrows, reply composer (markdown), pin/lock controls for mods.
-- `/community/new` and `/community/c/$slug/new` — new thread composer (title + markdown body + tags).
-- `/community/u/$username` — public profile: avatar, rank badge, points, join date, recent threads/posts, signature.
-- `/community/search?q=` — Postgres full-text search across threads + posts.
-- `/community/notifications` — list, mark read.
-- `/community/moderation` — mod-only queue of reports.
-- `/community/settings` — edit display name, avatar upload (Supabase storage bucket `community-avatars`), signature, password.
+- `src/routes/messages.tsx`: wrap each conversation row in a `<Link to="/messages/$taskId" params={{ taskId }}>` (currently the row isn't clickable). Add hover/active states and unread bolding.
+- Verify `/messages/$taskId` route (already exists) opens the WhatsApp-style pane; add mobile back-swipe affordance and desktop split layout (list on left, chat on right ≥ md).
+- Ensure last-message preview + timestamp + unread badge refresh every 15 s.
 
-### Server functions (`src/lib/community.functions.ts`)
-- `listCategories`, `listThreads({categoryId, sort, page})`, `getThread`, `createThread`, `replyToThread`, `editPost`, `deletePost`, `voteOn({target_type,target_id,value})`, `reportContent`, `searchCommunity`, `listNotifications`, `markNotificationRead`, `getProfile`, `updateProfile`, `moderationList`, `pinThread`, `lockThread`.
-- Public read fns use server publishable client + `TO anon` SELECT policies (list categories, list threads, view thread — read-only).
-- Write fns use `requireSupabaseAuth`.
+---
 
-### UI design language (distinct from Find-Am marketing site)
-- Editorial forum vibe: warm neutral background (`#F7F5F0`), deep ink text, single accent (amber `#E5A54B`), rounded 12px cards with subtle 1px borders, no gradients. Display font: **Fraunces** (headings), body: **Inter**. Rank badges as small pill chips with tier color (Newbie gray → Legend amber).
-- Thread rows: avatar left, title + category tag + reply count + last-reply relative time, hover highlight.
-- Thread view: left rail with author card (avatar, rank, points, join date, post count), right pane with post body + vote column, reply composer at bottom.
-- Mobile-first, WhatsApp-list feel on category pages.
+### 4. `/community/moderation` — full moderator dashboard
 
-### Notifications
-- On new reply to a thread you authored → insert row into `community_notifications` via db trigger; bell in community header shows unread count.
+Route exists but is minimal. Rebuild:
 
-### Moderation
-- Report button on every post → `community_reports` row.
-- Mods see `/community/moderation` list; can delete post, lock thread, or dismiss.
-- Admin role grantable via Cloud SQL editor (documented in code comment).
+- Tabs: **Open reports**, **Resolved**, **Locked/pinned threads**, **User roles**.
+- Each report card: reporter, target snippet (fetched via new `getReportTarget` server fn), reason, timestamps, action buttons (Lock, Unlock, Pin, Unpin, Delete, Warn user, Ban user).
+- Optimistic UI: after an action, refetch reports + show toast; status pill updates immediately.
+- Access guard: only users with `has_community_role(uid, 'moderator'|'admin')`; non-mods see a friendly "You don't have moderator access" page.
+- Extend `community.functions.ts`: `listReportsByStatus`, `getReportTarget`, `warnUser`, `banUser`, `assignRole` (admin-only).
 
-### Navigation
-- Add "Community" link in `TaskHeader` and `Footer`.
-- Community pages use their own `CommunityShell` layout (own header with own auth state, own nav: Home · Categories · Latest · Search · Notifications · Profile).
+---
 
-### Out of scope for v1
-- Private DMs inside forum (Find-Am messages already handle that).
-- Email digests, gamification badges beyond rank, thread tags UI (schema-ready but no filter UI).
+### 5. `/community/notifications` — proper feed
 
-## Files touched / created (summary)
-- edit: `src/components/Footer.tsx`, `src/routes/messages.tsx`, `src/components/TaskHeader.tsx`, `src/router.tsx` (already file-based), `src/styles.css` (add fraunces/inter + community tokens)
-- new: `src/routes/messages.$taskId.tsx`, `src/routes/community.tsx` (layout), `src/routes/community.index.tsx`, `src/routes/community.auth.tsx`, `src/routes/community.c.$slug.tsx`, `src/routes/community.t.$threadId.tsx`, `src/routes/community.new.tsx`, `src/routes/community.u.$username.tsx`, `src/routes/community.search.tsx`, `src/routes/community.notifications.tsx`, `src/routes/community.moderation.tsx`, `src/routes/community.settings.tsx`, `src/components/community/*` (CommunityShell, ThreadRow, PostCard, VoteButtons, RankBadge, MarkdownEditor, AuthCard), `src/lib/community.functions.ts`, `src/lib/community.ranks.ts`, migration for all tables + triggers + RLS + GRANTs, seed migration for initial categories (General, Making Money, Task Tips, Tech, Off-Topic, Support).
+- Server fn `listMyNotifications({ cursor, limit=20 })` returning ordered rows + `nextCursor`.
+- Client uses `useInfiniteQuery` with an IntersectionObserver sentinel for infinite scroll.
+- Each row: icon by type (reply, mention, vote, accepted, mod-action), preview text, relative time, unread dot.
+- Click marks that row read + navigates to target thread anchor.
+- Header actions: "Mark all read", filter tabs (All / Unread / Mentions / Replies).
+
+---
+
+### 6. `/community/u/$username` — full profile
+
+Route exists but basic. Upgrade:
+
+- Header: avatar, display name, @username, rank badge, points, join date, thread/post counts.
+- **Avatar upload** (owner only): reuse `AvatarUpload` component, upload to a new `community-avatars` Supabase storage bucket (public read, owner write), save URL to `community_profiles.avatar_url`.
+- **Edit** button (owner) → inline edit for display_name / bio / signature.
+- Tabs: **Threads**, **Replies**, **Bookmarks** (owner only), **Awards** (derived from rank milestones).
+- Signature rendered under each of the user's posts on thread pages.
+
+---
+
+### 7. Task workspace — Release / Dispute flow
+
+Studying the Find-Am docs & existing `src/routes/tasks.$taskId.workspace.tsx`:
+
+Backend endpoints available (from the docs):
+- `POST /tasks/{id}/complete` — tasker marks task complete (notifies poster).
+- `POST /tasks/{id}/release-payment` — poster releases escrow to tasker wallet.
+- `POST /tasks/{id}/dispute` — poster (or tasker) raises a dispute with a reason.
+- `GET /tasks/{id}/escrow-status` — current escrow state (funded, held, released, disputed).
+
+Frontend work:
+
+- In `src/lib/findtask.functions.ts`, add server fns: `markTaskComplete`, `releasePayment`, `raiseDispute`, `getEscrowStatus` (wire to the endpoints above via existing api client).
+- In `TaskHeader.tsx` / workspace:
+  - When escrow status = `held` AND current user = poster AND task = `awaiting_release`: show **Release payment** (primary) and **Raise dispute** (secondary) buttons. Confirm modal for Release ("This transfers ₦X to the tasker's wallet — this cannot be undone").
+  - Dispute modal: reason textarea (min 20 chars) + optional evidence text; POSTs to `/tasks/{id}/dispute`, then shows a "Dispute under review" banner.
+  - Tasker view: after `markTaskComplete`, show a "Waiting for poster to release payment" banner with the escrow amount and last-updated time.
+- Live status: poll `getEscrowStatus` every 20 s while the workspace is open, invalidate task query on any action.
+- Toasts + optimistic UI, error handling for 400/409 (already-released, already-disputed).
+
+---
+
+### Files touched (summary)
+
+New: `src/routes/contact.tsx`, `src/components/community/ThreadComposer.tsx`, `src/components/community/ReportCard.tsx`, `src/components/community/NotificationRow.tsx`, `src/components/community/ProfileTabs.tsx`, `src/components/tasks/ReleaseDisputeActions.tsx`, migration for `tags`, `accepted_post_id`, `community_bookmarks`, storage bucket `community-avatars`.
+
+Edited: `src/routes/index.tsx`, `src/routes/messages.tsx`, `src/routes/community.moderation.tsx`, `src/routes/community.notifications.tsx`, `src/routes/community.u.$username.tsx`, `src/routes/community.t.$threadId.tsx`, `src/routes/community.new.tsx`, `src/routes/tasks.$taskId.workspace.tsx`, `src/components/TaskHeader.tsx`, `src/lib/community.functions.ts`, `src/lib/findtask.functions.ts`.
+
+---
+
+### Out of scope
+
+- Admin-only Find-Am endpoints.
+- Private DMs inside the community.
+- Push notifications (in-app only for now).
+- Email digests.
+
+Ready to implement all 7 in one pass on approval.

@@ -14,6 +14,35 @@ export type Database = {
   }
   public: {
     Tables: {
+      community_bookmarks: {
+        Row: {
+          created_at: string
+          id: string
+          thread_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          thread_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          thread_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "community_bookmarks_thread_id_fkey"
+            columns: ["thread_id"]
+            isOneToOne: false
+            referencedRelation: "community_threads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       community_categories: {
         Row: {
           created_at: string
@@ -208,6 +237,7 @@ export type Database = {
       }
       community_threads: {
         Row: {
+          accepted_post_id: string | null
           author_id: string
           body_md: string
           category_id: string
@@ -221,11 +251,13 @@ export type Database = {
           score: number
           search_tsv: unknown
           slug: string
+          tags: string[]
           title: string
           updated_at: string
           view_count: number
         }
         Insert: {
+          accepted_post_id?: string | null
           author_id: string
           body_md: string
           category_id: string
@@ -239,11 +271,13 @@ export type Database = {
           score?: number
           search_tsv?: unknown
           slug: string
+          tags?: string[]
           title: string
           updated_at?: string
           view_count?: number
         }
         Update: {
+          accepted_post_id?: string | null
           author_id?: string
           body_md?: string
           category_id?: string
@@ -257,11 +291,19 @@ export type Database = {
           score?: number
           search_tsv?: unknown
           slug?: string
+          tags?: string[]
           title?: string
           updated_at?: string
           view_count?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "community_threads_accepted_post_id_fkey"
+            columns: ["accepted_post_id"]
+            isOneToOne: false
+            referencedRelation: "community_posts"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "community_threads_category_id_fkey"
             columns: ["category_id"]

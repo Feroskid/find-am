@@ -208,7 +208,7 @@ function Home() {
 
         <footer className="relative z-10 mt-auto bg-primary-soft/60 px-6 py-4 flex flex-wrap justify-between text-sm text-muted-foreground">
           <div className="flex flex-wrap gap-6">
-            <Link to="/terms" className="hover:text-foreground hover:underline">{t.footerAbout}</Link>
+            <Link to="/contact" className="hover:text-foreground hover:underline">Contact Us</Link>
             <Link to="/community" className="hover:text-foreground hover:underline">{t.advertising}</Link>
             <Link to="/community" className="hover:text-foreground hover:underline">{t.business}</Link>
             <Link to="/community" className="hover:text-foreground hover:underline">Community</Link>
