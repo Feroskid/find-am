@@ -45,6 +45,7 @@ import { Route as CommunityNewRouteImport } from './routes/community.new'
 import { Route as CommunityModerationRouteImport } from './routes/community.moderation'
 import { Route as CommunityAuthRouteImport } from './routes/community.auth'
 import { Route as AuthVerifyEmailRouteImport } from './routes/auth.verify-email'
+import { Route as AdminDisputesRouteImport } from './routes/admin.disputes'
 import { Route as TasksPaymentCallbackRouteImport } from './routes/tasks.payment.callback'
 import { Route as TasksTaskIdWorkspaceRouteImport } from './routes/tasks.$taskId.workspace'
 import { Route as TasksTaskIdApplicationsRouteImport } from './routes/tasks.$taskId.applications'
@@ -234,6 +235,11 @@ const AuthVerifyEmailRoute = AuthVerifyEmailRouteImport.update({
   path: '/auth/verify-email',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminDisputesRoute = AdminDisputesRouteImport.update({
+  id: '/disputes',
+  path: '/disputes',
+  getParentRoute: () => AdminRoute,
+} as any)
 const TasksPaymentCallbackRoute = TasksPaymentCallbackRouteImport.update({
   id: '/payment/callback',
   path: '/payment/callback',
@@ -295,6 +301,7 @@ export interface FileRoutesByFullPath {
   '/terms': typeof TermsRoute
   '/verify-email': typeof VerifyEmailRoute
   '/wallet': typeof WalletRoute
+  '/admin/disputes': typeof AdminDisputesRoute
   '/auth/verify-email': typeof AuthVerifyEmailRoute
   '/community/auth': typeof CommunityAuthRoute
   '/community/moderation': typeof CommunityModerationRoute
@@ -339,6 +346,7 @@ export interface FileRoutesByTo {
   '/terms': typeof TermsRoute
   '/verify-email': typeof VerifyEmailRoute
   '/wallet': typeof WalletRoute
+  '/admin/disputes': typeof AdminDisputesRoute
   '/auth/verify-email': typeof AuthVerifyEmailRoute
   '/community/auth': typeof CommunityAuthRoute
   '/community/moderation': typeof CommunityModerationRoute
@@ -386,6 +394,7 @@ export interface FileRoutesById {
   '/terms': typeof TermsRoute
   '/verify-email': typeof VerifyEmailRoute
   '/wallet': typeof WalletRoute
+  '/admin/disputes': typeof AdminDisputesRoute
   '/auth/verify-email': typeof AuthVerifyEmailRoute
   '/community/auth': typeof CommunityAuthRoute
   '/community/moderation': typeof CommunityModerationRoute
@@ -434,6 +443,7 @@ export interface FileRouteTypes {
     | '/terms'
     | '/verify-email'
     | '/wallet'
+    | '/admin/disputes'
     | '/auth/verify-email'
     | '/community/auth'
     | '/community/moderation'
@@ -478,6 +488,7 @@ export interface FileRouteTypes {
     | '/terms'
     | '/verify-email'
     | '/wallet'
+    | '/admin/disputes'
     | '/auth/verify-email'
     | '/community/auth'
     | '/community/moderation'
@@ -524,6 +535,7 @@ export interface FileRouteTypes {
     | '/terms'
     | '/verify-email'
     | '/wallet'
+    | '/admin/disputes'
     | '/auth/verify-email'
     | '/community/auth'
     | '/community/moderation'
@@ -841,6 +853,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthVerifyEmailRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/disputes': {
+      id: '/admin/disputes'
+      path: '/disputes'
+      fullPath: '/admin/disputes'
+      preLoaderRoute: typeof AdminDisputesRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/tasks/payment/callback': {
       id: '/tasks/payment/callback'
       path: '/payment/callback'
@@ -901,10 +920,12 @@ declare module '@tanstack/react-router' {
 }
 
 interface AdminRouteChildren {
+  AdminDisputesRoute: typeof AdminDisputesRoute
   AdminIndexRoute: typeof AdminIndexRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
+  AdminDisputesRoute: AdminDisputesRoute,
   AdminIndexRoute: AdminIndexRoute,
 }
 
