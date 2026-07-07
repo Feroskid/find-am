@@ -45,6 +45,7 @@ import { Route as CommunityNewRouteImport } from './routes/community.new'
 import { Route as CommunityModerationRouteImport } from './routes/community.moderation'
 import { Route as CommunityAuthRouteImport } from './routes/community.auth'
 import { Route as AuthVerifyEmailRouteImport } from './routes/auth.verify-email'
+import { Route as AdminUsersRouteImport } from './routes/admin.users'
 import { Route as AdminDisputesRouteImport } from './routes/admin.disputes'
 import { Route as TasksPaymentCallbackRouteImport } from './routes/tasks.payment.callback'
 import { Route as TasksTaskIdWorkspaceRouteImport } from './routes/tasks.$taskId.workspace'
@@ -235,6 +236,11 @@ const AuthVerifyEmailRoute = AuthVerifyEmailRouteImport.update({
   path: '/auth/verify-email',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminUsersRoute = AdminUsersRouteImport.update({
+  id: '/users',
+  path: '/users',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminDisputesRoute = AdminDisputesRouteImport.update({
   id: '/disputes',
   path: '/disputes',
@@ -302,6 +308,7 @@ export interface FileRoutesByFullPath {
   '/verify-email': typeof VerifyEmailRoute
   '/wallet': typeof WalletRoute
   '/admin/disputes': typeof AdminDisputesRoute
+  '/admin/users': typeof AdminUsersRoute
   '/auth/verify-email': typeof AuthVerifyEmailRoute
   '/community/auth': typeof CommunityAuthRoute
   '/community/moderation': typeof CommunityModerationRoute
@@ -347,6 +354,7 @@ export interface FileRoutesByTo {
   '/verify-email': typeof VerifyEmailRoute
   '/wallet': typeof WalletRoute
   '/admin/disputes': typeof AdminDisputesRoute
+  '/admin/users': typeof AdminUsersRoute
   '/auth/verify-email': typeof AuthVerifyEmailRoute
   '/community/auth': typeof CommunityAuthRoute
   '/community/moderation': typeof CommunityModerationRoute
@@ -395,6 +403,7 @@ export interface FileRoutesById {
   '/verify-email': typeof VerifyEmailRoute
   '/wallet': typeof WalletRoute
   '/admin/disputes': typeof AdminDisputesRoute
+  '/admin/users': typeof AdminUsersRoute
   '/auth/verify-email': typeof AuthVerifyEmailRoute
   '/community/auth': typeof CommunityAuthRoute
   '/community/moderation': typeof CommunityModerationRoute
@@ -444,6 +453,7 @@ export interface FileRouteTypes {
     | '/verify-email'
     | '/wallet'
     | '/admin/disputes'
+    | '/admin/users'
     | '/auth/verify-email'
     | '/community/auth'
     | '/community/moderation'
@@ -489,6 +499,7 @@ export interface FileRouteTypes {
     | '/verify-email'
     | '/wallet'
     | '/admin/disputes'
+    | '/admin/users'
     | '/auth/verify-email'
     | '/community/auth'
     | '/community/moderation'
@@ -536,6 +547,7 @@ export interface FileRouteTypes {
     | '/verify-email'
     | '/wallet'
     | '/admin/disputes'
+    | '/admin/users'
     | '/auth/verify-email'
     | '/community/auth'
     | '/community/moderation'
@@ -853,6 +865,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthVerifyEmailRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/users': {
+      id: '/admin/users'
+      path: '/users'
+      fullPath: '/admin/users'
+      preLoaderRoute: typeof AdminUsersRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/disputes': {
       id: '/admin/disputes'
       path: '/disputes'
@@ -921,11 +940,13 @@ declare module '@tanstack/react-router' {
 
 interface AdminRouteChildren {
   AdminDisputesRoute: typeof AdminDisputesRoute
+  AdminUsersRoute: typeof AdminUsersRoute
   AdminIndexRoute: typeof AdminIndexRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
   AdminDisputesRoute: AdminDisputesRoute,
+  AdminUsersRoute: AdminUsersRoute,
   AdminIndexRoute: AdminIndexRoute,
 }
 
