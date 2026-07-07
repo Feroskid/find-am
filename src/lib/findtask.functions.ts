@@ -652,3 +652,46 @@ export const verifyPayment = createServerFn({ method: "POST" })
       data: { reference: data.reference, status: "pending", verified: false },
     };
   });
+
+// ============ ADMIN ENDPOINTS ============
+export const adminFreezeUser = createServerFn({ method: "POST" })
+  .inputValidator((i: unknown) => z.object({ userId: UserId, token: Token }).parse(i))
+  .handler(async ({ data }) => call(`/admin/user/${data.userId}/freeze`, { method: "POST", token: data.token }));
+
+export const adminBanUser = createServerFn({ method: "POST" })
+  .inputValidator((i: unknown) => z.object({ userId: UserId, token: Token }).parse(i))
+  .handler(async ({ data }) => call(`/admin/user/${data.userId}/ban`, { method: "POST", token: data.token }));
+
+export const adminReactivateUser = createServerFn({ method: "POST" })
+  .inputValidator((i: unknown) => z.object({ userId: UserId, token: Token }).parse(i))
+  .handler(async ({ data }) => call(`/admin/user/${data.userId}/reactivate`, { method: "POST", token: data.token }));
+
+export const adminViewLedger = createServerFn({ method: "POST" })
+  .inputValidator((i: unknown) => z.object({ userId: UserId, token: Token }).parse(i))
+  .handler(async ({ data }) => call(`/admin/user/${data.userId}/ledger`, { token: data.token }));
+
+export const adminBlacklistBvn = createServerFn({ method: "POST" })
+  .inputValidator((i: unknown) => z.object({ bvn_hash: z.string().min(4).max(200), reason: z.string().min(3).max(500), token: Token }).parse(i))
+  .handler(async ({ data }) => call(`/admin/blacklist/BVN`, { method: "POST", body: { bvn_hash: data.bvn_hash, reason: data.reason }, token: data.token }));
+
+export const adminUnblacklistBvn = createServerFn({ method: "POST" })
+  .inputValidator((i: unknown) => z.object({ bvn_hash: z.string().min(4).max(200), token: Token }).parse(i))
+  .handler(async ({ data }) => call(`/admin/blacklist/BVN`, { method: "DELETE", body: { bvn_hash: data.bvn_hash }, token: data.token }));
+
+export const adminAuditLog = createServerFn({ method: "POST" })
+  .inputValidator((i: unknown) => z.object({ target_id: z.string().max(120).optional(), token: Token }).parse(i))
+  .handler(async ({ data }) => {
+    const qs = data.target_id ? `?target_id=${encodeURIComponent(data.target_id)}` : "";
+    return call(`/admin/audit/log${qs}`, { token: data.token });
+  });
+
+export const adminListDisputes = createServerFn({ method: "POST" })
+  .inputValidator((i: unknown) => z.object({ token: Token, status: z.string().max(30).optional() }).parse(i))
+  .handler(async ({ data }) => {
+    const qs = data.status ? `?status=${encodeURIComponent(data.status)}` : "";
+    return call(`/admin/disputes${qs}`, { token: data.token });
+  });
+
+export const adminResolveDispute = createServerFn({ method: "POST" })
+  .inputValidator((i: unknown) => z.object({ taskId: TaskId, resolution: z.enum(["release_to_tasker","refund_poster","split"]), note: z.string().max(2000).optional(), token: Token }).parse(i))
+  .handler(async ({ data }) => call(`/admin/task/${data.taskId}/resolve-dispute`, { method: "POST", body: { resolution: data.resolution, note: data.note }, token: data.token }));
