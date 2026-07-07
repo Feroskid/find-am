@@ -47,6 +47,7 @@ import { Route as CommunityAuthRouteImport } from './routes/community.auth'
 import { Route as AuthVerifyEmailRouteImport } from './routes/auth.verify-email'
 import { Route as AdminUsersRouteImport } from './routes/admin.users'
 import { Route as AdminDisputesRouteImport } from './routes/admin.disputes'
+import { Route as AdminBlacklistRouteImport } from './routes/admin.blacklist'
 import { Route as TasksPaymentCallbackRouteImport } from './routes/tasks.payment.callback'
 import { Route as TasksTaskIdWorkspaceRouteImport } from './routes/tasks.$taskId.workspace'
 import { Route as TasksTaskIdApplicationsRouteImport } from './routes/tasks.$taskId.applications'
@@ -246,6 +247,11 @@ const AdminDisputesRoute = AdminDisputesRouteImport.update({
   path: '/disputes',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminBlacklistRoute = AdminBlacklistRouteImport.update({
+  id: '/blacklist',
+  path: '/blacklist',
+  getParentRoute: () => AdminRoute,
+} as any)
 const TasksPaymentCallbackRoute = TasksPaymentCallbackRouteImport.update({
   id: '/payment/callback',
   path: '/payment/callback',
@@ -307,6 +313,7 @@ export interface FileRoutesByFullPath {
   '/terms': typeof TermsRoute
   '/verify-email': typeof VerifyEmailRoute
   '/wallet': typeof WalletRoute
+  '/admin/blacklist': typeof AdminBlacklistRoute
   '/admin/disputes': typeof AdminDisputesRoute
   '/admin/users': typeof AdminUsersRoute
   '/auth/verify-email': typeof AuthVerifyEmailRoute
@@ -353,6 +360,7 @@ export interface FileRoutesByTo {
   '/terms': typeof TermsRoute
   '/verify-email': typeof VerifyEmailRoute
   '/wallet': typeof WalletRoute
+  '/admin/blacklist': typeof AdminBlacklistRoute
   '/admin/disputes': typeof AdminDisputesRoute
   '/admin/users': typeof AdminUsersRoute
   '/auth/verify-email': typeof AuthVerifyEmailRoute
@@ -402,6 +410,7 @@ export interface FileRoutesById {
   '/terms': typeof TermsRoute
   '/verify-email': typeof VerifyEmailRoute
   '/wallet': typeof WalletRoute
+  '/admin/blacklist': typeof AdminBlacklistRoute
   '/admin/disputes': typeof AdminDisputesRoute
   '/admin/users': typeof AdminUsersRoute
   '/auth/verify-email': typeof AuthVerifyEmailRoute
@@ -452,6 +461,7 @@ export interface FileRouteTypes {
     | '/terms'
     | '/verify-email'
     | '/wallet'
+    | '/admin/blacklist'
     | '/admin/disputes'
     | '/admin/users'
     | '/auth/verify-email'
@@ -498,6 +508,7 @@ export interface FileRouteTypes {
     | '/terms'
     | '/verify-email'
     | '/wallet'
+    | '/admin/blacklist'
     | '/admin/disputes'
     | '/admin/users'
     | '/auth/verify-email'
@@ -546,6 +557,7 @@ export interface FileRouteTypes {
     | '/terms'
     | '/verify-email'
     | '/wallet'
+    | '/admin/blacklist'
     | '/admin/disputes'
     | '/admin/users'
     | '/auth/verify-email'
@@ -879,6 +891,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminDisputesRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/blacklist': {
+      id: '/admin/blacklist'
+      path: '/blacklist'
+      fullPath: '/admin/blacklist'
+      preLoaderRoute: typeof AdminBlacklistRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/tasks/payment/callback': {
       id: '/tasks/payment/callback'
       path: '/payment/callback'
@@ -939,12 +958,14 @@ declare module '@tanstack/react-router' {
 }
 
 interface AdminRouteChildren {
+  AdminBlacklistRoute: typeof AdminBlacklistRoute
   AdminDisputesRoute: typeof AdminDisputesRoute
   AdminUsersRoute: typeof AdminUsersRoute
   AdminIndexRoute: typeof AdminIndexRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
+  AdminBlacklistRoute: AdminBlacklistRoute,
   AdminDisputesRoute: AdminDisputesRoute,
   AdminUsersRoute: AdminUsersRoute,
   AdminIndexRoute: AdminIndexRoute,
