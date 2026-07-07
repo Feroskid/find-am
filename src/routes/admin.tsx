@@ -8,13 +8,13 @@ export const Route = createFileRoute("/admin")({
   component: AdminLayout,
 });
 
-const TABS = [
+const TABS: Array<{ to: string; label: string; icon: any; exact?: boolean }> = [
   { to: "/admin", label: "Overview", icon: Shield, exact: true },
   { to: "/admin/disputes", label: "Disputes", icon: AlertTriangle },
   { to: "/admin/users", label: "Users", icon: Users },
   { to: "/admin/blacklist", label: "BVN Blacklist", icon: Ban },
   { to: "/admin/audit", label: "Audit Log", icon: ScrollText },
-] as const;
+];
 
 function AdminLayout() {
   const { token, ready } = useAuth();
