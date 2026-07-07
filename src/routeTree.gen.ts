@@ -30,6 +30,7 @@ import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as TasksIndexRouteImport } from './routes/tasks.index'
 import { Route as CommunityIndexRouteImport } from './routes/community.index'
+import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as UUserIdRouteImport } from './routes/u.$userId'
 import { Route as TasksOffersRouteImport } from './routes/tasks.offers'
 import { Route as TasksMineRouteImport } from './routes/tasks.mine'
@@ -158,6 +159,11 @@ const CommunityIndexRoute = CommunityIndexRouteImport.update({
   path: '/community/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminIndexRoute = AdminIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminRoute,
+} as any)
 const UUserIdRoute = UUserIdRouteImport.update({
   id: '/u/$userId',
   path: '/u/$userId',
@@ -271,7 +277,7 @@ const ApiPublicSearchRoute = ApiPublicSearchRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/admin': typeof AdminRoute
+  '/admin': typeof AdminRouteWithChildren
   '/contact': typeof ContactRoute
   '/dashboard': typeof DashboardRoute
   '/explore': typeof ExploreRoute
@@ -303,6 +309,7 @@ export interface FileRoutesByFullPath {
   '/tasks/mine': typeof TasksMineRoute
   '/tasks/offers': typeof TasksOffersRoute
   '/u/$userId': typeof UUserIdRoute
+  '/admin/': typeof AdminIndexRoute
   '/community/': typeof CommunityIndexRoute
   '/tasks/': typeof TasksIndexRoute
   '/api/public/search': typeof ApiPublicSearchRoute
@@ -316,7 +323,6 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/admin': typeof AdminRoute
   '/contact': typeof ContactRoute
   '/dashboard': typeof DashboardRoute
   '/explore': typeof ExploreRoute
@@ -347,6 +353,7 @@ export interface FileRoutesByTo {
   '/tasks/mine': typeof TasksMineRoute
   '/tasks/offers': typeof TasksOffersRoute
   '/u/$userId': typeof UUserIdRoute
+  '/admin': typeof AdminIndexRoute
   '/community': typeof CommunityIndexRoute
   '/tasks': typeof TasksIndexRoute
   '/api/public/search': typeof ApiPublicSearchRoute
@@ -361,7 +368,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/admin': typeof AdminRoute
+  '/admin': typeof AdminRouteWithChildren
   '/contact': typeof ContactRoute
   '/dashboard': typeof DashboardRoute
   '/explore': typeof ExploreRoute
@@ -393,6 +400,7 @@ export interface FileRoutesById {
   '/tasks/mine': typeof TasksMineRoute
   '/tasks/offers': typeof TasksOffersRoute
   '/u/$userId': typeof UUserIdRoute
+  '/admin/': typeof AdminIndexRoute
   '/community/': typeof CommunityIndexRoute
   '/tasks/': typeof TasksIndexRoute
   '/api/public/search': typeof ApiPublicSearchRoute
@@ -440,6 +448,7 @@ export interface FileRouteTypes {
     | '/tasks/mine'
     | '/tasks/offers'
     | '/u/$userId'
+    | '/admin/'
     | '/community/'
     | '/tasks/'
     | '/api/public/search'
@@ -453,7 +462,6 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/admin'
     | '/contact'
     | '/dashboard'
     | '/explore'
@@ -484,6 +492,7 @@ export interface FileRouteTypes {
     | '/tasks/mine'
     | '/tasks/offers'
     | '/u/$userId'
+    | '/admin'
     | '/community'
     | '/tasks'
     | '/api/public/search'
@@ -529,6 +538,7 @@ export interface FileRouteTypes {
     | '/tasks/mine'
     | '/tasks/offers'
     | '/u/$userId'
+    | '/admin/'
     | '/community/'
     | '/tasks/'
     | '/api/public/search'
@@ -543,7 +553,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AdminRoute: typeof AdminRoute
+  AdminRoute: typeof AdminRouteWithChildren
   ContactRoute: typeof ContactRoute
   DashboardRoute: typeof DashboardRoute
   ExploreRoute: typeof ExploreRoute
@@ -726,6 +736,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CommunityIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/': {
+      id: '/admin/'
+      path: '/'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/u/$userId': {
       id: '/u/$userId'
       path: '/u/$userId'
@@ -883,6 +900,16 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AdminRouteChildren {
+  AdminIndexRoute: typeof AdminIndexRoute
+}
+
+const AdminRouteChildren: AdminRouteChildren = {
+  AdminIndexRoute: AdminIndexRoute,
+}
+
+const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
+
 interface MessagesRouteChildren {
   MessagesTaskIdRoute: typeof MessagesTaskIdRoute
 }
@@ -933,7 +960,7 @@ const TasksRouteWithChildren = TasksRoute._addFileChildren(TasksRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AdminRoute: AdminRoute,
+  AdminRoute: AdminRouteWithChildren,
   ContactRoute: ContactRoute,
   DashboardRoute: DashboardRoute,
   ExploreRoute: ExploreRoute,
