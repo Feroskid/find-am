@@ -26,9 +26,11 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as ExploreRouteImport } from './routes/explore'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as ContactRouteImport } from './routes/contact'
+import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as TasksIndexRouteImport } from './routes/tasks.index'
 import { Route as CommunityIndexRouteImport } from './routes/community.index'
+import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as UUserIdRouteImport } from './routes/u.$userId'
 import { Route as TasksOffersRouteImport } from './routes/tasks.offers'
 import { Route as TasksMineRouteImport } from './routes/tasks.mine'
@@ -43,6 +45,10 @@ import { Route as CommunityNewRouteImport } from './routes/community.new'
 import { Route as CommunityModerationRouteImport } from './routes/community.moderation'
 import { Route as CommunityAuthRouteImport } from './routes/community.auth'
 import { Route as AuthVerifyEmailRouteImport } from './routes/auth.verify-email'
+import { Route as AdminUsersRouteImport } from './routes/admin.users'
+import { Route as AdminDisputesRouteImport } from './routes/admin.disputes'
+import { Route as AdminBlacklistRouteImport } from './routes/admin.blacklist'
+import { Route as AdminAuditRouteImport } from './routes/admin.audit'
 import { Route as TasksPaymentCallbackRouteImport } from './routes/tasks.payment.callback'
 import { Route as TasksTaskIdWorkspaceRouteImport } from './routes/tasks.$taskId.workspace'
 import { Route as TasksTaskIdApplicationsRouteImport } from './routes/tasks.$taskId.applications'
@@ -137,6 +143,11 @@ const ContactRoute = ContactRouteImport.update({
   path: '/contact',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -151,6 +162,11 @@ const CommunityIndexRoute = CommunityIndexRouteImport.update({
   id: '/community/',
   path: '/community/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AdminIndexRoute = AdminIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminRoute,
 } as any)
 const UUserIdRoute = UUserIdRouteImport.update({
   id: '/u/$userId',
@@ -222,6 +238,26 @@ const AuthVerifyEmailRoute = AuthVerifyEmailRouteImport.update({
   path: '/auth/verify-email',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminUsersRoute = AdminUsersRouteImport.update({
+  id: '/users',
+  path: '/users',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminDisputesRoute = AdminDisputesRouteImport.update({
+  id: '/disputes',
+  path: '/disputes',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminBlacklistRoute = AdminBlacklistRouteImport.update({
+  id: '/blacklist',
+  path: '/blacklist',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminAuditRoute = AdminAuditRouteImport.update({
+  id: '/audit',
+  path: '/audit',
+  getParentRoute: () => AdminRoute,
+} as any)
 const TasksPaymentCallbackRoute = TasksPaymentCallbackRouteImport.update({
   id: '/payment/callback',
   path: '/payment/callback',
@@ -265,6 +301,7 @@ const ApiPublicSearchRoute = ApiPublicSearchRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteWithChildren
   '/contact': typeof ContactRoute
   '/dashboard': typeof DashboardRoute
   '/explore': typeof ExploreRoute
@@ -282,6 +319,10 @@ export interface FileRoutesByFullPath {
   '/terms': typeof TermsRoute
   '/verify-email': typeof VerifyEmailRoute
   '/wallet': typeof WalletRoute
+  '/admin/audit': typeof AdminAuditRoute
+  '/admin/blacklist': typeof AdminBlacklistRoute
+  '/admin/disputes': typeof AdminDisputesRoute
+  '/admin/users': typeof AdminUsersRoute
   '/auth/verify-email': typeof AuthVerifyEmailRoute
   '/community/auth': typeof CommunityAuthRoute
   '/community/moderation': typeof CommunityModerationRoute
@@ -296,6 +337,7 @@ export interface FileRoutesByFullPath {
   '/tasks/mine': typeof TasksMineRoute
   '/tasks/offers': typeof TasksOffersRoute
   '/u/$userId': typeof UUserIdRoute
+  '/admin/': typeof AdminIndexRoute
   '/community/': typeof CommunityIndexRoute
   '/tasks/': typeof TasksIndexRoute
   '/api/public/search': typeof ApiPublicSearchRoute
@@ -325,6 +367,10 @@ export interface FileRoutesByTo {
   '/terms': typeof TermsRoute
   '/verify-email': typeof VerifyEmailRoute
   '/wallet': typeof WalletRoute
+  '/admin/audit': typeof AdminAuditRoute
+  '/admin/blacklist': typeof AdminBlacklistRoute
+  '/admin/disputes': typeof AdminDisputesRoute
+  '/admin/users': typeof AdminUsersRoute
   '/auth/verify-email': typeof AuthVerifyEmailRoute
   '/community/auth': typeof CommunityAuthRoute
   '/community/moderation': typeof CommunityModerationRoute
@@ -339,6 +385,7 @@ export interface FileRoutesByTo {
   '/tasks/mine': typeof TasksMineRoute
   '/tasks/offers': typeof TasksOffersRoute
   '/u/$userId': typeof UUserIdRoute
+  '/admin': typeof AdminIndexRoute
   '/community': typeof CommunityIndexRoute
   '/tasks': typeof TasksIndexRoute
   '/api/public/search': typeof ApiPublicSearchRoute
@@ -353,6 +400,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteWithChildren
   '/contact': typeof ContactRoute
   '/dashboard': typeof DashboardRoute
   '/explore': typeof ExploreRoute
@@ -370,6 +418,10 @@ export interface FileRoutesById {
   '/terms': typeof TermsRoute
   '/verify-email': typeof VerifyEmailRoute
   '/wallet': typeof WalletRoute
+  '/admin/audit': typeof AdminAuditRoute
+  '/admin/blacklist': typeof AdminBlacklistRoute
+  '/admin/disputes': typeof AdminDisputesRoute
+  '/admin/users': typeof AdminUsersRoute
   '/auth/verify-email': typeof AuthVerifyEmailRoute
   '/community/auth': typeof CommunityAuthRoute
   '/community/moderation': typeof CommunityModerationRoute
@@ -384,6 +436,7 @@ export interface FileRoutesById {
   '/tasks/mine': typeof TasksMineRoute
   '/tasks/offers': typeof TasksOffersRoute
   '/u/$userId': typeof UUserIdRoute
+  '/admin/': typeof AdminIndexRoute
   '/community/': typeof CommunityIndexRoute
   '/tasks/': typeof TasksIndexRoute
   '/api/public/search': typeof ApiPublicSearchRoute
@@ -399,6 +452,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/admin'
     | '/contact'
     | '/dashboard'
     | '/explore'
@@ -416,6 +470,10 @@ export interface FileRouteTypes {
     | '/terms'
     | '/verify-email'
     | '/wallet'
+    | '/admin/audit'
+    | '/admin/blacklist'
+    | '/admin/disputes'
+    | '/admin/users'
     | '/auth/verify-email'
     | '/community/auth'
     | '/community/moderation'
@@ -430,6 +488,7 @@ export interface FileRouteTypes {
     | '/tasks/mine'
     | '/tasks/offers'
     | '/u/$userId'
+    | '/admin/'
     | '/community/'
     | '/tasks/'
     | '/api/public/search'
@@ -459,6 +518,10 @@ export interface FileRouteTypes {
     | '/terms'
     | '/verify-email'
     | '/wallet'
+    | '/admin/audit'
+    | '/admin/blacklist'
+    | '/admin/disputes'
+    | '/admin/users'
     | '/auth/verify-email'
     | '/community/auth'
     | '/community/moderation'
@@ -473,6 +536,7 @@ export interface FileRouteTypes {
     | '/tasks/mine'
     | '/tasks/offers'
     | '/u/$userId'
+    | '/admin'
     | '/community'
     | '/tasks'
     | '/api/public/search'
@@ -486,6 +550,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/admin'
     | '/contact'
     | '/dashboard'
     | '/explore'
@@ -503,6 +568,10 @@ export interface FileRouteTypes {
     | '/terms'
     | '/verify-email'
     | '/wallet'
+    | '/admin/audit'
+    | '/admin/blacklist'
+    | '/admin/disputes'
+    | '/admin/users'
     | '/auth/verify-email'
     | '/community/auth'
     | '/community/moderation'
@@ -517,6 +586,7 @@ export interface FileRouteTypes {
     | '/tasks/mine'
     | '/tasks/offers'
     | '/u/$userId'
+    | '/admin/'
     | '/community/'
     | '/tasks/'
     | '/api/public/search'
@@ -531,6 +601,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminRoute: typeof AdminRouteWithChildren
   ContactRoute: typeof ContactRoute
   DashboardRoute: typeof DashboardRoute
   ExploreRoute: typeof ExploreRoute
@@ -685,6 +756,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ContactRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -705,6 +783,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/community/'
       preLoaderRoute: typeof CommunityIndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/admin/': {
+      id: '/admin/'
+      path: '/'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof AdminRoute
     }
     '/u/$userId': {
       id: '/u/$userId'
@@ -804,6 +889,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthVerifyEmailRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/users': {
+      id: '/admin/users'
+      path: '/users'
+      fullPath: '/admin/users'
+      preLoaderRoute: typeof AdminUsersRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/disputes': {
+      id: '/admin/disputes'
+      path: '/disputes'
+      fullPath: '/admin/disputes'
+      preLoaderRoute: typeof AdminDisputesRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/blacklist': {
+      id: '/admin/blacklist'
+      path: '/blacklist'
+      fullPath: '/admin/blacklist'
+      preLoaderRoute: typeof AdminBlacklistRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/audit': {
+      id: '/admin/audit'
+      path: '/audit'
+      fullPath: '/admin/audit'
+      preLoaderRoute: typeof AdminAuditRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/tasks/payment/callback': {
       id: '/tasks/payment/callback'
       path: '/payment/callback'
@@ -863,6 +976,24 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AdminRouteChildren {
+  AdminAuditRoute: typeof AdminAuditRoute
+  AdminBlacklistRoute: typeof AdminBlacklistRoute
+  AdminDisputesRoute: typeof AdminDisputesRoute
+  AdminUsersRoute: typeof AdminUsersRoute
+  AdminIndexRoute: typeof AdminIndexRoute
+}
+
+const AdminRouteChildren: AdminRouteChildren = {
+  AdminAuditRoute: AdminAuditRoute,
+  AdminBlacklistRoute: AdminBlacklistRoute,
+  AdminDisputesRoute: AdminDisputesRoute,
+  AdminUsersRoute: AdminUsersRoute,
+  AdminIndexRoute: AdminIndexRoute,
+}
+
+const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
+
 interface MessagesRouteChildren {
   MessagesTaskIdRoute: typeof MessagesTaskIdRoute
 }
@@ -913,6 +1044,7 @@ const TasksRouteWithChildren = TasksRoute._addFileChildren(TasksRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminRoute: AdminRouteWithChildren,
   ContactRoute: ContactRoute,
   DashboardRoute: DashboardRoute,
   ExploreRoute: ExploreRoute,

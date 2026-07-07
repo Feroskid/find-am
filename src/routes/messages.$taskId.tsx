@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft, Send, Loader2, Briefcase } from "lucide-react";
+import { ArrowLeft, Send, Loader2, Briefcase, ArrowRightLeft } from "lucide-react";
 import { toast } from "sonner";
 import { getTask, listMessages, sendMessage } from "@/lib/findtask.functions";
 import { roomSecret, encryptText, decryptText } from "@/lib/e2ee";
@@ -124,51 +124,58 @@ function ChatPage() {
   if (!token) return null;
 
   return (
-    <div className="fixed inset-0 flex flex-col bg-background">
-      {/* Header */}
-      <header className="flex items-center gap-3 px-3 py-2 border-b border-border bg-card">
-        <Link to="/messages" className="p-2 rounded-full hover:bg-muted">
+    <div className="fixed inset-0 flex flex-col bg-[#0b141a]">
+      {/* Header — WhatsApp style */}
+      <header className="flex items-center gap-2 px-2 py-2 border-b border-black/40 bg-[#202c33] text-white">
+        <Link to="/messages" className="p-2 rounded-full hover:bg-white/10">
           <ArrowLeft className="h-5 w-5" />
         </Link>
-        <div className="grid h-10 w-10 place-items-center rounded-full bg-gradient-to-br from-primary to-primary/60 text-primary-foreground font-bold">
+        <div className="grid h-10 w-10 place-items-center rounded-full bg-gradient-to-br from-emerald-500 to-emerald-700 text-white font-bold shrink-0">
           {initials(otherName)}
         </div>
         <div className="min-w-0 flex-1">
-          <div className="font-semibold text-ink truncate">{otherName}</div>
-          <Link
-            to="/tasks/$taskId"
-            params={{ taskId }}
-            className="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1 truncate max-w-full"
-          >
-            <Briefcase className="h-3 w-3" />
-            <span className="truncate">{task?.title ?? "Task"}</span>
-          </Link>
+          <div className="font-semibold truncate leading-tight">{otherName}</div>
+          <div className="text-[11px] text-white/60 truncate leading-tight">
+            {task?.title ?? "Task"}
+          </div>
         </div>
         <Link
           to="/tasks/$taskId/workspace"
           params={{ taskId }}
-          className="text-xs font-semibold text-primary hover:underline shrink-0 px-2"
+          className="inline-flex items-center gap-1.5 shrink-0 rounded-full bg-emerald-600 hover:bg-emerald-500 px-3 py-1.5 text-xs font-bold text-white shadow"
+          title="Switch to task workspace"
         >
-          Workspace
+          <ArrowRightLeft className="h-3.5 w-3.5" />
+          <span>Switch to task</span>
         </Link>
       </header>
 
-      {/* Messages */}
-      <div ref={scrollerRef} className="flex-1 overflow-y-auto px-3 py-4 bg-muted/20">
+      {/* Messages — WhatsApp pattern bg */}
+      <div
+        ref={scrollerRef}
+        className="flex-1 overflow-y-auto px-2 py-3"
+        style={{
+          backgroundColor: "#0b141a",
+          backgroundImage:
+            "radial-gradient(rgba(255,255,255,0.04) 1px, transparent 1px), radial-gradient(rgba(255,255,255,0.03) 1px, transparent 1px)",
+          backgroundSize: "22px 22px, 44px 44px",
+          backgroundPosition: "0 0, 11px 11px",
+        }}
+      >
         {msgsQ.isLoading ? (
-          <div className="flex items-center justify-center py-10 text-muted-foreground gap-2">
+          <div className="flex items-center justify-center py-10 text-white/60 gap-2">
             <Loader2 className="h-4 w-4 animate-spin" /> Loading…
           </div>
         ) : raw.length === 0 ? (
-          <div className="text-center text-muted-foreground py-20 text-sm">
+          <div className="text-center text-white/60 py-20 text-sm">
             No messages yet. Send the first one below.
           </div>
         ) : (
-          <div className="mx-auto max-w-2xl space-y-4">
+          <div className="mx-auto max-w-2xl space-y-1">
             {grouped.map((g) => (
               <div key={g.day}>
-                <div className="flex justify-center my-2">
-                  <span className="text-[10px] font-semibold uppercase tracking-wider bg-background/70 text-muted-foreground px-2 py-0.5 rounded-full">
+                <div className="flex justify-center my-3">
+                  <span className="text-[11px] font-medium bg-[#182229] text-white/70 px-2.5 py-1 rounded-md shadow">
                     {g.day}
                   </span>
                 </div>
@@ -177,16 +184,24 @@ function ChatPage() {
                   const mine = String(m.sender_id ?? m.user_id) === String(myId);
                   const text = decrypted[k] ?? "…";
                   return (
-                    <div key={k} className={`flex mb-1 ${mine ? "justify-end" : "justify-start"}`}>
+                    <div key={k} className={`flex mb-0.5 ${mine ? "justify-end" : "justify-start"}`}>
                       <div
-                        className={`max-w-[75%] rounded-2xl px-3 py-2 shadow-sm text-sm break-words ${
+                        className={`relative max-w-[78%] px-2.5 py-1.5 pr-14 shadow text-[14.5px] leading-snug break-words ${
                           mine
-                            ? "bg-primary text-primary-foreground rounded-br-md"
-                            : "bg-card text-foreground rounded-bl-md border border-border"
+                            ? "bg-[#005c4b] text-white rounded-lg rounded-tr-none"
+                            : "bg-[#202c33] text-white rounded-lg rounded-tl-none"
                         }`}
                       >
+                        {/* Tail */}
+                        <span
+                          className={`absolute top-0 w-0 h-0 border-solid ${
+                            mine
+                              ? "right-[-6px] border-t-[#005c4b] border-t-8 border-l-transparent border-l-8"
+                              : "left-[-6px] border-t-[#202c33] border-t-8 border-r-transparent border-r-8"
+                          }`}
+                        />
                         <div className="whitespace-pre-wrap">{text}</div>
-                        <div className={`mt-0.5 text-[10px] ${mine ? "text-primary-foreground/70" : "text-muted-foreground"} text-right`}>
+                        <div className="absolute bottom-1 right-2 text-[10px] text-white/60">
                           {fmtTime(m.created_at ?? m.sent_at)}
                         </div>
                       </div>
@@ -199,10 +214,10 @@ function ChatPage() {
         )}
       </div>
 
-      {/* Composer */}
+      {/* Composer — WhatsApp style */}
       <form
         onSubmit={(e) => { e.preventDefault(); if (draft.trim() && !sendM.isPending) sendM.mutate(); }}
-        className="flex items-end gap-2 px-3 py-2 border-t border-border bg-card"
+        className="flex items-end gap-2 px-2 py-2 bg-[#202c33]"
       >
         <textarea
           value={draft}
@@ -214,13 +229,13 @@ function ChatPage() {
             }
           }}
           rows={1}
-          placeholder="Type a message"
-          className="flex-1 resize-none max-h-32 rounded-2xl bg-muted/60 px-4 py-2.5 text-sm outline-none focus:bg-muted"
+          placeholder="Message"
+          className="flex-1 resize-none max-h-32 rounded-full bg-[#2a3942] text-white placeholder:text-white/50 px-4 py-2.5 text-sm outline-none"
         />
         <button
           type="submit"
           disabled={!draft.trim() || sendM.isPending}
-          className="grid h-10 w-10 place-items-center rounded-full bg-primary text-primary-foreground disabled:opacity-50 shrink-0"
+          className="grid h-11 w-11 place-items-center rounded-full bg-emerald-600 text-white disabled:opacity-50 shrink-0 hover:bg-emerald-500"
           aria-label="Send"
         >
           {sendM.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
