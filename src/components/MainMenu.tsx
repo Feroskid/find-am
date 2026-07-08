@@ -12,6 +12,12 @@ export function MainMenu() {
   const close = () => setOpen(false);
 
   const name = (user as any)?.name || (user as any)?.full_name || (user as any)?.email || "Guest";
+  const u: any = user ?? {};
+  const isAdmin = Boolean(
+    u.is_admin || u.admin || u.is_staff ||
+    (typeof u.role === "string" && ["admin", "moderator", "staff"].includes(u.role.toLowerCase())) ||
+    (Array.isArray(u.roles) && u.roles.some((r: any) => typeof r === "string" && ["admin", "moderator", "staff"].includes(r.toLowerCase())))
+  );
 
   const main: Row[] = token
     ? [
