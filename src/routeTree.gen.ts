@@ -20,7 +20,6 @@ import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as PostTaskRouteImport } from './routes/post-task'
 import { Route as NotificationsRouteImport } from './routes/notifications'
-import { Route as MessagesRouteImport } from './routes/messages'
 import { Route as MapRouteImport } from './routes/map'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ExploreRouteImport } from './routes/explore'
@@ -29,6 +28,7 @@ import { Route as ContactRouteImport } from './routes/contact'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as TasksIndexRouteImport } from './routes/tasks.index'
+import { Route as MessagesIndexRouteImport } from './routes/messages.index'
 import { Route as CommunityIndexRouteImport } from './routes/community.index'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as UUserIdRouteImport } from './routes/u.$userId'
@@ -113,11 +113,6 @@ const NotificationsRoute = NotificationsRouteImport.update({
   path: '/notifications',
   getParentRoute: () => rootRouteImport,
 } as any)
-const MessagesRoute = MessagesRouteImport.update({
-  id: '/messages',
-  path: '/messages',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const MapRoute = MapRouteImport.update({
   id: '/map',
   path: '/map',
@@ -157,6 +152,11 @@ const TasksIndexRoute = TasksIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => TasksRoute,
+} as any)
+const MessagesIndexRoute = MessagesIndexRouteImport.update({
+  id: '/messages/',
+  path: '/messages/',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const CommunityIndexRoute = CommunityIndexRouteImport.update({
   id: '/community/',
@@ -199,9 +199,9 @@ const TasksTaskIdRoute = TasksTaskIdRouteImport.update({
   getParentRoute: () => TasksRoute,
 } as any)
 const MessagesTaskIdRoute = MessagesTaskIdRouteImport.update({
-  id: '/$taskId',
-  path: '/$taskId',
-  getParentRoute: () => MessagesRoute,
+  id: '/messages/$taskId',
+  path: '/messages/$taskId',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const CommunitySettingsRoute = CommunitySettingsRouteImport.update({
   id: '/community/settings',
@@ -307,7 +307,6 @@ export interface FileRoutesByFullPath {
   '/explore': typeof ExploreRoute
   '/login': typeof LoginRoute
   '/map': typeof MapRoute
-  '/messages': typeof MessagesRouteWithChildren
   '/notifications': typeof NotificationsRoute
   '/post-task': typeof PostTaskRoute
   '/privacy': typeof PrivacyRoute
@@ -339,6 +338,7 @@ export interface FileRoutesByFullPath {
   '/u/$userId': typeof UUserIdRoute
   '/admin/': typeof AdminIndexRoute
   '/community/': typeof CommunityIndexRoute
+  '/messages/': typeof MessagesIndexRoute
   '/tasks/': typeof TasksIndexRoute
   '/api/public/search': typeof ApiPublicSearchRoute
   '/community/c/$slug': typeof CommunityCSlugRoute
@@ -356,7 +356,6 @@ export interface FileRoutesByTo {
   '/explore': typeof ExploreRoute
   '/login': typeof LoginRoute
   '/map': typeof MapRoute
-  '/messages': typeof MessagesRouteWithChildren
   '/notifications': typeof NotificationsRoute
   '/post-task': typeof PostTaskRoute
   '/privacy': typeof PrivacyRoute
@@ -387,6 +386,7 @@ export interface FileRoutesByTo {
   '/u/$userId': typeof UUserIdRoute
   '/admin': typeof AdminIndexRoute
   '/community': typeof CommunityIndexRoute
+  '/messages': typeof MessagesIndexRoute
   '/tasks': typeof TasksIndexRoute
   '/api/public/search': typeof ApiPublicSearchRoute
   '/community/c/$slug': typeof CommunityCSlugRoute
@@ -406,7 +406,6 @@ export interface FileRoutesById {
   '/explore': typeof ExploreRoute
   '/login': typeof LoginRoute
   '/map': typeof MapRoute
-  '/messages': typeof MessagesRouteWithChildren
   '/notifications': typeof NotificationsRoute
   '/post-task': typeof PostTaskRoute
   '/privacy': typeof PrivacyRoute
@@ -438,6 +437,7 @@ export interface FileRoutesById {
   '/u/$userId': typeof UUserIdRoute
   '/admin/': typeof AdminIndexRoute
   '/community/': typeof CommunityIndexRoute
+  '/messages/': typeof MessagesIndexRoute
   '/tasks/': typeof TasksIndexRoute
   '/api/public/search': typeof ApiPublicSearchRoute
   '/community/c/$slug': typeof CommunityCSlugRoute
@@ -458,7 +458,6 @@ export interface FileRouteTypes {
     | '/explore'
     | '/login'
     | '/map'
-    | '/messages'
     | '/notifications'
     | '/post-task'
     | '/privacy'
@@ -490,6 +489,7 @@ export interface FileRouteTypes {
     | '/u/$userId'
     | '/admin/'
     | '/community/'
+    | '/messages/'
     | '/tasks/'
     | '/api/public/search'
     | '/community/c/$slug'
@@ -507,7 +507,6 @@ export interface FileRouteTypes {
     | '/explore'
     | '/login'
     | '/map'
-    | '/messages'
     | '/notifications'
     | '/post-task'
     | '/privacy'
@@ -538,6 +537,7 @@ export interface FileRouteTypes {
     | '/u/$userId'
     | '/admin'
     | '/community'
+    | '/messages'
     | '/tasks'
     | '/api/public/search'
     | '/community/c/$slug'
@@ -556,7 +556,6 @@ export interface FileRouteTypes {
     | '/explore'
     | '/login'
     | '/map'
-    | '/messages'
     | '/notifications'
     | '/post-task'
     | '/privacy'
@@ -588,6 +587,7 @@ export interface FileRouteTypes {
     | '/u/$userId'
     | '/admin/'
     | '/community/'
+    | '/messages/'
     | '/tasks/'
     | '/api/public/search'
     | '/community/c/$slug'
@@ -607,7 +607,6 @@ export interface RootRouteChildren {
   ExploreRoute: typeof ExploreRoute
   LoginRoute: typeof LoginRoute
   MapRoute: typeof MapRoute
-  MessagesRoute: typeof MessagesRouteWithChildren
   NotificationsRoute: typeof NotificationsRoute
   PostTaskRoute: typeof PostTaskRoute
   PrivacyRoute: typeof PrivacyRoute
@@ -626,8 +625,10 @@ export interface RootRouteChildren {
   CommunityNotificationsRoute: typeof CommunityNotificationsRoute
   CommunitySearchRoute: typeof CommunitySearchRoute
   CommunitySettingsRoute: typeof CommunitySettingsRoute
+  MessagesTaskIdRoute: typeof MessagesTaskIdRoute
   UUserIdRoute: typeof UUserIdRoute
   CommunityIndexRoute: typeof CommunityIndexRoute
+  MessagesIndexRoute: typeof MessagesIndexRoute
   ApiPublicSearchRoute: typeof ApiPublicSearchRoute
   CommunityCSlugRoute: typeof CommunityCSlugRoute
   CommunityTThreadIdRoute: typeof CommunityTThreadIdRoute
@@ -714,13 +715,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof NotificationsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/messages': {
-      id: '/messages'
-      path: '/messages'
-      fullPath: '/messages'
-      preLoaderRoute: typeof MessagesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/map': {
       id: '/map'
       path: '/map'
@@ -776,6 +770,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/tasks/'
       preLoaderRoute: typeof TasksIndexRouteImport
       parentRoute: typeof TasksRoute
+    }
+    '/messages/': {
+      id: '/messages/'
+      path: '/messages'
+      fullPath: '/messages/'
+      preLoaderRoute: typeof MessagesIndexRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/community/': {
       id: '/community/'
@@ -835,10 +836,10 @@ declare module '@tanstack/react-router' {
     }
     '/messages/$taskId': {
       id: '/messages/$taskId'
-      path: '/$taskId'
+      path: '/messages/$taskId'
       fullPath: '/messages/$taskId'
       preLoaderRoute: typeof MessagesTaskIdRouteImport
-      parentRoute: typeof MessagesRoute
+      parentRoute: typeof rootRouteImport
     }
     '/community/settings': {
       id: '/community/settings'
@@ -994,18 +995,6 @@ const AdminRouteChildren: AdminRouteChildren = {
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
-interface MessagesRouteChildren {
-  MessagesTaskIdRoute: typeof MessagesTaskIdRoute
-}
-
-const MessagesRouteChildren: MessagesRouteChildren = {
-  MessagesTaskIdRoute: MessagesTaskIdRoute,
-}
-
-const MessagesRouteWithChildren = MessagesRoute._addFileChildren(
-  MessagesRouteChildren,
-)
-
 interface TasksTaskIdRouteChildren {
   TasksTaskIdApplicationsRoute: typeof TasksTaskIdApplicationsRoute
   TasksTaskIdWorkspaceRoute: typeof TasksTaskIdWorkspaceRoute
@@ -1050,7 +1039,6 @@ const rootRouteChildren: RootRouteChildren = {
   ExploreRoute: ExploreRoute,
   LoginRoute: LoginRoute,
   MapRoute: MapRoute,
-  MessagesRoute: MessagesRouteWithChildren,
   NotificationsRoute: NotificationsRoute,
   PostTaskRoute: PostTaskRoute,
   PrivacyRoute: PrivacyRoute,
@@ -1069,8 +1057,10 @@ const rootRouteChildren: RootRouteChildren = {
   CommunityNotificationsRoute: CommunityNotificationsRoute,
   CommunitySearchRoute: CommunitySearchRoute,
   CommunitySettingsRoute: CommunitySettingsRoute,
+  MessagesTaskIdRoute: MessagesTaskIdRoute,
   UUserIdRoute: UUserIdRoute,
   CommunityIndexRoute: CommunityIndexRoute,
+  MessagesIndexRoute: MessagesIndexRoute,
   ApiPublicSearchRoute: ApiPublicSearchRoute,
   CommunityCSlugRoute: CommunityCSlugRoute,
   CommunityTThreadIdRoute: CommunityTThreadIdRoute,

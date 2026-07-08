@@ -7,7 +7,7 @@ import { TaskHeader } from "@/components/TaskHeader";
 import { getMyConversations } from "@/lib/findtask.functions";
 import { useAuth } from "@/lib/auth";
 
-export const Route = createFileRoute("/messages")({
+export const Route = createFileRoute("/messages/")({
   head: () => ({ meta: [{ title: "Messages — Find-task" }] }),
   component: MessagesInbox,
 });
