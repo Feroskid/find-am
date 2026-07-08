@@ -34,6 +34,7 @@ export function MainMenu() {
         { to: "/profile", label: "Settings", chevron: true },
         { to: "/tasks/categories", label: "Discover", chevron: true },
         { to: "/community", label: "Help topics", chevron: true },
+        ...(isAdmin ? [{ to: "/admin", label: "Admin Console", chevron: true }] : []),
       ]
     : [
         { to: "/tasks", label: "Home" },
