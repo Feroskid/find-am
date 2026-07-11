@@ -1,8 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { Mail, Send, ArrowLeft } from "lucide-react";
+import { Mail, Send, ArrowLeft, Phone, MapPin } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
+
+const CONTACT_PHONE = "+2348115880524";
+const CONTACT_PHONE_DISPLAY = "+234 811 588 0524";
+const CONTACT_ADDRESS = "4, Itakogun, Ilesa, Osun State, Nigeria";
 
 const CONTACT_EMAIL = "integerpj@gmail.com";
 
@@ -91,6 +95,30 @@ function ContactPage() {
             <a href={`mailto:${CONTACT_EMAIL}`} className="text-primary font-semibold hover:underline">{CONTACT_EMAIL}</a>
           </p>
         </form>
+
+        <div className="mt-6 grid gap-3 sm:grid-cols-3">
+          <a href={`tel:${CONTACT_PHONE}`} className="flex items-start gap-3 rounded-2xl border border-border bg-card p-4 hover:border-primary transition">
+            <span className="grid h-10 w-10 place-items-center rounded-full bg-primary/10 text-primary shrink-0"><Phone className="h-4 w-4" /></span>
+            <div className="min-w-0">
+              <div className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Phone</div>
+              <div className="text-sm font-semibold text-ink truncate">{CONTACT_PHONE_DISPLAY}</div>
+            </div>
+          </a>
+          <a href={`mailto:${CONTACT_EMAIL}`} className="flex items-start gap-3 rounded-2xl border border-border bg-card p-4 hover:border-primary transition">
+            <span className="grid h-10 w-10 place-items-center rounded-full bg-primary/10 text-primary shrink-0"><Mail className="h-4 w-4" /></span>
+            <div className="min-w-0">
+              <div className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Email</div>
+              <div className="text-sm font-semibold text-ink truncate">{CONTACT_EMAIL}</div>
+            </div>
+          </a>
+          <div className="flex items-start gap-3 rounded-2xl border border-border bg-card p-4 sm:col-span-1">
+            <span className="grid h-10 w-10 place-items-center rounded-full bg-primary/10 text-primary shrink-0"><MapPin className="h-4 w-4" /></span>
+            <div className="min-w-0">
+              <div className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Address</div>
+              <div className="text-sm font-semibold text-ink">{CONTACT_ADDRESS}</div>
+            </div>
+          </div>
+        </div>
       </main>
     </div>
   );
