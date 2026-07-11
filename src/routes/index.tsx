@@ -216,6 +216,7 @@ function Home() {
           <div className="flex flex-wrap gap-6">
             <Link to="/privacy" className="hover:text-foreground hover:underline">{t.privacy}</Link>
             <Link to="/terms" className="hover:text-foreground hover:underline">{t.terms}</Link>
+            <Link to="/refund" className="hover:text-foreground hover:underline">Refund Policy</Link>
             <Link to="/profile" className="hover:text-foreground hover:underline">{t.settings}</Link>
           </div>
         </footer>

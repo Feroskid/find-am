@@ -21,7 +21,8 @@ const COLS: { title: string; links: { to: string; label: string }[] }[] = [
       { to: "/community", label: "Community guidelines" },
       { to: "/terms", label: "Terms and Conditions" },
       { to: "/privacy", label: "Privacy policy" },
-      { to: "/community", label: "Contact us" },
+      { to: "/refund", label: "Refund policy" },
+      { to: "/contact", label: "Contact us" },
     ],
   },
   {
@@ -103,6 +104,8 @@ export function Footer() {
             <Link to="/terms" className="hover:text-background hover:underline">Terms &amp; Conditions</Link>
             <span className="text-background/30">·</span>
             <Link to="/privacy" className="hover:text-background hover:underline">Privacy Policy</Link>
+            <span className="text-background/30">·</span>
+            <Link to="/refund" className="hover:text-background hover:underline">Refund Policy</Link>
             <span className="text-background/30">·</span>
             <Link to="/community" className="hover:text-background hover:underline">Community Guidelines</Link>
           </nav>
