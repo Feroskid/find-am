@@ -248,6 +248,17 @@ export const acceptApplicant = createServerFn({ method: "POST" })
     }),
   );
 
+export const declineApplicant = createServerFn({ method: "POST" })
+  .inputValidator((i: unknown) =>
+    z.object({ taskId: TaskId, taskerId: TaskerId, token: Token }).parse(i),
+  )
+  .handler(async ({ data }) =>
+    call(`/task/${data.taskId}/decline/${data.taskerId}`, {
+      method: "PUT",
+      token: data.token,
+    }),
+  );
+
 // ---- Complete -----------------------------------------------------------
 export const completeTask = createServerFn({ method: "POST" })
   .inputValidator((i: unknown) => z.object({ taskId: TaskId, token: Token }).parse(i))
