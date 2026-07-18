@@ -3,7 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import {
-  ArrowLeft, MapPin, Clock, Loader2, Heart, Flag, ChevronDown, BadgeCheck, Star, Globe, CheckCircle2, RefreshCw, MessageSquare, X as XIcon,
+  ArrowLeft, MapPin, Clock, Loader2, Flag, ChevronDown, BadgeCheck, Star, Globe, CheckCircle2, RefreshCw, Wallet, CreditCard,
 } from "lucide-react";
 import { toast } from "sonner";
 import { TaskHeader } from "@/components/TaskHeader";
@@ -11,14 +11,10 @@ import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 import {
-  getTask, applyToTask, acceptApplicant, sendMessage, listMessages, listTaskApplications, cancelTask, getMyApplications,
+  getTask, applyToTask, acceptApplicant, declineApplicant, sendMessage, listMessages, listTaskApplications, cancelTask, getMyApplications, walletBalance,
 } from "@/lib/findtask.functions";
 
-
 import { useAuth } from "@/lib/auth";
-import {
-  parseOfferAmount, parseReplyTarget, parseCounterTarget, isDecline, stripHeaders, formatOfferMessage,
-} from "@/lib/offerParse";
 import { FeeBreakdown } from "@/components/FeeBreakdown";
 import { computeFees, formatNaira } from "@/lib/fees";
 
@@ -26,7 +22,7 @@ export const Route = createFileRoute("/tasks/$taskId")({
   head: ({ params }) => ({
     meta: [
       { title: `Task #${params.taskId} — Find-task` },
-      { name: "description", content: "View task details, make an offer or negotiate with the poster on Find-task." },
+      { name: "description", content: "View task details and make an offer on Find-task." },
     ],
   }),
   component: TaskDetail,
@@ -78,6 +74,9 @@ function TaskDetail() {
   const send = useServerFn(sendMessage);
   const fetchMessages = useServerFn(listMessages);
   const fetchApps = useServerFn(listTaskApplications);
+  const declineFn = useServerFn(declineApplicant);
+  const walletFn = useServerFn(walletBalance);
+  const cancelFn = useServerFn(cancelTask);
 
   const { data, isFetching, refetch } = useQuery({
     queryKey: ["task", taskId],
@@ -130,13 +129,11 @@ function TaskDetail() {
     return Array.from(byId.values());
   })();
 
-
   // Visibility: poster sees all; everyone else sees only their own offer.
   const offers: any[] = isPoster
     ? mergedOffers
     : mergedOffers.filter((o) => String(o.applicant_id ?? o.tasker_id ?? o.user_id) === String(myId));
-  // Prefer explicit backend count so non-posters (who can't fetch the private
-  // application list) still see the same number the browse card shows.
+
   const backendOfferCount = Number(
     task?.offers_count ?? task?.applications_count ?? task?.applicants_count ?? task?.offer_count ?? 0,
   );
@@ -157,11 +154,8 @@ function TaskDetail() {
   const [startDate, setStartDate] = useState("");
   const [question, setQuestion] = useState("");
   const [moreOpen, setMoreOpen] = useState(false);
-  const [counterFor, setCounterFor] = useState<any | null>(null);
-  const [counterAmt, setCounterAmt] = useState("");
-  const [counterMsg, setCounterMsg] = useState("");
 
-  // Message thread — used for Q&A and per-offer counter/reply rendering
+  // Message thread
   const qaQ = useQuery({
     queryKey: ["task", taskId, "thread", token],
     enabled: !!token,
@@ -172,13 +166,16 @@ function TaskDetail() {
     if (!r?.ok) return [];
     return (r.data as any)?.messages ?? (Array.isArray(r.data) ? r.data : []);
   }, [qaQ.data]);
-  const liveQuestions = allMessages.length ? allMessages.filter((m: any) => {
-    const body = m.message_text ?? m.message ?? m.body ?? "";
-    return !parseCounterTarget(body) && !parseReplyTarget(body) && !isDecline(body);
-  }) : questions;
+  const liveQuestions = allMessages.length ? allMessages : questions;
 
-  // Tasker offer amount is locked to the task budget (poster-controlled).
-  const amtNum = Number(task?.budget ?? 0);
+  // Wallet balance — used by the funding choice modal
+  const walletQ = useQuery({
+    queryKey: ["wallet", token],
+    enabled: !!token && isPoster,
+    queryFn: () => walletFn({ data: { token: token! } }),
+  });
+  const walletBal = walletQ.data?.ok ? Number((walletQ.data.data as any)?.withdrawable_balance ?? 0) : 0;
+
   const validOffer = message.trim().length >= 20 && message.trim().length <= 2000;
 
   const [applyError, setApplyError] = useState<string | null>(null);
@@ -187,7 +184,8 @@ function TaskDetail() {
       data: {
         taskId,
         token: token!,
-        message: formatOfferMessage({ kind: "OFFER", amount: amtNum, body: message.trim(), startDate: startDate || undefined }),
+        message: message.trim(),
+        earliest_start: startDate || undefined,
       },
     }),
     onSuccess: (r) => {
@@ -210,72 +208,39 @@ function TaskDetail() {
     },
   });
 
-  // Pending payment / accept flow — backend may return a Flutterwave
-  // checkout URL from PUT /task/{id}/accept/{tasker_id}; if so we redirect
-  // the poster there and finalise via /task/payment/callback on return.
+  // Accept + funding flow
   const [payFor, setPayFor] = useState<any | null>(null);
   const [payStage, setPayStage] = useState<"confirm" | "processing" | "done">("confirm");
   const [payError, setPayError] = useState<string | null>(null);
 
   const acceptM = useMutation({
-    mutationFn: async (taskerId: string | number) => {
-      return await accept({ data: { taskId, taskerId, token: token! } });
-    },
-    onSuccess: (r) => {
-      if (!r.ok) toast.error(r.error);
-      // The intro message + task refetch run on /tasks/payment/callback
-      // after Flutterwave confirms payment.
-    },
+    mutationFn: async (v: { taskerId: string | number; funding_method: "wallet" | "flutterwave" }) =>
+      await accept({ data: { taskId, taskerId: v.taskerId, funding_method: v.funding_method, token: token! } }),
   });
 
-  const cancelFn = useServerFn(cancelTask);
   const cancelM = useMutation({
     mutationFn: (reason?: string) => cancelFn({ data: { taskId, token: token!, reason } }),
-    onSuccess: (r) => {
+    onSuccess: (r: any) => {
       if (r.ok) { toast.success("Task cancelled"); refetch(); }
       else toast.error(r.error);
     },
   });
 
-
-
-
-  const counterAmtNum = Number(counterAmt);
-  const validCounter = counterAmtNum >= 100 && counterMsg.trim().length >= 5;
-  const counterM = useMutation({
-    mutationFn: () => {
-      const toName = counterFor?.applicant_name ?? counterFor?.tasker_name ?? counterFor?.name ?? "tasker";
-      return send({
-        data: {
-          taskId,
-          token: token!,
-          message_text: formatOfferMessage({ kind: "COUNTER", amount: counterAmtNum, toName, body: counterMsg.trim() }),
-        },
-      });
-    },
+  const declineM = useMutation({
+    mutationFn: (taskerId: string) => declineFn({ data: { taskId, taskerId, token: token! } }),
     onSuccess: (r) => {
       if (r.ok) {
-        toast.success("Counter sent");
-        setCounterFor(null); setCounterMsg("");
-        qaQ.refetch();
+        toast.success("Application declined");
+        appsQ.refetch();
+        refetch();
       } else toast.error(r.error);
     },
-  });
-
-  const declineM = useMutation({
-    mutationFn: (offer: any) => {
-      const toName = offer?.applicant_name ?? offer?.tasker_name ?? offer?.name ?? "tasker";
-      return send({
-        data: { taskId, token: token!, message_text: formatOfferMessage({ kind: "DECLINE", toName, body: "Sorry, going with someone else." }) },
-      });
-    },
-    onSuccess: (r) => { if (r.ok) { toast.success("Offer declined"); qaQ.refetch(); } else toast.error(r.error); },
   });
 
   const askM = useMutation({
     mutationFn: () => send({ data: { taskId, message_text: question.trim(), token: token! } }),
     onSuccess: (r) => {
-      if (r.ok) { setQuestion(""); qaQ.refetch(); toast.success("Question posted"); }
+      if (r.ok) { setQuestion(""); qaQ.refetch(); toast.success("Message sent"); }
       else toast.error(r.error);
     },
   });
@@ -287,6 +252,9 @@ function TaskDetail() {
   const dateLabel = date
     ? date.toLocaleDateString(undefined, { weekday: "short", day: "numeric", month: "short" })
     : "Flexible";
+
+  const totalCharged = Number(task?.total_charged ?? 0);
+  const canUseWallet = totalCharged > 0 && walletBal >= totalCharged;
 
   const StatusPill = ({ name }: { name: "open" | "assigned" | "completed" }) => {
     const active = status === name || (name === "assigned" && (status === "in_progress" || status === "accepted"));
@@ -305,6 +273,39 @@ function TaskDetail() {
   const openApplyModal = () => {
     if (!token) return;
     setShowApply(true);
+  };
+
+  const doAccept = async (funding_method: "wallet" | "flutterwave") => {
+    if (!payFor) return;
+    setPayError(null);
+    setPayStage("processing");
+    try {
+      const r: any = await acceptM.mutateAsync({ taskerId: payFor._taskerId, funding_method });
+      if (!r?.ok) {
+        setPayError(r?.error ?? "Could not complete the request.");
+        setPayStage("confirm");
+        return;
+      }
+      const d: any = r.data ?? {};
+      if (d.funded_from_wallet) {
+        setPayStage("done");
+        toast.success("Tasker accepted. Task funded from your wallet.");
+        setPayFor(null);
+        setPayStage("confirm");
+        refetch(); appsQ.refetch(); walletQ.refetch();
+        return;
+      }
+      if (d.payment_link) {
+        setPayStage("done");
+        window.location.href = d.payment_link;
+        return;
+      }
+      setPayError("Accepted, but no payment link was returned. Please contact support.");
+      setPayStage("confirm");
+    } catch (e: any) {
+      setPayError(e?.message ?? "Something went wrong.");
+      setPayStage("confirm");
+    }
   };
 
   return (
@@ -328,9 +329,6 @@ function TaskDetail() {
                   <StatusPill name="assigned" />
                   <StatusPill name="completed" />
                 </div>
-                <button className="inline-flex items-center gap-1 text-sm font-semibold text-primary hover:underline">
-                  <Heart className="h-4 w-4" /> Follow
-                </button>
               </div>
 
               <h1 className="mt-4 font-display text-3xl sm:text-4xl text-ink leading-tight">{task.title ?? "Untitled task"}</h1>
@@ -406,7 +404,25 @@ function TaskDetail() {
                 </p>
               </section>
 
-              {/* Offers / Questions */}
+              {/* Milestones */}
+              {Array.isArray(task.milestones) && task.milestones.length > 0 && (
+                <section className="mt-8 border-t border-border pt-6">
+                  <h2 className="font-display text-2xl text-ink">Milestones</h2>
+                  <div className="mt-3 space-y-2">
+                    {task.milestones.map((m: any) => (
+                      <div key={m.milestone_id} className="rounded-xl border border-border bg-card p-3 flex items-center justify-between gap-3">
+                        <div className="min-w-0">
+                          <div className="font-semibold text-ink text-sm truncate">{m.title}</div>
+                          <div className="text-xs text-muted-foreground capitalize">{m.status}</div>
+                        </div>
+                        <div className="font-display text-lg text-ink shrink-0">₦{Number(m.amount ?? 0).toLocaleString()}</div>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              )}
+
+              {/* Offers / Messages */}
               <section className="mt-8">
                 <div className="inline-flex w-full sm:w-auto rounded-full bg-muted p-1">
                   <button
@@ -428,7 +444,6 @@ function TaskDetail() {
                     Messages
                     <span className="ml-1 opacity-70">{liveQuestions.length}</span>
                   </button>
-
                 </div>
 
                 <div className="mt-6 space-y-5">
@@ -447,47 +462,39 @@ function TaskDetail() {
                         </div>
                       )}
                       {offers.length === 0 ? (
-                      <div className="rounded-2xl border border-dashed border-border p-8 text-center text-muted-foreground">
-                        No offers yet. {!isPoster && token && status === "open" && (
-                          <button onClick={openApplyModal} className="text-primary font-bold hover:underline">Be the first to make one →</button>
-                        )}
-                      </div>
-                    ) : (
-                      offers.map((o, i) => {
-                        const oName = o.applicant_name ?? o.tasker_name ?? o.name ?? "Tasker";
-                        const counters = allMessages.filter((m: any) => {
-                          const body = m.message_text ?? m.message ?? m.body ?? "";
-                          const tgt = parseCounterTarget(body);
-                          return tgt && oName && tgt.toLowerCase().includes(String(oName).split(" ")[0].toLowerCase());
-                        });
-                        const declined = allMessages.some((m: any) => {
-                          const body = m.message_text ?? m.message ?? m.body ?? "";
-                          return isDecline(body) && (body || "").toLowerCase().includes(String(oName).split(" ")[0].toLowerCase());
-                        });
-                        return (
-                          <OfferCard
-                            key={i}
-                            offer={o}
-                            taskBudget={Number(task.budget ?? 0)}
-                            isPoster={isPoster}
-                            isMine={String(o.applicant_id ?? o.tasker_id ?? o.user_id) === String(myId)}
-                            counters={counters}
-                            declined={declined}
-                            showAccept={isPoster && status === "open" && !declined}
-                            onAccept={() => {
-                              const tid = o.applicant_id ?? o.tasker_id ?? o.user_id;
-                              if (tid == null) return;
-                              setPayFor({ ...o, _taskerId: tid });
-                              setPayStage("confirm");
-                              setPayError(null);
-                            }}
-                            onDecline={() => declineM.mutate(o)}
-                            accepting={acceptM.isPending}
-                          />
-
-                        );
-                      })
-                    )}
+                        <div className="rounded-2xl border border-dashed border-border p-8 text-center text-muted-foreground">
+                          No offers yet. {!isPoster && token && status === "open" && (
+                            <button onClick={openApplyModal} className="text-primary font-bold hover:underline">Be the first to make one →</button>
+                          )}
+                        </div>
+                      ) : (
+                        offers.map((o, i) => {
+                          const tid = o.applicant_id ?? o.tasker_id ?? o.user_id;
+                          const oStatus = String(o.status ?? "pending").toLowerCase();
+                          return (
+                            <OfferCard
+                              key={i}
+                              offer={o}
+                              taskBudget={Number(task.budget ?? 0)}
+                              isMine={String(tid) === String(myId)}
+                              showActions={isPoster && status === "open" && oStatus === "pending"}
+                              onAccept={() => {
+                                if (tid == null) return;
+                                setPayFor({ ...o, _taskerId: tid });
+                                setPayStage("confirm");
+                                setPayError(null);
+                              }}
+                              onDecline={() => {
+                                if (tid == null) return;
+                                if (!confirm("Decline this application? This can't be undone.")) return;
+                                declineM.mutate(String(tid));
+                              }}
+                              accepting={acceptM.isPending}
+                              declining={declineM.isPending}
+                            />
+                          );
+                        })
+                      )}
                     </>
                   ) : (
                     <>
@@ -502,7 +509,7 @@ function TaskDetail() {
                           />
                           <div className="mt-2 flex items-center justify-between">
                             <span className="text-[11px] text-muted-foreground">
-                              {isPoster ? "The tasker will be notified." : "The poster will be notified."}
+                              Messaging opens once a tasker is accepted and the task is funded.
                             </span>
                             <button
                               onClick={() => askM.mutate()}
@@ -528,13 +535,13 @@ function TaskDetail() {
               <section className="mt-10 border-t border-border pt-6">
                 <h3 className="font-display text-xl text-ink">Cancellation policy</h3>
                 <p className="mt-2 text-sm text-muted-foreground">
-                  If you are responsible for cancelling this task, a Cancellation Fee will be deducted from your next payment payout(s).
+                  You can cancel this task free of charge any time before a tasker is assigned. Once a tasker is assigned and the task is funded, cancellation is locked — use the dispute process instead.
                 </p>
-                <Link to="/terms" className="mt-2 inline-block text-sm font-bold text-primary hover:underline">Learn more</Link>
+                <Link to="/refund" className="mt-2 inline-block text-sm font-bold text-primary hover:underline">Refund policy</Link>
               </section>
             </div>
 
-            {/* RIGHT SIDEBAR — Budget card */}
+            {/* RIGHT SIDEBAR */}
             <aside className="md:sticky md:top-[120px] h-fit space-y-4">
               <div className="rounded-3xl border border-border bg-card p-6 text-center">
                 <div className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">Task budget</div>
@@ -576,7 +583,6 @@ function TaskDetail() {
                       </>
                     ) : null}
                   </div>
-
                 ) : !token ? (
                   <Link to="/login" search={{ redirect: `/tasks/${taskId}` } as any} className="mt-5 block w-full rounded-full bg-primary py-3 text-sm font-bold text-primary-foreground hover:opacity-90">
                     Log in to make an offer
@@ -606,7 +612,6 @@ function TaskDetail() {
                     Make an offer
                   </button>
                 )}
-
               </div>
 
               <button
@@ -619,7 +624,6 @@ function TaskDetail() {
               {moreOpen && (
                 <div className="rounded-2xl border border-border bg-card p-4 text-sm space-y-2">
                   <button className="w-full text-left hover:text-primary">Share this task</button>
-                  <button className="w-full text-left hover:text-primary">Save for later</button>
                   <button className="w-full text-left hover:text-primary">Copy task link</button>
                 </div>
               )}
@@ -742,87 +746,78 @@ function TaskDetail() {
         </DialogContent>
       </Dialog>
 
-      {/* Counter-offer modal */}
-      <Dialog open={!!counterFor} onOpenChange={(o) => !o && setCounterFor(null)}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="font-display text-2xl text-ink">Counter offer</DialogTitle>
-            <DialogDescription>
-              Propose a different price to {counterFor?.applicant_name ?? counterFor?.tasker_name ?? "the tasker"}.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-2">
-            <div>
-              <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Counter price (₦)</label>
-              <input
-                type="number"
-                inputMode="numeric"
-                min={100}
-                value={counterAmt}
-                onChange={(e) => setCounterAmt(e.target.value)}
-                className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 text-base font-semibold"
-              />
-            </div>
-            <div>
-              <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Message</label>
-              <textarea
-                value={counterMsg}
-                onChange={(e) => setCounterMsg(e.target.value)}
-                rows={4}
-                placeholder="I can offer this price if you can start sooner…"
-                className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
-                maxLength={1000}
-              />
-            </div>
-          </div>
-          <DialogFooter className="gap-2 sm:gap-2">
-            <button onClick={() => setCounterFor(null)} className="rounded-full border border-border px-5 py-2.5 text-sm font-semibold hover:bg-muted">
-              <XIcon className="h-4 w-4 inline -mt-0.5" /> Cancel
-            </button>
-            <button
-              onClick={() => counterM.mutate()}
-              disabled={!validCounter || counterM.isPending}
-              className="inline-flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-bold text-primary-foreground hover:opacity-90 disabled:opacity-50"
-            >
-              {counterM.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
-              Send counter
-            </button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Flutterwave payment confirmation modal — fires before accept */}
+      {/* Funding choice modal — fires before accept */}
       <Dialog open={!!payFor} onOpenChange={(o) => { if (!o && payStage !== "processing") { setPayFor(null); setPayStage("confirm"); setPayError(null); } }}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <div className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-primary/15 text-primary">
               <CheckCircle2 className="h-8 w-8" />
             </div>
-            <DialogTitle className="font-display text-2xl text-ink mt-2 text-center">Confirm payment to accept</DialogTitle>
+            <DialogTitle className="font-display text-2xl text-ink mt-2 text-center">
+              Accept {payFor?.applicant_name ?? payFor?.tasker_name ?? payFor?.name ?? "tasker"}?
+            </DialogTitle>
             <DialogDescription className="text-center">
-              Pay securely with <span className="font-semibold text-ink">Flutterwave</span>. Funds are held in escrow and only released to the tasker after the task is completed.
+              Task funds are held until you mark the task complete, then released to the tasker.
             </DialogDescription>
           </DialogHeader>
-          {payFor && (() => {
-            const base = Number(payFor.amount ?? payFor.price ?? parseOfferAmount(payFor.message) ?? task?.budget ?? 0);
-            const fees = computeFees(base);
-            return (
-              <div className="space-y-3">
-                <div className="rounded-2xl border border-border bg-muted/40 p-4 text-sm">
-                  <div className="flex justify-between"><span className="text-muted-foreground">Tasker</span><span className="font-semibold text-ink">{payFor.applicant_name ?? payFor.tasker_name ?? payFor.name ?? "Tasker"}</span></div>
-                  <div className="flex justify-between mt-1"><span className="text-muted-foreground">Task</span><span className="font-semibold text-ink truncate ml-2">{task?.title}</span></div>
-                </div>
-                <FeeBreakdown budget={base} />
-                <div className="rounded-xl bg-primary/10 px-4 py-3 flex justify-between items-baseline">
-                  <span className="text-xs uppercase tracking-wider font-bold text-primary">Total to pay</span>
-                  <span className="font-display text-2xl text-ink">{formatNaira(fees.total)}</span>
-                </div>
+
+          {payFor && (
+            <div className="space-y-3">
+              <div className="rounded-2xl border border-border bg-muted/40 p-4 text-sm">
+                <div className="flex justify-between"><span className="text-muted-foreground">Task</span><span className="font-semibold text-ink truncate ml-2">{task?.title}</span></div>
               </div>
-            );
-          })()}
+              <FeeBreakdown budget={Number(task?.budget ?? 0)} />
+              <div className="rounded-xl bg-primary/10 px-4 py-3 flex justify-between items-baseline">
+                <span className="text-xs uppercase tracking-wider font-bold text-primary">Total to pay</span>
+                <span className="font-display text-2xl text-ink">
+                  {totalCharged > 0 ? formatNaira(totalCharged) : formatNaira(computeFees(Number(task?.budget ?? 0)).total)}
+                </span>
+              </div>
+            </div>
+          )}
+
           {payError && (
             <div className="rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-xs text-destructive">{payError}</div>
           )}
+
+          <div className="space-y-2 pt-1">
+            <button
+              disabled={!canUseWallet || payStage === "processing"}
+              onClick={() => doAccept("wallet")}
+              className="w-full rounded-xl border border-border p-3 text-left hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-3"
+            >
+              <Wallet className="h-5 w-5 text-primary shrink-0" />
+              <span className="flex-1">
+                <span className="block font-semibold text-sm">Use wallet balance</span>
+                <span className="block text-xs text-muted-foreground">
+                  {walletQ.isFetching
+                    ? "Checking balance…"
+                    : canUseWallet
+                      ? `${formatNaira(walletBal)} available`
+                      : `Insufficient balance — ${formatNaira(walletBal)} available`}
+                </span>
+              </span>
+            </button>
+
+            <button
+              disabled={payStage === "processing"}
+              onClick={() => doAccept("flutterwave")}
+              className="w-full rounded-xl border border-border p-3 text-left hover:bg-muted disabled:opacity-50 flex items-center gap-3"
+            >
+              <CreditCard className="h-5 w-5 text-primary shrink-0" />
+              <span className="flex-1">
+                <span className="block font-semibold text-sm">Pay with card</span>
+                <span className="block text-xs text-muted-foreground">You'll be redirected to complete payment</span>
+              </span>
+            </button>
+          </div>
+
+          {payStage === "processing" && (
+            <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground pt-2">
+              <Loader2 className="h-4 w-4 animate-spin" /> Processing…
+            </div>
+          )}
+
           <DialogFooter className="gap-2 sm:gap-2">
             <button
               onClick={() => { setPayFor(null); setPayStage("confirm"); setPayError(null); }}
@@ -831,60 +826,9 @@ function TaskDetail() {
             >
               Cancel
             </button>
-            <button
-              onClick={async () => {
-                if (!payFor) return;
-                setPayError(null);
-                setPayStage("processing");
-                try {
-                  // PUT /task/{id}/accept/{tasker_id} returns:
-                  // { message, task_id, tasker_id, payment_link, tx_ref, ... }
-                  // We redirect to payment_link; Flutterwave returns the user
-                  // to /tasks/payment/callback which finalises escrow + opens chat.
-                  const r: any = await acceptM.mutateAsync(payFor._taskerId);
-                  if (!r?.ok) {
-                    setPayError(r?.error ?? "Could not start payment.");
-                    setPayStage("confirm");
-                    return;
-                  }
-                  const d: any = r.data ?? {};
-                  const url = d.payment_link ?? d.payment_url ?? d.checkout_url ?? d.authorization_url ?? d.link ?? d.url;
-                  if (url) {
-                    // Tag the return URL with the task id so the callback can route back.
-                    try {
-                      const u = new URL(url);
-                      const ret = `${window.location.origin}/tasks/payment/callback?task_id=${encodeURIComponent(String(taskId))}&tasker_id=${encodeURIComponent(String(payFor._taskerId))}`;
-                      // Flutterwave hosted checkout reads `redirect_url` from the link itself; we just navigate.
-                      u; ret;
-                    } catch {}
-                    setPayStage("done");
-                    window.location.href = url;
-                    return;
-                  }
-                  // No link — backend already finalised (e.g. free / pre-paid).
-                  setPayStage("done");
-                  toast.success(d.message ?? "Tasker accepted");
-                  setPayFor(null);
-                  setPayStage("confirm");
-                  refetch(); appsQ.refetch();
-                } catch (e: any) {
-                  setPayError(e?.message ?? "Payment failed");
-                  setPayStage("confirm");
-                }
-              }}
-              disabled={payStage === "processing"}
-              className="inline-flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-bold text-primary-foreground hover:opacity-90 disabled:opacity-50"
-            >
-              {payStage === "processing" && <Loader2 className="h-4 w-4 animate-spin" />}
-              {payStage === "processing" && "Opening Flutterwave…"}
-              {payStage === "confirm" && "Pay & accept"}
-              {payStage === "done" && "Redirecting…"}
-            </button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
-
 
       {/* Offer submitted success modal */}
       <Dialog open={showOfferSuccess} onOpenChange={setShowOfferSuccess}>
@@ -924,24 +868,23 @@ function TaskDetail() {
 }
 
 function OfferCard({
-  offer, taskBudget, isPoster, isMine, counters, declined, showAccept, onAccept, onDecline, accepting,
+  offer, taskBudget, isMine, showActions, onAccept, onDecline, accepting, declining,
 }: {
-  offer: any; taskBudget: number; isPoster: boolean; isMine: boolean;
-  counters: any[]; declined: boolean; showAccept: boolean;
-  onAccept: () => void; onDecline: () => void; accepting: boolean;
+  offer: any; taskBudget: number; isMine: boolean;
+  showActions: boolean;
+  onAccept: () => void; onDecline: () => void; accepting: boolean; declining: boolean;
 }) {
-
   const name = offer.applicant_name ?? offer.tasker_name ?? offer.user_name ?? offer.name ?? "Tasker";
   const applicantId = offer.applicant_id ?? offer.tasker_id ?? offer.user_id ?? null;
-  const rating = offer.rating ?? "5.0";
-  const ratings = offer.ratings_count ?? offer.review_count ?? 0;
-  const completion = offer.completion_rate ?? "100%";
-  const rawMsg = offer.message ?? offer.comment ?? offer.body ?? "Hi! I'd love to help with this task.";
-  const parsedAmt = parseOfferAmount(rawMsg);
-  const cleanMsg = stripHeaders(rawMsg) || rawMsg;
-  const time = offer.created_at ? new Date(offer.created_at).toLocaleDateString() : "Recently";
-  const amount = Number(offer.amount ?? offer.price ?? parsedAmt ?? taskBudget);
-  const [showReplies, setShowReplies] = useState(false);
+  const rating = offer.rating ?? offer.average_rating ?? null;
+  const ratings = Number(offer.ratings_count ?? offer.rating_count ?? offer.review_count ?? 0);
+  const completion = offer.completion_rate ?? null;
+  const cleanMsg = offer.message ?? offer.comment ?? offer.body ?? "Hi! I'd love to help with this task.";
+  const time = offer.applied_at
+    ? new Date(offer.applied_at).toLocaleDateString()
+    : (offer.created_at ? new Date(offer.created_at).toLocaleDateString() : "Recently");
+  const amount = Number(taskBudget);
+  const isRejected = String(offer.status ?? "").toLowerCase() === "rejected";
 
   const AvatarEl = (
     <div className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-primary/10 font-display text-lg text-primary">
@@ -950,7 +893,7 @@ function OfferCard({
   );
 
   return (
-    <article className={"rounded-2xl border bg-card p-5 " + (declined ? "border-destructive/30 opacity-70" : "border-border")}>
+    <article className={"rounded-2xl border bg-card p-5 " + (isRejected ? "border-destructive/30 opacity-70" : "border-border")}>
       <div className="flex items-start gap-3">
         {applicantId ? (
           <Link to="/u/$userId" params={{ userId: String(applicantId) }} className="shrink-0 hover:opacity-80">{AvatarEl}</Link>
@@ -962,59 +905,56 @@ function OfferCard({
             ) : name}
             <BadgeCheck className="h-4 w-4 text-primary" />
             {isMine && <span className="ml-1 text-[10px] uppercase tracking-wider rounded-full bg-primary/10 text-primary px-2 py-0.5">You</span>}
-            {declined && <span className="ml-1 text-[10px] uppercase tracking-wider rounded-full bg-destructive/10 text-destructive px-2 py-0.5">Declined</span>}
+            {isRejected && <span className="ml-1 text-[10px] uppercase tracking-wider rounded-full bg-destructive/10 text-destructive px-2 py-0.5">Not selected</span>}
           </div>
           <div className="text-sm text-ink flex items-center gap-1.5 mt-0.5">
-            <span className="font-bold">{rating}</span>
-            <Star className="h-3.5 w-3.5 fill-amber-500 text-amber-500" />
-            <span className="text-muted-foreground">({ratings})</span>
+            {rating != null && ratings > 0 ? (
+              <>
+                <span className="font-bold">{Number(rating).toFixed(1)}</span>
+                <Star className="h-3.5 w-3.5 fill-amber-500 text-amber-500" />
+                <span className="text-muted-foreground">({ratings})</span>
+              </>
+            ) : (
+              <span className="text-muted-foreground text-xs">No ratings yet</span>
+            )}
           </div>
-          <div className="text-sm font-semibold text-ink mt-0.5">{completion} Completion rate</div>
+          {completion != null && (
+            <div className="text-sm font-semibold text-ink mt-0.5">{completion}% Completion rate</div>
+          )}
         </div>
         <div className="text-right shrink-0">
           <div className="font-display text-xl text-ink">₦{amount.toLocaleString()}</div>
-          <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Offer</div>
+          <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Task budget</div>
         </div>
       </div>
+
       <div className="mt-3 rounded-xl bg-muted/60 p-4 text-sm text-ink whitespace-pre-wrap">{cleanMsg}</div>
 
-      {counters.length > 0 && (
-        <div className="mt-3 space-y-2">
-          {counters.map((c, i) => {
-            const body = c.message_text ?? c.message ?? c.body ?? "";
-            const cAmt = parseOfferAmount(body);
-            return (
-              <div key={i} className="rounded-xl border border-primary/30 bg-primary/5 p-3 text-sm">
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-primary">Counter offer</span>
-                  {cAmt != null && <span className="font-display text-lg text-ink">₦{cAmt.toLocaleString()}</span>}
-                </div>
-                <p className="mt-1 whitespace-pre-wrap text-foreground/90">{stripHeaders(body)}</p>
-              </div>
-            );
-          })}
-        </div>
+      {offer.earliest_start && (
+        <div className="mt-2 text-xs text-muted-foreground">Can start: {offer.earliest_start}</div>
       )}
 
       <div className="mt-3 flex items-center justify-between gap-3 text-xs">
-        <button onClick={() => setShowReplies((v) => !v)} className="inline-flex items-center gap-1 text-primary font-semibold hover:underline">
-          <MessageSquare className="h-3.5 w-3.5" /> {showReplies ? "Hide" : "View"} replies ({counters.length})
-        </button>
-        <span className="text-muted-foreground">· {time}</span>
+        <span className="text-muted-foreground">{time}</span>
         <div className="flex items-center gap-2 ml-auto">
-          {isPoster && !declined && (
-            <button onClick={onDecline} className="rounded-full border border-border px-3 py-1.5 text-xs font-semibold hover:bg-muted">Decline</button>
-          )}
-
-          {showAccept && (
-            <button
-              onClick={onAccept}
-              disabled={accepting}
-              className="inline-flex items-center gap-1.5 rounded-full bg-primary px-4 py-1.5 text-xs font-bold text-primary-foreground hover:opacity-90 disabled:opacity-50"
-            >
-              {accepting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckCircle2 className="h-3.5 w-3.5" />}
-              Accept
-            </button>
+          {showActions && (
+            <>
+              <button
+                onClick={onDecline}
+                disabled={declining || accepting}
+                className="rounded-full border border-border px-3 py-1.5 text-xs font-semibold hover:bg-muted disabled:opacity-50"
+              >
+                {declining ? "Declining…" : "Decline"}
+              </button>
+              <button
+                onClick={onAccept}
+                disabled={accepting || declining}
+                className="inline-flex items-center gap-1.5 rounded-full bg-primary px-4 py-1.5 text-xs font-bold text-primary-foreground hover:opacity-90 disabled:opacity-50"
+              >
+                {accepting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckCircle2 className="h-3.5 w-3.5" />}
+                Accept
+              </button>
+            </>
           )}
         </div>
       </div>
@@ -1028,6 +968,16 @@ function QuestionCard({ q, posterId }: { q: any; posterId?: any }) {
   const time = q.created_at ? new Date(q.created_at).toLocaleString() : "Recently";
   const senderId = q.sender_id ?? q.user_id ?? q.from_id;
   const isPosterMsg = posterId != null && senderId != null && String(senderId) === String(posterId);
+  const isSystem = q.is_system === 1 || q.is_system === true;
+
+  if (isSystem) {
+    return (
+      <div className="text-center">
+        <span className="inline-block rounded-full bg-muted px-4 py-1.5 text-xs text-muted-foreground">{body}</span>
+      </div>
+    );
+  }
+
   return (
     <article className={"rounded-2xl border bg-card p-4 " + (isPosterMsg ? "border-primary/40 bg-primary/5" : "border-border")}>
       <div className="flex items-center gap-2">
