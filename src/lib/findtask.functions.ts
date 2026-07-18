@@ -703,3 +703,19 @@ export const adminListDisputes = createServerFn({ method: "POST" })
     return call(`/admin/disputes${qs}`, { token: data.token });
   });
 
+export const adminResolveDispute = createServerFn({ method: "POST" })
+  .inputValidator((i: unknown) =>
+    z.object({
+      taskId: TaskId,
+      resolution: z.enum(["release", "refund", "split"]),
+      note: z.string().max(2000).optional(),
+      token: Token,
+    }).parse(i),
+  )
+  .handler(async ({ data }) =>
+    call(`/admin/dispute/${data.taskId}/resolve`, {
+      method: "POST",
+      body: { resolution: data.resolution, note: data.note ?? "" },
+      token: data.token,
+    }),
+  );
