@@ -248,6 +248,17 @@ export const acceptApplicant = createServerFn({ method: "POST" })
     }),
   );
 
+export const declineApplicant = createServerFn({ method: "POST" })
+  .inputValidator((i: unknown) =>
+    z.object({ taskId: TaskId, taskerId: TaskerId, token: Token }).parse(i),
+  )
+  .handler(async ({ data }) =>
+    call(`/task/${data.taskId}/decline/${data.taskerId}`, {
+      method: "PUT",
+      token: data.token,
+    }),
+  );
+
 // ---- Complete -----------------------------------------------------------
 export const completeTask = createServerFn({ method: "POST" })
   .inputValidator((i: unknown) => z.object({ taskId: TaskId, token: Token }).parse(i))
@@ -693,5 +704,18 @@ export const adminListDisputes = createServerFn({ method: "POST" })
   });
 
 export const adminResolveDispute = createServerFn({ method: "POST" })
-  .inputValidator((i: unknown) => z.object({ taskId: TaskId, resolution: z.enum(["release_to_tasker","refund_poster","split"]), note: z.string().max(2000).optional(), token: Token }).parse(i))
-  .handler(async ({ data }) => call(`/admin/task/${data.taskId}/resolve-dispute`, { method: "POST", body: { resolution: data.resolution, note: data.note }, token: data.token }));
+  .inputValidator((i: unknown) =>
+    z.object({
+      taskId: TaskId,
+      resolution: z.enum(["release", "refund", "split"]),
+      note: z.string().max(2000).optional(),
+      token: Token,
+    }).parse(i),
+  )
+  .handler(async ({ data }) =>
+    call(`/admin/dispute/${data.taskId}/resolve`, {
+      method: "POST",
+      body: { resolution: data.resolution, note: data.note ?? "" },
+      token: data.token,
+    }),
+  );
