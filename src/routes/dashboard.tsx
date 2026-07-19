@@ -12,6 +12,7 @@ import { ModeSwitcher } from "@/components/ModeSwitcher";
 import { Footer } from "@/components/Footer";
 import { TierProgress } from "@/components/TierProgress";
 import { useAuth } from "@/lib/auth";
+import { useCountUp } from "@/lib/useCountUp";
 import {
   listTasks, unreadCount, walletBalance, walletTransactions, getUserTasks,
 } from "@/lib/findtask.functions";
@@ -53,7 +54,7 @@ function Dashboard() {
   const txQ = useQuery({
     queryKey: ["dashboard", "tx", token],
     enabled: !!token && !isPoster,
-    queryFn: () => txs({ data: { token: token! } }),
+    queryFn: () => txs({ data: { token: token!, type: "credit" } }),
   });
   const myTasksQ = useQuery({
     queryKey: ["dashboard", "my-tasks", myId, mode],
@@ -61,15 +62,16 @@ function Dashboard() {
     queryFn: () => userTasks({ data: { userId: String(myId), token, role: isPoster ? "poster" : "tasker" } }),
   });
 
-
   if (!token) return null;
 
   const displayName =
     (user as any)?.name || (user as any)?.full_name || (user as any)?.email || "there";
   const myTasks: any[] = extractList(myTasksQ.data?.ok ? myTasksQ.data.data : null);
   const unreadN: number = unreadQ.data?.ok ? Number((unreadQ.data.data as any)?.unread_count ?? 0) : 0;
-  const balance = walletQ.data?.ok
-    ? (walletQ.data.data as any)?.balance ?? (walletQ.data.data as any)?.available_balance
+
+  // Backend /wallet/balance returns withdrawable_balance
+  const balance: number | null = walletQ.data?.ok
+    ? Number((walletQ.data.data as any)?.withdrawable_balance ?? 0)
     : null;
 
   const earnings30d = useMemo(() => {
@@ -78,9 +80,8 @@ function Dashboard() {
     return list
       .filter((t) => {
         const ts = new Date(t.created_at ?? t.date ?? 0).getTime();
-        const type = String(t.type ?? t.direction ?? "").toLowerCase();
-        const amt = Number(t.amount ?? 0);
-        return ts >= cutoff && (type === "credit" || type === "earning" || amt > 0);
+        const type = String(t.type ?? "").toLowerCase();
+        return ts >= cutoff && type === "credit";
       })
       .reduce((s, t) => s + Number(t.amount ?? 0), 0);
   }, [txQ.data]);
@@ -91,16 +92,16 @@ function Dashboard() {
   const rating = (user as any)?.rating ?? (user as any)?.average_rating ?? "—";
 
   const posterKpis = [
-    { icon: Briefcase, label: "Posted", value: String(myTasks.length), sub: "all-time" },
-    { icon: ListChecks, label: "In escrow", value: String(stat("in_progress") + stat("escrow") + stat("accepted")), sub: "active" },
-    { icon: Star, label: "Completed", value: String(stat("completed")), sub: "lifetime" },
-    { icon: Banknote, label: "Wallet", value: balance != null ? `₦${Number(balance).toLocaleString()}` : "—", sub: "available" },
+    { icon: Briefcase, label: "Posted", value: myTasks.length, money: false, sub: "all-time" },
+    { icon: ListChecks, label: "Active", value: stat("in_progress") + stat("assigned"), money: false, sub: "in progress" },
+    { icon: Star, label: "Completed", value: stat("completed"), money: false, sub: "lifetime" },
+    { icon: Banknote, label: "Wallet", value: balance ?? 0, money: true, sub: "available" },
   ];
   const taskerKpis = [
-    { icon: Wrench, label: "Active", value: String(stat("in_progress") + stat("accepted")), sub: "in progress" },
-    { icon: Star, label: "Completed", value: String(stat("completed")), sub: "lifetime" },
-    { icon: User, label: "Rating", value: typeof rating === "number" ? rating.toFixed(1) : String(rating), sub: "average" },
-    { icon: Wallet, label: "Earnings", value: `₦${Number(earnings30d ?? 0).toLocaleString()}`, sub: "last 30 days" },
+    { icon: Wrench, label: "Active", value: stat("in_progress") + stat("assigned"), money: false, sub: "in progress" },
+    { icon: Star, label: "Completed", value: stat("completed"), money: false, sub: "lifetime" },
+    { icon: User, label: "Rating", value: typeof rating === "number" ? rating : 0, money: false, sub: "average", raw: typeof rating !== "number" ? String(rating) : undefined, decimals: 1 },
+    { icon: Wallet, label: "Earnings", value: Number(earnings30d ?? 0), money: true, sub: "last 30 days" },
   ];
   const kpis = isPoster ? posterKpis : taskerKpis;
 
@@ -137,10 +138,10 @@ function Dashboard() {
           </div>
         </div>
 
-        {/* KPI strip — Airtasker style */}
+        {/* KPI strip */}
         <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {kpis.map((k) => (
-            <Kpi key={k.label} icon={k.icon} label={k.label} value={k.value} sub={k.sub} />
+            <Kpi key={k.label} icon={k.icon} label={k.label} value={k.value} money={k.money} sub={k.sub} raw={(k as any).raw} decimals={(k as any).decimals} />
           ))}
         </div>
 
@@ -155,8 +156,8 @@ function Dashboard() {
           : <TaskerMain />}
 
         <section className="mt-10 grid gap-3 sm:grid-cols-3">
-          <QuickLink to="/wallet" icon={Wallet} title="Wallet & escrow" desc="Top up, withdraw, and track payments" />
-          <QuickLink to="/messages" icon={MessageSquare} title="Messages" desc="Chat with posters & taskers (E2E encrypted)" />
+          <QuickLink to="/wallet" icon={Wallet} title="Wallet" desc="Withdraw and track your payments" />
+          <QuickLink to="/messages" icon={MessageSquare} title="Messages" desc="Chat with posters and taskers" />
           <QuickLink to="/profile" icon={User} title="Profile" desc="Update your photo, bio and categories" />
         </section>
       </main>
@@ -174,12 +175,21 @@ function extractList(d: any): any[] {
   );
 }
 
-function Kpi({ icon: Icon, label, value, sub }: { icon: any; label: string; value: string; sub?: string }) {
+function Kpi({ icon: Icon, label, value, money, sub, raw, decimals }: { icon: any; label: string; value: number; money?: boolean; sub?: string; raw?: string; decimals?: number }) {
+  const animated = useCountUp(Number.isFinite(value) ? value : 0);
+  const shown = raw != null
+    ? raw
+    : money
+      ? `₦${Math.round(animated).toLocaleString()}`
+      : decimals
+        ? animated.toFixed(decimals)
+        : String(Math.round(animated));
+
   return (
-    <div className="rounded-3xl border border-border bg-surface-soft p-5 sm:p-6">
+    <div className="rounded-3xl border border-border bg-surface-soft p-5 sm:p-6 transition-shadow hover:shadow-md">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <div className="font-display text-3xl text-ink truncate">{value}</div>
+          <div className="font-display text-3xl text-ink truncate tabular-nums">{shown}</div>
           <div className="mt-1 text-[11px] font-bold uppercase tracking-widest text-muted-foreground">{label}</div>
           {sub && <div className="mt-0.5 text-xs text-muted-foreground">{sub}</div>}
         </div>
@@ -338,7 +348,3 @@ function SkeletonGrid() {
     </div>
   );
 }
-
-/* legacy export retained for any external import — also used during loading */
-function _Loader() { return <Loader2 className="h-4 w-4 animate-spin" />; }
-void _Loader;
