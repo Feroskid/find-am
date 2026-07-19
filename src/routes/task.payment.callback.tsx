@@ -4,12 +4,11 @@ import { useEffect, useState } from "react";
 import { z } from "zod";
 import { CheckCircle2, Loader2, XCircle } from "lucide-react";
 import { TaskHeader } from "@/components/TaskHeader";
-import { paymentCallback, sendMessage, getTask } from "@/lib/findtask.functions";
-import { useAuth } from "@/lib/auth";
+import { paymentCallback } from "@/lib/findtask.functions";
 
-// Mirror of /tasks/payment/callback — backend redirects to the singular
-// "/task/payment/callback" path after a Flutterwave redirect. We parse the
-// task id out of the tx_ref ("findtask-{taskId}-{hash}") and finalise the flow.
+// Backend redirects here after Flutterwave with tx_ref / transaction_id / status.
+// The backend callback finalises funding AND opens the message thread itself,
+// so this page only confirms the result to the user and redirects.
 const Search = z.object({
   tx_ref: z.string().optional(),
   transaction_id: z.string().optional(),
@@ -31,10 +30,7 @@ function deriveTaskId(tx?: string): string | null {
 function PaymentCallbackPage() {
   const search = Route.useSearch();
   const navigate = useNavigate();
-  const { token } = useAuth();
   const cb = useServerFn(paymentCallback);
-  const send = useServerFn(sendMessage);
-  const fetchTask = useServerFn(getTask);
   const [stage, setStage] = useState<"working" | "ok" | "fail">("working");
   const [msg, setMsg] = useState("Confirming your payment with Flutterwave…");
   const taskId = deriveTaskId(search.tx_ref);
@@ -51,22 +47,9 @@ function PaymentCallbackPage() {
       const successful = /success|paid|completed/i.test(status);
       if (r.ok && successful) {
         setStage("ok");
-        setMsg("Payment confirmed. Opening the conversation with your tasker…");
-        if (token && taskId) {
-          try {
-            let title = "this task";
-            try {
-              const tr: any = await fetchTask({ data: { taskId } });
-              title = tr?.data?.task?.title ?? tr?.data?.title ?? title;
-            } catch {}
-            await send({
-              data: {
-                taskId,
-                token,
-                message_text: `🎉 Offer accepted! Your offer on "${title}" has been accepted and payment is held in escrow. Let's coordinate next steps here.`,
-              },
-            });
-          } catch {}
+        setMsg("Payment confirmed. Opening your task…");
+        // Redirect regardless of token — the workspace handles auth itself.
+        if (taskId) {
           setTimeout(() => navigate({ to: "/tasks/$taskId/workspace", params: { taskId } }), 1200);
         }
       } else if (r.ok) {
@@ -77,7 +60,7 @@ function PaymentCallbackPage() {
         setMsg(r.error || "Could not confirm payment.");
       }
     })();
-  }, [search.tx_ref, search.transaction_id, search.status, taskId, cb, send, fetchTask, token, navigate]);
+  }, [search.tx_ref, search.transaction_id, search.status, taskId, cb, navigate]);
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -97,9 +80,18 @@ function PaymentCallbackPage() {
         <div className="mt-6 flex flex-wrap gap-2 justify-center">
           {taskId && (
             <Link
-              to="/tasks/$taskId"
+              to="/tasks/$taskId/workspace"
               params={{ taskId }}
               className="rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground hover:opacity-90"
+            >
+              Open workspace
+            </Link>
+          )}
+          {taskId && (
+            <Link
+              to="/tasks/$taskId"
+              params={{ taskId }}
+              className="rounded-full border border-border px-5 py-2.5 text-sm font-semibold hover:bg-muted"
             >
               Back to task
             </Link>
