@@ -33,7 +33,7 @@ function PostTaskPage() {
 
   const catsQ = useQuery({
     queryKey: ["categories"],
-    queryFn: () => catsFn({ data: {} }),
+    queryFn: () => catsFn(),
     staleTime: 5 * 60 * 1000,
   });
   const categories: any[] = catsQ.data?.ok
