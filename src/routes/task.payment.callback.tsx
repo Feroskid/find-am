@@ -9,10 +9,11 @@ import { paymentCallback } from "@/lib/findtask.functions";
 // Backend redirects here after Flutterwave with tx_ref / transaction_id / status.
 // The backend callback finalises funding AND opens the message thread itself,
 // so this page only confirms the result to the user and redirects.
+const toStr = z.union([z.string(), z.number()]).optional().transform((v) => (v === undefined ? undefined : String(v)));
 const Search = z.object({
-  tx_ref: z.string().optional(),
-  transaction_id: z.string().optional(),
-  status: z.string().optional(),
+  tx_ref: toStr,
+  transaction_id: toStr,
+  status: toStr,
 });
 
 export const Route = createFileRoute("/task/payment/callback")({
