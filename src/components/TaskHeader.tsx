@@ -36,6 +36,7 @@ export function TaskHeader() {
               <Link to="/explore" className="hover:text-primary">Browse</Link>
               <Link to="/tasks/categories" className="hover:text-primary">Categories</Link>
               <Link to="/tasks/mine" className="hover:text-primary">My tasks</Link>
+              {token && <Link to="/dashboard" className="hover:text-primary">My dashboard</Link>}
             </nav>
             {token && <NotificationsBell />}
             <Link

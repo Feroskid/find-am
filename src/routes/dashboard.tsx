@@ -3,7 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import {
-  Loader2, Plus, MessageSquare, Bell, Wallet, Briefcase, Wrench, User,
+  Loader2, Plus, MessageSquare, Wallet, Briefcase, Wrench, User,
   Search, Star, ListChecks, Banknote, MapPin, ChevronLeft, ChevronRight,
 } from "lucide-react";
 import { TaskHeader } from "@/components/TaskHeader";
@@ -129,12 +129,6 @@ function Dashboard() {
                 <Search className="h-4 w-4" /> Apply to tasks
               </Link>
             )}
-            <Link to="/notifications" className="relative inline-flex items-center gap-1.5 rounded-full border border-border px-4 py-2 text-sm font-medium hover:bg-muted">
-              <Bell className="h-4 w-4" /> Inbox
-              {unreadN > 0 && (
-                <span className="absolute -right-1 -top-1 grid h-5 min-w-5 place-items-center rounded-full bg-destructive px-1 text-[10px] font-bold text-destructive-foreground">{unreadN}</span>
-              )}
-            </Link>
           </div>
         </div>
 

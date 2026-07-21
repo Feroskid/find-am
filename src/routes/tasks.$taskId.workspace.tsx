@@ -1,12 +1,12 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { useEffect, useMemo, useRef, useState } from "react";
-import { Loader2, ArrowLeft, Send, CheckCircle2, AlertTriangle, Star, Banknote, Lock, MapPin, Navigation, Flag } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Loader2, ArrowLeft, Send, CheckCircle2, AlertTriangle, Star, Banknote, MapPin, Navigation, Flag } from "lucide-react";
 import { toast } from "sonner";
 import { TaskHeader } from "@/components/TaskHeader";
 import { useAuth } from "@/lib/auth";
-import { roomSecret, encryptText, decryptText } from "@/lib/e2ee";
+import { LiveTaskMap } from "@/components/LiveTaskMap";
 import {
   getTask, listMessages, sendMessage, completeTask, disputeTask, rateTask,
   releaseTask,
@@ -62,31 +62,10 @@ function WorkspacePage() {
   const myId = (user as any)?.user_id ?? (user as any)?.id;
   const posterId = task?.poster_id ?? task?.user_id ?? task?.owner_id;
   const taskerId = task?.tasker_id ?? task?.accepted_tasker_id ?? task?.assigned_to;
-  const secret = useMemo(
-    () => roomSecret(taskId, [posterId, taskerId, myId].filter(Boolean) as any),
-    [taskId, posterId, taskerId, myId],
-  );
-
-  const [decrypted, setDecrypted] = useState<Record<string, string>>({});
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      const next: Record<string, string> = {};
-      for (const m of rawMessages) {
-        const k = String(m.message_id ?? m.id ?? `${m.created_at}-${m.sender_id}`);
-        const text = m.message_text ?? m.body ?? m.message ?? m.text ?? "";
-        next[k] = await decryptText(String(text), secret);
-      }
-      if (!cancelled) setDecrypted(next);
-    })();
-    return () => { cancelled = true; };
-  }, [rawMessages, secret]);
 
   const sendM = useMutation({
-    mutationFn: async () => {
-      const cipher = await encryptText(draft.trim(), secret);
-      return sFn({ data: { taskId, message_text: cipher, token: token! } });
-    },
+    mutationFn: async () =>
+      sFn({ data: { taskId, message_text: draft.trim(), token: token! } }),
     onSuccess: (r) => {
       if (r.ok) { setDraft(""); msgsQ.refetch(); } else toast.error(r.error);
     },
@@ -137,9 +116,6 @@ function WorkspacePage() {
               <ArrowLeft className="h-4 w-4" /> {task?.title ?? "Task"}
             </Link>
             <div className="flex items-center gap-2">
-              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 text-[10px] font-semibold" title="Messages are obfuscated at rest. Not true end-to-end encrypted — do not share highly sensitive secrets.">
-                <Lock className="h-3 w-3" /> Encrypted at rest
-              </span>
               {status && (
                 <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary capitalize">{status}</span>
               )}
@@ -154,8 +130,7 @@ function WorkspacePage() {
             ) : rawMessages.map((m: any, i: number) => {
               const senderId = m.sender_id ?? m.user_id ?? m.from;
               const mine = senderId !== undefined && String(senderId) === String(myId);
-              const k = String(m.message_id ?? m.id ?? `${m.created_at}-${senderId}`);
-              const text = decrypted[k] ?? "…";
+              const text = m.message_text ?? m.body ?? m.message ?? m.text ?? "";
               return (
                 <div key={m.message_id ?? m.id ?? i} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
                   <div className={`max-w-[75%] rounded-2xl px-3.5 py-2 text-sm ${mine ? "bg-primary text-primary-foreground" : "bg-background border border-border"}`}>
@@ -279,7 +254,13 @@ function WorkspacePage() {
           )}
 
           {task && !task.is_remote && (status === "assigned" || status === "in_progress" || status === "accepted") && (
-            <LiveLocationPanel taskId={taskId} token={token!} isPoster={isPoster} />
+            <LiveLocationPanel
+              taskId={taskId}
+              token={token!}
+              isPoster={isPoster}
+              taskLat={task?.location_lat ?? task?.latitude}
+              taskLng={task?.location_lng ?? task?.longitude}
+            />
           )}
         </aside>
       </main>
@@ -287,7 +268,7 @@ function WorkspacePage() {
   );
 }
 
-function LiveLocationPanel({ taskId, token, isPoster }: { taskId: string; token: string; isPoster: boolean }) {
+function LiveLocationPanel({ taskId, token, isPoster, taskLat, taskLng }: { taskId: string; token: string; isPoster: boolean; taskLat?: number | null; taskLng?: number | null }) {
   const getLoc = useServerFn(getTaskLocation);
   const toggle = useServerFn(toggleTaskLocation);
   const arrive = useServerFn(markArrived);
@@ -301,6 +282,7 @@ function LiveLocationPanel({ taskId, token, isPoster }: { taskId: string; token:
   const [sharing, setSharing] = useState(false);
   const [pos, setPos] = useState<{ lat: number; lng: number } | null>(null);
   const watchRef = useRef<number | null>(null);
+  const [liveTrail, setLiveTrail] = useState<[number, number][]>([]);
 
   // Start/stop browser geolocation watch when sharing is on.
   useEffect(() => {
@@ -320,6 +302,7 @@ function LiveLocationPanel({ taskId, token, isPoster }: { taskId: string; token:
       (p) => {
         const next = { lat: p.coords.latitude, lng: p.coords.longitude };
         setPos(next);
+        setLiveTrail((t) => [...t, [next.lat, next.lng]]);
         toggle({ data: { taskId, token, sharing: true, latitude: next.lat, longitude: next.lng } }).catch(() => {});
       },
       () => toast.error("Couldn't get your location."),
@@ -373,21 +356,14 @@ function LiveLocationPanel({ taskId, token, isPoster }: { taskId: string; token:
         <div className="text-[11px] text-muted-foreground">You: {pos.lat.toFixed(4)}, {pos.lng.toFixed(4)}</div>
       )}
 
-      {other && (other.latitude ?? other.lat) != null && (
-        <div className="rounded-xl border border-border bg-muted/30 p-3 text-xs">
-          <div className="font-semibold text-ink">{isPoster ? "Tasker" : "Poster"} location</div>
-          <div className="text-muted-foreground mt-0.5">
-            {(other.latitude ?? other.lat)?.toFixed?.(4)}, {(other.longitude ?? other.lng)?.toFixed?.(4)}
-          </div>
-          <a
-            href={`https://www.google.com/maps?q=${other.latitude ?? other.lat},${other.longitude ?? other.lng}`}
-            target="_blank" rel="noopener noreferrer"
-            className="mt-1 inline-block text-primary font-semibold hover:underline"
-          >
-            Open in Google Maps →
-          </a>
-        </div>
-      )}
+      <LiveTaskMap
+        taskLat={taskLat ?? null}
+        taskLng={taskLng ?? null}
+        me={data?.me ?? data?.self ?? null}
+        other={other ?? null}
+        liveTrail={liveTrail}
+        isPoster={isPoster}
+      />
 
       {!isPoster && (
         <button
