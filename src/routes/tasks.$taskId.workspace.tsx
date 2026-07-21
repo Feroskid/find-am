@@ -268,7 +268,7 @@ function WorkspacePage() {
   );
 }
 
-function LiveLocationPanel({ taskId, token, isPoster }: { taskId: string; token: string; isPoster: boolean }) {
+function LiveLocationPanel({ taskId, token, isPoster, taskLat, taskLng }: { taskId: string; token: string; isPoster: boolean; taskLat?: number | null; taskLng?: number | null }) {
   const getLoc = useServerFn(getTaskLocation);
   const toggle = useServerFn(toggleTaskLocation);
   const arrive = useServerFn(markArrived);
@@ -282,6 +282,7 @@ function LiveLocationPanel({ taskId, token, isPoster }: { taskId: string; token:
   const [sharing, setSharing] = useState(false);
   const [pos, setPos] = useState<{ lat: number; lng: number } | null>(null);
   const watchRef = useRef<number | null>(null);
+  const [liveTrail, setLiveTrail] = useState<[number, number][]>([]);
 
   // Start/stop browser geolocation watch when sharing is on.
   useEffect(() => {
