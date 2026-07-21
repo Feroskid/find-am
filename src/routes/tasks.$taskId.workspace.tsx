@@ -254,7 +254,13 @@ function WorkspacePage() {
           )}
 
           {task && !task.is_remote && (status === "assigned" || status === "in_progress" || status === "accepted") && (
-            <LiveLocationPanel taskId={taskId} token={token!} isPoster={isPoster} />
+            <LiveLocationPanel
+              taskId={taskId}
+              token={token!}
+              isPoster={isPoster}
+              taskLat={task?.location_lat ?? task?.latitude}
+              taskLng={task?.location_lng ?? task?.longitude}
+            />
           )}
         </aside>
       </main>
