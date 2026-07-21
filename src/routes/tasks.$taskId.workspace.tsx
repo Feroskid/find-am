@@ -6,7 +6,7 @@ import { Loader2, ArrowLeft, Send, CheckCircle2, AlertTriangle, Star, Banknote, 
 import { toast } from "sonner";
 import { TaskHeader } from "@/components/TaskHeader";
 import { useAuth } from "@/lib/auth";
-import { roomSecret, encryptText, decryptText } from "@/lib/e2ee";
+import { LiveTaskMap } from "@/components/LiveTaskMap";
 import {
   getTask, listMessages, sendMessage, completeTask, disputeTask, rateTask,
   releaseTask,
