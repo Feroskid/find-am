@@ -5,7 +5,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, Send, Loader2, Briefcase, ArrowRightLeft } from "lucide-react";
 import { toast } from "sonner";
 import { getTask, listMessages, sendMessage } from "@/lib/findtask.functions";
-import { roomSecret, encryptText, decryptText } from "@/lib/e2ee";
+
 import { useAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/messages/$taskId")({
