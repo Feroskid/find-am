@@ -116,9 +116,6 @@ function WorkspacePage() {
               <ArrowLeft className="h-4 w-4" /> {task?.title ?? "Task"}
             </Link>
             <div className="flex items-center gap-2">
-              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 text-[10px] font-semibold" title="Messages are obfuscated at rest. Not true end-to-end encrypted — do not share highly sensitive secrets.">
-                <Lock className="h-3 w-3" /> Encrypted at rest
-              </span>
               {status && (
                 <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary capitalize">{status}</span>
               )}
