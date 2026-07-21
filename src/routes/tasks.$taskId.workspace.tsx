@@ -133,8 +133,7 @@ function WorkspacePage() {
             ) : rawMessages.map((m: any, i: number) => {
               const senderId = m.sender_id ?? m.user_id ?? m.from;
               const mine = senderId !== undefined && String(senderId) === String(myId);
-              const k = String(m.message_id ?? m.id ?? `${m.created_at}-${senderId}`);
-              const text = decrypted[k] ?? "…";
+              const text = m.message_text ?? m.body ?? m.message ?? m.text ?? "";
               return (
                 <div key={m.message_id ?? m.id ?? i} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
                   <div className={`max-w-[75%] rounded-2xl px-3.5 py-2 text-sm ${mine ? "bg-primary text-primary-foreground" : "bg-background border border-border"}`}>
