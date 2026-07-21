@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { TaskHeader } from "@/components/TaskHeader";
+import { LocationPicker, type LatLng } from "@/components/LocationPicker";
 import { useAuth } from "@/lib/auth";
 import { getCategories, createTask } from "@/lib/findtask.functions";
 import { computeFees, formatNaira } from "@/lib/fees";
@@ -33,12 +34,10 @@ function PostTaskPage() {
 
   const catsQ = useQuery({
     queryKey: ["categories"],
-    queryFn: () => catsFn(),
+    queryFn: () => (catsFn as any)({ data: {} }),
     staleTime: 5 * 60 * 1000,
   });
-  const categories: any[] = catsQ.data?.ok
-    ? ((catsQ.data.data as any)?.categories ?? [])
-    : [];
+  const categories: any[] = catsQ.data?.ok ? ((catsQ.data.data as any)?.categories ?? []) : [];
 
   // form state
   const [title, setTitle] = useState("");
@@ -48,7 +47,8 @@ function PostTaskPage() {
   const [budget, setBudget] = useState("");
   const [quantity, setQuantity] = useState(1);
   const [isRemote, setIsRemote] = useState(false);
-  const [location, setLocation] = useState("");
+  const [location, setLocation] = useState("");            // address text -> location_text
+  const [coords, setCoords] = useState<LatLng | null>(null); // lat/lng from the map
   const [deadline, setDeadline] = useState("");
   const [isMilestone, setIsMilestone] = useState(false);
   const [milestones, setMilestones] = useState<Milestone[]>([]);
@@ -67,7 +67,7 @@ function PostTaskPage() {
     description.trim().length >= 20 &&
     validBudget &&
     !!chosenCategory &&
-    (isRemote || location.trim().length > 0) &&
+    (isRemote || coords !== null) &&
     quantity >= 1;
 
   const [error, setError] = useState<string | null>(null);
@@ -83,7 +83,9 @@ function PostTaskPage() {
           category_id: Number(chosenCategory),
           quantity,
           is_remote: isRemote ? 1 : 0,
-          location_text: isRemote ? undefined : location.trim(),
+          location_text: isRemote ? undefined : (location.trim() || undefined),
+          location_lat: isRemote ? undefined : coords?.lat,
+          location_lng: isRemote ? undefined : coords?.lng,
           deadline: deadline || undefined,
           is_milestone: isMilestone ? 1 : 0,
           milestones: isMilestone
@@ -195,7 +197,7 @@ function PostTaskPage() {
           </Section>
 
           {/* LOCATION */}
-          <Section icon={isRemote ? Globe : MapPin} title="Where?" desc="On-site tasks need a location; remote ones don't.">
+          <Section icon={isRemote ? Globe : MapPin} title="Where?" desc="On-site tasks need a pinned location; remote ones don't.">
             <label className="flex items-center gap-3 rounded-lg border border-border bg-background px-3 py-2.5 cursor-pointer hover:bg-muted/40">
               <input
                 type="checkbox"
@@ -207,14 +209,12 @@ function PostTaskPage() {
             </label>
 
             {!isRemote && (
-              <Field label="Location">
-                <input
-                  value={location}
-                  onChange={(e) => setLocation(e.target.value)}
-                  placeholder="e.g. Lekki Phase 1, Lagos"
-                  className="w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none"
-                />
-              </Field>
+              <LocationPicker
+                value={coords}
+                address={location}
+                onChange={setCoords}
+                onAddressChange={setLocation}
+              />
             )}
           </Section>
 
@@ -349,7 +349,7 @@ function PostTaskPage() {
           </button>
           {!canSubmit && (
             <p className="text-center text-xs text-muted-foreground">
-              Fill in a title, description (20+ chars), category, budget ({formatNaira(MIN_BUDGET)}+){!isRemote ? ", location" : ""} to continue.
+              Fill in a title, description (20+ chars), category, budget ({formatNaira(MIN_BUDGET)}+){!isRemote ? ", and pin a location" : ""} to continue.
             </p>
           )}
         </div>

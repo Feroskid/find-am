@@ -219,9 +219,9 @@ function TasksHome() {
             <div key={i} className="rounded-2xl border border-border bg-card p-5 flex flex-col">
               <div className="text-[10px] font-bold uppercase tracking-widest text-primary">{card.category}</div>
               <div className="mt-2 font-bold text-ink leading-snug min-h-[3em]">{card.title}</div>
-              <div className="mt-4 inline-flex items-center gap-0.5 text-amber-500">
+              <div className="mt-4 inline-flex items-center gap-0.5 text-primary">
                 {Array.from({ length: 5 }).map((_, i) => (
-                  <Star key={i} className="h-3.5 w-3.5 fill-amber-500" />
+                  <Star key={i} className="h-3.5 w-3.5 fill-primary" />
                 ))}
               </div>
               <div className="mt-auto pt-4 font-display text-2xl text-ink">₦{card.budget.toLocaleString()}</div>
@@ -316,7 +316,7 @@ function TasksHome() {
                 </div>
                 <div className="mt-4 grid grid-cols-2 gap-3">
                   <div className="rounded-xl bg-surface-soft p-3">
-                    <div className="font-display text-2xl text-ink">{t.rating} <Star className="inline h-4 w-4 fill-amber-500 text-amber-500" /></div>
+                    <div className="font-display text-2xl text-ink">{t.rating} <Star className="inline h-4 w-4 fill-primary text-primary" /></div>
                     <div className="text-[11px] text-muted-foreground">{t.ratings} ratings</div>
                   </div>
                   <div className="rounded-xl bg-surface-soft p-3">
@@ -345,7 +345,7 @@ function TasksHome() {
             { tag: "MONEY", title: "How to save on electricity bills", body: "Cost of living going up — keep your energy bills down with these tips." },
           ].map((a) => (
             <article key={a.title} className="rounded-2xl border border-border bg-card overflow-hidden hover:shadow-md transition">
-              <div className="h-40 bg-gradient-to-br from-primary/20 via-surface-warm to-surface-soft" />
+              <div className="h-40 bg-gradient-to-br from-primary/25 via-sky-400/20 to-emerald-400/25" />
               <div className="p-5">
                 <div className="text-[10px] font-bold uppercase tracking-widest text-primary">{a.tag}</div>
                 <h3 className="mt-1 font-display text-lg text-ink leading-snug">{a.title}</h3>
