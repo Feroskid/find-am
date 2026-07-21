@@ -62,31 +62,10 @@ function WorkspacePage() {
   const myId = (user as any)?.user_id ?? (user as any)?.id;
   const posterId = task?.poster_id ?? task?.user_id ?? task?.owner_id;
   const taskerId = task?.tasker_id ?? task?.accepted_tasker_id ?? task?.assigned_to;
-  const secret = useMemo(
-    () => roomSecret(taskId, [posterId, taskerId, myId].filter(Boolean) as any),
-    [taskId, posterId, taskerId, myId],
-  );
-
-  const [decrypted, setDecrypted] = useState<Record<string, string>>({});
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      const next: Record<string, string> = {};
-      for (const m of rawMessages) {
-        const k = String(m.message_id ?? m.id ?? `${m.created_at}-${m.sender_id}`);
-        const text = m.message_text ?? m.body ?? m.message ?? m.text ?? "";
-        next[k] = await decryptText(String(text), secret);
-      }
-      if (!cancelled) setDecrypted(next);
-    })();
-    return () => { cancelled = true; };
-  }, [rawMessages, secret]);
 
   const sendM = useMutation({
-    mutationFn: async () => {
-      const cipher = await encryptText(draft.trim(), secret);
-      return sFn({ data: { taskId, message_text: cipher, token: token! } });
-    },
+    mutationFn: async () =>
+      sFn({ data: { taskId, message_text: draft.trim(), token: token! } }),
     onSuccess: (r) => {
       if (r.ok) { setDraft(""); msgsQ.refetch(); } else toast.error(r.error);
     },
