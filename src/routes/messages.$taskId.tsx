@@ -70,10 +70,6 @@ function ChatPage() {
   const myId = (user as any)?.user_id ?? (user as any)?.id;
   const posterId = task?.poster_id ?? task?.user_id ?? task?.owner_id;
   const taskerId = task?.tasker_id ?? task?.accepted_tasker_id ?? task?.assigned_to;
-  const secret = useMemo(
-    () => roomSecret(taskId, [posterId, taskerId, myId].filter(Boolean) as any),
-    [taskId, posterId, taskerId, myId],
-  );
 
   const otherName = useMemo(() => {
     if (!task) return "Chat";
@@ -81,32 +77,28 @@ function ChatPage() {
     return task.poster_name ?? "Poster";
   }, [task, myId, posterId]);
 
-  const [decrypted, setDecrypted] = useState<Record<string, string>>({});
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      const next: Record<string, string> = {};
-      for (const m of raw) {
+  const messages = useMemo(
+    () =>
+      raw.map((m) => {
         const k = String(m.message_id ?? m.id ?? `${m.created_at}-${m.sender_id}`);
         const text = m.message_text ?? m.body ?? m.message ?? m.text ?? "";
-        next[k] = await decryptText(String(text), secret);
-      }
-      if (!cancelled) setDecrypted(next);
-    })();
-    return () => { cancelled = true; };
-  }, [raw, secret]);
+        return { ...m, __k: k, __text: String(text) };
+      }),
+    [raw],
+  );
 
   const [draft, setDraft] = useState("");
   const scrollerRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
     scrollerRef.current?.scrollTo({ top: scrollerRef.current.scrollHeight });
-  }, [decrypted]);
+  }, [messages]);
+
+  // Silence unused-var lint for taskerId (kept for potential future features).
+  void taskerId;
 
   const sendM = useMutation({
-    mutationFn: async () => {
-      const cipher = await encryptText(draft.trim(), secret);
-      return sFn({ data: { taskId, message_text: cipher, token: token! } });
-    },
+    mutationFn: async () =>
+      sFn({ data: { taskId, message_text: draft.trim(), token: token! } }),
     onSuccess: (r) => r.ok ? (setDraft(""), msgsQ.refetch()) : toast.error(r.error),
   });
 
