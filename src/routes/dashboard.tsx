@@ -3,7 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import {
-  Loader2, Plus, MessageSquare, Bell, Wallet, Briefcase, Wrench, User,
+  Loader2, Plus, MessageSquare, Wallet, Briefcase, Wrench, User,
   Search, Star, ListChecks, Banknote, MapPin, ChevronLeft, ChevronRight,
 } from "lucide-react";
 import { TaskHeader } from "@/components/TaskHeader";
