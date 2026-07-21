@@ -9,7 +9,7 @@ import { useAuth } from "@/lib/auth";
 import { roomSecret, encryptText, decryptText } from "@/lib/e2ee";
 import {
   getTask, listMessages, sendMessage, completeTask, disputeTask, rateTask,
-  releaseEscrow,
+  releaseTask,
   getTaskLocation, toggleTaskLocation, markArrived,
 } from "@/lib/findtask.functions";
 
@@ -37,7 +37,7 @@ function WorkspacePage() {
   const mFn = useServerFn(listMessages);
   const sFn = useServerFn(sendMessage);
   const cFn = useServerFn(completeTask);
-  const relFn = useServerFn(releaseEscrow);
+  const relFn = useServerFn(releaseTask);
   const dFn = useServerFn(disputeTask);
   const rFn = useServerFn(rateTask);
 
