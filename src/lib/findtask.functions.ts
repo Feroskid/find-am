@@ -175,10 +175,8 @@ const CreateTaskSchema = z.object({
 export const createTask = createServerFn({ method: "POST" })
   .inputValidator((i: unknown) => CreateTaskSchema.parse(i))
   .handler(async ({ data }) => {
-    const { token, latitude, longitude, milestones, state, city, location_text, ...rest } = data;
+    const { token, milestones, state, city, location_text, ...rest } = data;
     const body: Record<string, unknown> = { ...rest };
-    if (latitude !== undefined) body.location_lat = latitude;
-    if (longitude !== undefined) body.location_lng = longitude;
     // Compose a display location_text if not supplied so on-site tasks always show one.
     const composed = location_text ?? [city, state].filter(Boolean).join(", ");
     if (composed) body.location_text = composed;
