@@ -356,21 +356,14 @@ function LiveLocationPanel({ taskId, token, isPoster, taskLat, taskLng }: { task
         <div className="text-[11px] text-muted-foreground">You: {pos.lat.toFixed(4)}, {pos.lng.toFixed(4)}</div>
       )}
 
-      {other && (other.latitude ?? other.lat) != null && (
-        <div className="rounded-xl border border-border bg-muted/30 p-3 text-xs">
-          <div className="font-semibold text-ink">{isPoster ? "Tasker" : "Poster"} location</div>
-          <div className="text-muted-foreground mt-0.5">
-            {(other.latitude ?? other.lat)?.toFixed?.(4)}, {(other.longitude ?? other.lng)?.toFixed?.(4)}
-          </div>
-          <a
-            href={`https://www.google.com/maps?q=${other.latitude ?? other.lat},${other.longitude ?? other.lng}`}
-            target="_blank" rel="noopener noreferrer"
-            className="mt-1 inline-block text-primary font-semibold hover:underline"
-          >
-            Open in Google Maps →
-          </a>
-        </div>
-      )}
+      <LiveTaskMap
+        taskLat={taskLat ?? null}
+        taskLng={taskLng ?? null}
+        me={data?.me ?? data?.self ?? null}
+        other={other ?? null}
+        liveTrail={liveTrail}
+        isPoster={isPoster}
+      />
 
       {!isPoster && (
         <button
