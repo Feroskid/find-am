@@ -302,6 +302,7 @@ function LiveLocationPanel({ taskId, token, isPoster, taskLat, taskLng }: { task
       (p) => {
         const next = { lat: p.coords.latitude, lng: p.coords.longitude };
         setPos(next);
+        setLiveTrail((t) => [...t, [next.lat, next.lng]]);
         toggle({ data: { taskId, token, sharing: true, latitude: next.lat, longitude: next.lng } }).catch(() => {});
       },
       () => toast.error("Couldn't get your location."),
