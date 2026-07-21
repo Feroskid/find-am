@@ -13,7 +13,7 @@ export function FeeBreakdown({ budget }: { budget: number }) {
       <Row label="You pay" value={formatNaira(f.total)} bold />
       <Row label="Tasker receives" value={formatNaira(f.taskerReceives)} muted />
       <p className="mt-3 text-xs text-muted-foreground">
-        Held in Paystack escrow until you mark the task complete.
+        Held securely until task is completed.
       </p>
     </div>
   );

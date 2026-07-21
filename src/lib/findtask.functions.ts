@@ -617,11 +617,13 @@ export const paymentCallback = createServerFn({ method: "POST" })
     return call(`/task/payment/callback?${qs}`);
   });
 
-export const releaseEscrow = createServerFn({ method: "POST" })
+export const releaseTask = createServerFn({ method: "POST" })
   .inputValidator((i: unknown) => z.object({ taskId: TaskId, token: Token }).parse(i))
   .handler(async ({ data }) =>
     call(`/task/${data.taskId}/release`, { method: "POST", token: data.token }),
   );
+// Backwards-compat alias.
+export const releaseEscrow = releaseTask;
 
 // Deprecated aliases — kept temporarily so older imports compile. They now
 // rely on the accept response to surface a Flutterwave checkout URL.
