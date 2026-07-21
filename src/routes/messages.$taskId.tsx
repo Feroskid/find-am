@@ -174,7 +174,7 @@ function ChatPage() {
                 {g.items.map((m) => {
                   const k = String(m.message_id ?? m.id ?? `${m.created_at}-${m.sender_id}`);
                   const mine = String(m.sender_id ?? m.user_id) === String(myId);
-                  const text = decrypted[k] ?? "…";
+                  const text = m.message_text ?? m.body ?? m.message ?? m.text ?? "";
                   return (
                     <div key={k} className={`flex mb-0.5 ${mine ? "justify-end" : "justify-start"}`}>
                       <div
