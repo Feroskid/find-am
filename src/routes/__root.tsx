@@ -129,6 +129,7 @@ function RootComponent() {
       <ThemeProvider>
         <I18nProvider>
           <AuthProvider>
+            <SessionGuard />
             <Outlet />
           </AuthProvider>
         </I18nProvider>
