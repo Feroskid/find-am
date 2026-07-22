@@ -175,11 +175,19 @@ const CreateTaskSchema = z.object({
 export const createTask = createServerFn({ method: "POST" })
   .inputValidator((i: unknown) => CreateTaskSchema.parse(i))
   .handler(async ({ data }) => {
-    const { token, milestones, state, city, location_text, ...rest } = data;
+    const { token, milestones, state, city, location_text, location_lat, location_lng, ...rest } = data;
     const body: Record<string, unknown> = { ...rest };
-    // Compose a display location_text if not supplied so on-site tasks always show one.
     const composed = location_text ?? [city, state].filter(Boolean).join(", ");
     if (composed) body.location_text = composed;
+    // Forward coordinates under both naming conventions the backend has accepted.
+    if (typeof location_lat === "number") {
+      body.location_lat = location_lat;
+      body.latitude = location_lat;
+    }
+    if (typeof location_lng === "number") {
+      body.location_lng = location_lng;
+      body.longitude = location_lng;
+    }
     if (milestones && milestones.length > 0) {
       body.milestones = milestones;
       body.is_milestone = 1;
