@@ -38,27 +38,23 @@ function PaymentCallbackPage() {
 
   useEffect(() => {
     const { tx_ref, transaction_id, status } = search;
-    if (!tx_ref || !transaction_id || !status) {
+    if (!tx_ref) {
       setStage("fail");
-      setMsg("Missing payment confirmation details.");
+      setMsg("Missing payment reference.");
       return;
     }
     (async () => {
-      const r = await cb({ data: { tx_ref, transaction_id, status } });
-      const successful = /success|paid|completed/i.test(status);
+      const r = await cb({ data: { tx_ref, transaction_id: transaction_id ?? "", status: status ?? "cancelled" } });
+      const successful = /success|paid|completed/i.test(status ?? "");
       if (r.ok && successful) {
         setStage("ok");
         setMsg("Payment confirmed. Opening your task…");
-        // Redirect regardless of token — the workspace handles auth itself.
         if (taskId) {
           setTimeout(() => navigate({ to: "/tasks/$taskId/workspace", params: { taskId } }), 1200);
         }
-      } else if (r.ok) {
-        setStage("fail");
-        setMsg(`Payment status: ${status}. No funds were captured.`);
       } else {
         setStage("fail");
-        setMsg(r.error || "Could not confirm payment.");
+        setMsg(`Payment ${status ?? "was not completed"}. You can return to the task and try again.`);
       }
     })();
   }, [search.tx_ref, search.transaction_id, search.status, taskId, cb, navigate]);
