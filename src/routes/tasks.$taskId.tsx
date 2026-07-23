@@ -246,6 +246,13 @@ function TaskDetail() {
   });
 
   const status = String(task?.status ?? "open").toLowerCase();
+  const WORKSPACE_STATUSES = new Set([
+    "assigned", "accepted", "in_progress", "active",
+    "completed_by_tasker", "pending_release", "awaiting_release", "work_submitted", "submitted",
+    "completed", "released", "paid_out", "paid",
+  ]);
+  const useWorkspace = WORKSPACE_STATUSES.has(status) && (isPoster || (!!myApplication && String(myApplication?.status ?? "").toLowerCase() === "accepted"));
+  const conversationTo = useWorkspace ? "/tasks/$taskId/workspace" : "/messages/$taskId";
   const location = task?.location_text ?? task?.location;
   const remote = !!task?.is_remote;
   const date = task?.deadline ? new Date(task.deadline) : null;
@@ -589,7 +596,7 @@ function TaskDetail() {
                   </Link>
                 ) : myApplication ? (
                   <div className="mt-5 space-y-2">
-                    <Link to="/tasks/$taskId/workspace" params={{ taskId }} className="block w-full rounded-full border border-primary text-primary py-3 text-sm font-bold hover:bg-primary/5">
+                    <Link to={conversationTo} params={{ taskId }} className="block w-full rounded-full border border-primary text-primary py-3 text-sm font-bold hover:bg-primary/5">
                       {status !== "open" ? "Open conversation" : "Offer sent · Open conversation"}
                     </Link>
                     {status !== "open" && status !== "completed" && status !== "cancelled" && (
@@ -659,7 +666,7 @@ function TaskDetail() {
             </Link>
           )}
           {myApplication && (
-            <Link to="/tasks/$taskId/workspace" params={{ taskId }} className="block w-full text-center rounded-full border border-primary text-primary py-3 text-sm font-bold">
+            <Link to={conversationTo} params={{ taskId }} className="block w-full text-center rounded-full border border-primary text-primary py-3 text-sm font-bold">
               Open conversation
             </Link>
           )}
@@ -853,7 +860,7 @@ function TaskDetail() {
               Keep browsing
             </button>
             <Link
-              to="/tasks/$taskId/workspace"
+              to={conversationTo}
               params={{ taskId }}
               onClick={() => setShowOfferSuccess(false)}
               className="inline-flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-bold text-primary-foreground hover:opacity-90"
