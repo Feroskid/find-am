@@ -18,8 +18,8 @@ const PUBLIC_PATHS = [
 function looksUnauthorized(payload: unknown): boolean {
   if (!payload || typeof payload !== "object") return false;
   const p = payload as any;
-  if (p.ok === false && (p.status === 401 || p.status === 403)) return true;
-  if (typeof p.error === "string" && /unauthori[sz]ed|session|expired|invalid token|not authenticated/i.test(p.error)) return true;
+  if (p.ok === false && p.status === 401) return true;
+  if (typeof p.error === "string" && /session (has )?expired|invalid token|not authenticated|could not validate credentials/i.test(p.error)) return true;
   return false;
 }
 
