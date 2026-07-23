@@ -557,12 +557,19 @@ function TaskDetail() {
                 </div>
                 {isPoster ? (
                   <div className="mt-5 space-y-2">
-                    <Link to="/tasks/$taskId/applications" params={{ taskId }} className="block w-full rounded-full bg-primary py-3 text-sm font-bold text-primary-foreground hover:opacity-90">
-                      View applications
+                    <Link to={conversationTo} params={{ taskId }} className="block w-full rounded-full bg-primary py-3 text-sm font-bold text-primary-foreground hover:opacity-90">
+                      Open conversation
                     </Link>
-                    <Link to="/tasks/$taskId/workspace" params={{ taskId }} className="block w-full rounded-full border border-border py-3 text-sm font-bold hover:bg-muted">
-                      Open workspace
-                    </Link>
+                    {status === "open" && (
+                      <Link to="/tasks/$taskId/applications" params={{ taskId }} className="block w-full rounded-full border border-border py-3 text-sm font-bold hover:bg-muted">
+                        View applications
+                      </Link>
+                    )}
+                    {useWorkspace && (
+                      <Link to="/tasks/$taskId/workspace" params={{ taskId }} className="block w-full rounded-full border border-border py-3 text-sm font-bold hover:bg-muted">
+                        Open workspace
+                      </Link>
+                    )}
                     {status === "open" ? (
                       <button
                         onClick={() => {
