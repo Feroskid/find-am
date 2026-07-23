@@ -596,7 +596,7 @@ function TaskDetail() {
                   </Link>
                 ) : myApplication ? (
                   <div className="mt-5 space-y-2">
-                    <Link to="/tasks/$taskId/workspace" params={{ taskId }} className="block w-full rounded-full border border-primary text-primary py-3 text-sm font-bold hover:bg-primary/5">
+                    <Link to={conversationTo} params={{ taskId }} className="block w-full rounded-full border border-primary text-primary py-3 text-sm font-bold hover:bg-primary/5">
                       {status !== "open" ? "Open conversation" : "Offer sent · Open conversation"}
                     </Link>
                     {status !== "open" && status !== "completed" && status !== "cancelled" && (
