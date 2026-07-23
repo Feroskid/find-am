@@ -666,7 +666,7 @@ function TaskDetail() {
             </Link>
           )}
           {myApplication && (
-            <Link to="/tasks/$taskId/workspace" params={{ taskId }} className="block w-full text-center rounded-full border border-primary text-primary py-3 text-sm font-bold">
+            <Link to={conversationTo} params={{ taskId }} className="block w-full text-center rounded-full border border-primary text-primary py-3 text-sm font-bold">
               Open conversation
             </Link>
           )}
