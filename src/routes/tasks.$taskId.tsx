@@ -246,6 +246,13 @@ function TaskDetail() {
   });
 
   const status = String(task?.status ?? "open").toLowerCase();
+  const WORKSPACE_STATUSES = new Set([
+    "assigned", "accepted", "in_progress", "active",
+    "completed_by_tasker", "pending_release", "awaiting_release", "work_submitted", "submitted",
+    "completed", "released", "paid_out", "paid",
+  ]);
+  const useWorkspace = WORKSPACE_STATUSES.has(status) && (isPoster || (!!myApplication && String(myApplication?.status ?? "").toLowerCase() === "accepted"));
+  const conversationTo = useWorkspace ? "/tasks/$taskId/workspace" : "/messages/$taskId";
   const location = task?.location_text ?? task?.location;
   const remote = !!task?.is_remote;
   const date = task?.deadline ? new Date(task.deadline) : null;
