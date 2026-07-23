@@ -18,7 +18,7 @@ import { useAuth } from "@/lib/auth";
 import { FeeBreakdown } from "@/components/FeeBreakdown";
 import { computeFees, formatNaira } from "@/lib/fees";
 
-export const Route = createFileRoute("/tasks/$taskId")({
+export const Route = createFileRoute("/tasks/$taskId/")({
   head: ({ params }) => ({
     meta: [
       { title: `Task #${params.taskId} — Find-task` },

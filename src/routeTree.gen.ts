@@ -37,7 +37,6 @@ import { Route as TasksOffersRouteImport } from './routes/tasks.offers'
 import { Route as TasksMineRouteImport } from './routes/tasks.mine'
 import { Route as TasksCategoriesRouteImport } from './routes/tasks.categories'
 import { Route as TasksBrowseRouteImport } from './routes/tasks.browse'
-import { Route as TasksTaskIdRouteImport } from './routes/tasks.$taskId'
 import { Route as MessagesTaskIdRouteImport } from './routes/messages.$taskId'
 import { Route as CommunitySettingsRouteImport } from './routes/community.settings'
 import { Route as CommunitySearchRouteImport } from './routes/community.search'
@@ -50,6 +49,7 @@ import { Route as AdminUsersRouteImport } from './routes/admin.users'
 import { Route as AdminDisputesRouteImport } from './routes/admin.disputes'
 import { Route as AdminBlacklistRouteImport } from './routes/admin.blacklist'
 import { Route as AdminAuditRouteImport } from './routes/admin.audit'
+import { Route as TasksTaskIdIndexRouteImport } from './routes/tasks.$taskId.index'
 import { Route as TasksPaymentCallbackRouteImport } from './routes/tasks.payment.callback'
 import { Route as TasksTaskIdWorkspaceRouteImport } from './routes/tasks.$taskId.workspace'
 import { Route as TasksTaskIdApplicationsRouteImport } from './routes/tasks.$taskId.applications'
@@ -199,11 +199,6 @@ const TasksBrowseRoute = TasksBrowseRouteImport.update({
   path: '/browse',
   getParentRoute: () => TasksRoute,
 } as any)
-const TasksTaskIdRoute = TasksTaskIdRouteImport.update({
-  id: '/$taskId',
-  path: '/$taskId',
-  getParentRoute: () => TasksRoute,
-} as any)
 const MessagesTaskIdRoute = MessagesTaskIdRouteImport.update({
   id: '/messages/$taskId',
   path: '/messages/$taskId',
@@ -264,20 +259,25 @@ const AdminAuditRoute = AdminAuditRouteImport.update({
   path: '/audit',
   getParentRoute: () => AdminRoute,
 } as any)
+const TasksTaskIdIndexRoute = TasksTaskIdIndexRouteImport.update({
+  id: '/$taskId/',
+  path: '/$taskId/',
+  getParentRoute: () => TasksRoute,
+} as any)
 const TasksPaymentCallbackRoute = TasksPaymentCallbackRouteImport.update({
   id: '/payment/callback',
   path: '/payment/callback',
   getParentRoute: () => TasksRoute,
 } as any)
 const TasksTaskIdWorkspaceRoute = TasksTaskIdWorkspaceRouteImport.update({
-  id: '/workspace',
-  path: '/workspace',
-  getParentRoute: () => TasksTaskIdRoute,
+  id: '/$taskId/workspace',
+  path: '/$taskId/workspace',
+  getParentRoute: () => TasksRoute,
 } as any)
 const TasksTaskIdApplicationsRoute = TasksTaskIdApplicationsRouteImport.update({
-  id: '/applications',
-  path: '/applications',
-  getParentRoute: () => TasksTaskIdRoute,
+  id: '/$taskId/applications',
+  path: '/$taskId/applications',
+  getParentRoute: () => TasksRoute,
 } as any)
 const TaskPaymentCallbackRoute = TaskPaymentCallbackRouteImport.update({
   id: '/task/payment/callback',
@@ -337,7 +337,6 @@ export interface FileRoutesByFullPath {
   '/community/search': typeof CommunitySearchRoute
   '/community/settings': typeof CommunitySettingsRoute
   '/messages/$taskId': typeof MessagesTaskIdRoute
-  '/tasks/$taskId': typeof TasksTaskIdRouteWithChildren
   '/tasks/browse': typeof TasksBrowseRoute
   '/tasks/categories': typeof TasksCategoriesRoute
   '/tasks/mine': typeof TasksMineRoute
@@ -355,6 +354,7 @@ export interface FileRoutesByFullPath {
   '/tasks/$taskId/applications': typeof TasksTaskIdApplicationsRoute
   '/tasks/$taskId/workspace': typeof TasksTaskIdWorkspaceRoute
   '/tasks/payment/callback': typeof TasksPaymentCallbackRoute
+  '/tasks/$taskId/': typeof TasksTaskIdIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -386,7 +386,6 @@ export interface FileRoutesByTo {
   '/community/search': typeof CommunitySearchRoute
   '/community/settings': typeof CommunitySettingsRoute
   '/messages/$taskId': typeof MessagesTaskIdRoute
-  '/tasks/$taskId': typeof TasksTaskIdRouteWithChildren
   '/tasks/browse': typeof TasksBrowseRoute
   '/tasks/categories': typeof TasksCategoriesRoute
   '/tasks/mine': typeof TasksMineRoute
@@ -404,6 +403,7 @@ export interface FileRoutesByTo {
   '/tasks/$taskId/applications': typeof TasksTaskIdApplicationsRoute
   '/tasks/$taskId/workspace': typeof TasksTaskIdWorkspaceRoute
   '/tasks/payment/callback': typeof TasksPaymentCallbackRoute
+  '/tasks/$taskId': typeof TasksTaskIdIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -438,7 +438,6 @@ export interface FileRoutesById {
   '/community/search': typeof CommunitySearchRoute
   '/community/settings': typeof CommunitySettingsRoute
   '/messages/$taskId': typeof MessagesTaskIdRoute
-  '/tasks/$taskId': typeof TasksTaskIdRouteWithChildren
   '/tasks/browse': typeof TasksBrowseRoute
   '/tasks/categories': typeof TasksCategoriesRoute
   '/tasks/mine': typeof TasksMineRoute
@@ -456,6 +455,7 @@ export interface FileRoutesById {
   '/tasks/$taskId/applications': typeof TasksTaskIdApplicationsRoute
   '/tasks/$taskId/workspace': typeof TasksTaskIdWorkspaceRoute
   '/tasks/payment/callback': typeof TasksPaymentCallbackRoute
+  '/tasks/$taskId/': typeof TasksTaskIdIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -491,7 +491,6 @@ export interface FileRouteTypes {
     | '/community/search'
     | '/community/settings'
     | '/messages/$taskId'
-    | '/tasks/$taskId'
     | '/tasks/browse'
     | '/tasks/categories'
     | '/tasks/mine'
@@ -509,6 +508,7 @@ export interface FileRouteTypes {
     | '/tasks/$taskId/applications'
     | '/tasks/$taskId/workspace'
     | '/tasks/payment/callback'
+    | '/tasks/$taskId/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -540,7 +540,6 @@ export interface FileRouteTypes {
     | '/community/search'
     | '/community/settings'
     | '/messages/$taskId'
-    | '/tasks/$taskId'
     | '/tasks/browse'
     | '/tasks/categories'
     | '/tasks/mine'
@@ -558,6 +557,7 @@ export interface FileRouteTypes {
     | '/tasks/$taskId/applications'
     | '/tasks/$taskId/workspace'
     | '/tasks/payment/callback'
+    | '/tasks/$taskId'
   id:
     | '__root__'
     | '/'
@@ -591,7 +591,6 @@ export interface FileRouteTypes {
     | '/community/search'
     | '/community/settings'
     | '/messages/$taskId'
-    | '/tasks/$taskId'
     | '/tasks/browse'
     | '/tasks/categories'
     | '/tasks/mine'
@@ -609,6 +608,7 @@ export interface FileRouteTypes {
     | '/tasks/$taskId/applications'
     | '/tasks/$taskId/workspace'
     | '/tasks/payment/callback'
+    | '/tasks/$taskId/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -847,13 +847,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TasksBrowseRouteImport
       parentRoute: typeof TasksRoute
     }
-    '/tasks/$taskId': {
-      id: '/tasks/$taskId'
-      path: '/$taskId'
-      fullPath: '/tasks/$taskId'
-      preLoaderRoute: typeof TasksTaskIdRouteImport
-      parentRoute: typeof TasksRoute
-    }
     '/messages/$taskId': {
       id: '/messages/$taskId'
       path: '/messages/$taskId'
@@ -938,6 +931,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAuditRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/tasks/$taskId/': {
+      id: '/tasks/$taskId/'
+      path: '/$taskId'
+      fullPath: '/tasks/$taskId/'
+      preLoaderRoute: typeof TasksTaskIdIndexRouteImport
+      parentRoute: typeof TasksRoute
+    }
     '/tasks/payment/callback': {
       id: '/tasks/payment/callback'
       path: '/payment/callback'
@@ -947,17 +947,17 @@ declare module '@tanstack/react-router' {
     }
     '/tasks/$taskId/workspace': {
       id: '/tasks/$taskId/workspace'
-      path: '/workspace'
+      path: '/$taskId/workspace'
       fullPath: '/tasks/$taskId/workspace'
       preLoaderRoute: typeof TasksTaskIdWorkspaceRouteImport
-      parentRoute: typeof TasksTaskIdRoute
+      parentRoute: typeof TasksRoute
     }
     '/tasks/$taskId/applications': {
       id: '/tasks/$taskId/applications'
-      path: '/applications'
+      path: '/$taskId/applications'
       fullPath: '/tasks/$taskId/applications'
       preLoaderRoute: typeof TasksTaskIdApplicationsRouteImport
-      parentRoute: typeof TasksTaskIdRoute
+      parentRoute: typeof TasksRoute
     }
     '/task/payment/callback': {
       id: '/task/payment/callback'
@@ -1015,38 +1015,28 @@ const AdminRouteChildren: AdminRouteChildren = {
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
-interface TasksTaskIdRouteChildren {
-  TasksTaskIdApplicationsRoute: typeof TasksTaskIdApplicationsRoute
-  TasksTaskIdWorkspaceRoute: typeof TasksTaskIdWorkspaceRoute
-}
-
-const TasksTaskIdRouteChildren: TasksTaskIdRouteChildren = {
-  TasksTaskIdApplicationsRoute: TasksTaskIdApplicationsRoute,
-  TasksTaskIdWorkspaceRoute: TasksTaskIdWorkspaceRoute,
-}
-
-const TasksTaskIdRouteWithChildren = TasksTaskIdRoute._addFileChildren(
-  TasksTaskIdRouteChildren,
-)
-
 interface TasksRouteChildren {
-  TasksTaskIdRoute: typeof TasksTaskIdRouteWithChildren
   TasksBrowseRoute: typeof TasksBrowseRoute
   TasksCategoriesRoute: typeof TasksCategoriesRoute
   TasksMineRoute: typeof TasksMineRoute
   TasksOffersRoute: typeof TasksOffersRoute
   TasksIndexRoute: typeof TasksIndexRoute
+  TasksTaskIdApplicationsRoute: typeof TasksTaskIdApplicationsRoute
+  TasksTaskIdWorkspaceRoute: typeof TasksTaskIdWorkspaceRoute
   TasksPaymentCallbackRoute: typeof TasksPaymentCallbackRoute
+  TasksTaskIdIndexRoute: typeof TasksTaskIdIndexRoute
 }
 
 const TasksRouteChildren: TasksRouteChildren = {
-  TasksTaskIdRoute: TasksTaskIdRouteWithChildren,
   TasksBrowseRoute: TasksBrowseRoute,
   TasksCategoriesRoute: TasksCategoriesRoute,
   TasksMineRoute: TasksMineRoute,
   TasksOffersRoute: TasksOffersRoute,
   TasksIndexRoute: TasksIndexRoute,
+  TasksTaskIdApplicationsRoute: TasksTaskIdApplicationsRoute,
+  TasksTaskIdWorkspaceRoute: TasksTaskIdWorkspaceRoute,
   TasksPaymentCallbackRoute: TasksPaymentCallbackRoute,
+  TasksTaskIdIndexRoute: TasksTaskIdIndexRoute,
 }
 
 const TasksRouteWithChildren = TasksRoute._addFileChildren(TasksRouteChildren)
