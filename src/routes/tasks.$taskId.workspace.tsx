@@ -106,6 +106,16 @@ function WorkspacePage() {
   const isCompleted = COMPLETED.includes(status);
   const inProgress = IN_PROGRESS.includes(status);
 
+  // If task hasn't been assigned yet, or the viewer is neither poster nor the assigned tasker,
+  // send them to the pre-assignment chat instead of an empty workspace.
+  useEffect(() => {
+    if (!ready || !token || !task) return;
+    const assigned = inProgress || awaitingRelease || isCompleted;
+    if (!assigned || (!isPoster && !isTasker)) {
+      navigate({ to: "/messages/$taskId", params: { taskId }, replace: true });
+    }
+  }, [ready, token, task, inProgress, awaitingRelease, isCompleted, isPoster, isTasker, taskId, navigate]);
+
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <TaskHeader />
