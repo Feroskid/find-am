@@ -860,7 +860,7 @@ function TaskDetail() {
               Keep browsing
             </button>
             <Link
-              to="/tasks/$taskId/workspace"
+              to={conversationTo}
               params={{ taskId }}
               onClick={() => setShowOfferSuccess(false)}
               className="inline-flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-bold text-primary-foreground hover:opacity-90"
