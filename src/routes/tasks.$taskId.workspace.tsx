@@ -61,7 +61,11 @@ function WorkspacePage() {
   const rawMessages = msgsQ.data?.ok ? extractMsgs(msgsQ.data.data) : [];
   const myId = (user as any)?.user_id ?? (user as any)?.id;
   const posterId = task?.poster_id ?? task?.user_id ?? task?.owner_id;
-  const taskerId = task?.tasker_id ?? task?.accepted_tasker_id ?? task?.assigned_to;
+  const taskerId =
+    task?.tasker_id ?? task?.accepted_tasker_id ?? task?.assigned_to ??
+    task?.assigned_tasker_id ?? task?.accepted_user_id ??
+    task?.tasker?.user_id ?? task?.tasker?.id ?? task?.assignee_id ??
+    task?.accepted_offer?.user_id ?? task?.accepted_offer?.tasker_id;
 
   const sendM = useMutation({
     mutationFn: async () =>
@@ -99,22 +103,30 @@ function WorkspacePage() {
   const status = String(task?.status ?? "").toLowerCase();
   const isPoster = posterId !== undefined && String(posterId) === String(myId);
   const isTasker = taskerId !== undefined && String(taskerId) === String(myId);
-  const AWAITING = ["completed_by_tasker", "pending_release", "awaiting_release", "work_submitted", "submitted"];
+  const AWAITING = [
+    "completed_by_tasker","pending_release","awaiting_release",
+    "work_submitted","submitted",
+    "awaiting_confirmation","awaiting_payment","pending_confirmation",
+    "pending_payment","tasker_completed",
+  ];
   const COMPLETED = ["completed", "released", "paid_out", "paid"];
   const IN_PROGRESS = ["assigned", "accepted", "in_progress", "active"];
-  const awaitingRelease = AWAITING.includes(status) || Boolean(task?.tasker_marked_complete);
+  const awaitingRelease =
+    AWAITING.includes(status) ||
+    Boolean(task?.tasker_marked_complete ?? task?.completed_by_tasker ?? task?.is_awaiting_release);
   const isCompleted = COMPLETED.includes(status);
   const inProgress = IN_PROGRESS.includes(status);
+  const isTaskerFinal = isTasker || String(task?.my_offer?.status ?? "").toLowerCase() === "accepted";
 
   // If task hasn't been assigned yet, or the viewer is neither poster nor the assigned tasker,
   // send them to the pre-assignment chat instead of an empty workspace.
   useEffect(() => {
     if (!ready || !token || !task) return;
     const assigned = inProgress || awaitingRelease || isCompleted;
-    if (!assigned || (!isPoster && !isTasker)) {
+    if (!assigned || (!isPoster && !isTaskerFinal)) {
       navigate({ to: "/messages/$taskId", params: { taskId }, replace: true });
     }
-  }, [ready, token, task, inProgress, awaitingRelease, isCompleted, isPoster, isTasker, taskId, navigate]);
+  }, [ready, token, task, inProgress, awaitingRelease, isCompleted, isPoster, isTaskerFinal, taskId, navigate]);
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -184,19 +196,19 @@ function WorkspacePage() {
           <div className="rounded-2xl border border-border bg-card p-5 space-y-2">
             <h3 className="font-semibold">Actions</h3>
 
-            {isTasker && inProgress && !awaitingRelease && (
+            {isTaskerFinal && inProgress && !awaitingRelease && !isCompleted && (
               <button onClick={() => completeM.mutate()} disabled={completeM.isPending} className="w-full inline-flex items-center justify-center gap-1.5 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-50">
                 {completeM.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />} Mark task as complete
               </button>
             )}
 
-            {isTasker && awaitingRelease && (
+            {isTaskerFinal && awaitingRelease && !isCompleted && (
               <div className="rounded-lg border border-border bg-muted/40 p-3 text-xs text-muted-foreground">
                 You've marked this task complete. Awaiting the poster to release payment.
               </div>
             )}
 
-            {isPoster && awaitingRelease && (
+            {isPoster && awaitingRelease && !isCompleted && (
               <>
                 <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-3 text-xs text-foreground/80">
                   The tasker has marked this task complete. Review the work, then release payment to finish.

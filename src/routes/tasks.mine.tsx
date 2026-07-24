@@ -42,13 +42,27 @@ function MyTasksPage() {
     return d.tasks ?? d.results ?? d.data ?? d.items ?? d.posted_tasks ?? d.user_tasks ?? d.my_tasks ?? [];
   })();
 
+  const normalize = (t: any) => {
+    const row = t?.task ?? t;
+    return {
+      id: row.task_id ?? row.id ?? t.task_id ?? t.id,
+      title: row.title ?? t.task_title ?? t.title ?? "Untitled task",
+      budget: row.budget ?? t.task_budget ?? t.budget ?? 0,
+      remote: !!(row.is_remote ?? t.is_remote),
+      loc: row.location_text ?? row.location ?? t.location_text ?? t.location,
+      deadline: row.deadline ?? t.deadline,
+      status: String(row.status ?? t.task_status ?? t.status ?? "open").toLowerCase(),
+      offers: row.offers_count ?? row.applications_count ?? t.offers_count ?? t.applications_count ?? 0,
+    };
+  };
+
   const filtered = useMemo(() => {
     const term = q.trim().toLowerCase();
-    return rows.filter((t) => {
-      const s = String(t.status ?? "open").toLowerCase();
+    return rows.map((t) => ({ raw: t, n: normalize(t) })).filter(({ n }) => {
+      const s = n.status;
       if (filter !== "All" && s !== filter.toLowerCase() && !(filter === "Assigned" && (s === "in_progress" || s === "accepted"))) return false;
       if (!term) return true;
-      return String(t.title ?? "").toLowerCase().includes(term);
+      return n.title.toLowerCase().includes(term);
     });
   }, [rows, q, filter]);
 
@@ -107,31 +121,26 @@ function MyTasksPage() {
 
           ) : (
             <ul className="grid gap-3">
-              {filtered.map((t) => {
-                const id = t.task_id ?? t.id;
-                const remote = !!t.is_remote;
-                const loc = t.location_text ?? t.location;
-                const status = String(t.status ?? "open").toLowerCase();
-                const offers = t.offers_count ?? t.applications_count ?? 0;
+              {filtered.map(({ n }) => {
                 return (
-                  <li key={id}>
+                  <li key={n.id}>
                     <Link
                       to="/tasks/$taskId"
-                      params={{ taskId: String(id) }}
+                      params={{ taskId: String(n.id) }}
                       className="block rounded-2xl border border-border bg-card p-4 hover:border-primary hover:shadow-sm transition"
                     >
                       <div className="flex items-start justify-between gap-3">
-                        <h3 className="font-bold text-ink leading-snug">{t.title ?? "Untitled task"}</h3>
-                        <span className="font-display text-xl text-ink shrink-0">₦{Number(t.budget ?? 0).toLocaleString()}</span>
+                        <h3 className="font-bold text-ink leading-snug">{n.title}</h3>
+                        <span className="font-display text-xl text-ink shrink-0">₦{Number(n.budget ?? 0).toLocaleString()}</span>
                       </div>
                       <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
                         <span className="inline-flex items-center gap-1">
-                          {remote ? <Globe className="h-3.5 w-3.5" /> : <MapPin className="h-3.5 w-3.5" />}
-                          {remote ? "Remote" : (loc ?? "On-site")}
+                          {n.remote ? <Globe className="h-3.5 w-3.5" /> : <MapPin className="h-3.5 w-3.5" />}
+                          {n.remote ? "Remote" : (n.loc ?? "On-site")}
                         </span>
-                        <span className="inline-flex items-center gap-1"><Clock className="h-3.5 w-3.5" />{t.deadline ? new Date(t.deadline).toLocaleDateString() : "Flexible"}</span>
-                        <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 font-semibold text-primary capitalize">{status.replace("_", " ")}</span>
-                        {Number(offers) > 0 && <span>· {offers} offer{Number(offers) === 1 ? "" : "s"}</span>}
+                        <span className="inline-flex items-center gap-1"><Clock className="h-3.5 w-3.5" />{n.deadline ? new Date(n.deadline).toLocaleDateString() : "Flexible"}</span>
+                        <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 font-semibold text-primary capitalize">{n.status.replace("_", " ")}</span>
+                        {Number(n.offers) > 0 && <span>· {n.offers} offer{Number(n.offers) === 1 ? "" : "s"}</span>}
                       </div>
                     </Link>
                   </li>
