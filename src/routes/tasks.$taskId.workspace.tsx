@@ -61,7 +61,11 @@ function WorkspacePage() {
   const rawMessages = msgsQ.data?.ok ? extractMsgs(msgsQ.data.data) : [];
   const myId = (user as any)?.user_id ?? (user as any)?.id;
   const posterId = task?.poster_id ?? task?.user_id ?? task?.owner_id;
-  const taskerId = task?.tasker_id ?? task?.accepted_tasker_id ?? task?.assigned_to;
+  const taskerId =
+    task?.tasker_id ?? task?.accepted_tasker_id ?? task?.assigned_to ??
+    task?.assigned_tasker_id ?? task?.accepted_user_id ??
+    task?.tasker?.user_id ?? task?.tasker?.id ?? task?.assignee_id ??
+    task?.accepted_offer?.user_id ?? task?.accepted_offer?.tasker_id;
 
   const sendM = useMutation({
     mutationFn: async () =>
