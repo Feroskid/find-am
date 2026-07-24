@@ -123,10 +123,10 @@ function WorkspacePage() {
   useEffect(() => {
     if (!ready || !token || !task) return;
     const assigned = inProgress || awaitingRelease || isCompleted;
-    if (!assigned || (!isPoster && !isTasker)) {
+    if (!assigned || (!isPoster && !isTaskerFinal)) {
       navigate({ to: "/messages/$taskId", params: { taskId }, replace: true });
     }
-  }, [ready, token, task, inProgress, awaitingRelease, isCompleted, isPoster, isTasker, taskId, navigate]);
+  }, [ready, token, task, inProgress, awaitingRelease, isCompleted, isPoster, isTaskerFinal, taskId, navigate]);
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
