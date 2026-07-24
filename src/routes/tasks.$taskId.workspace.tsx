@@ -196,19 +196,19 @@ function WorkspacePage() {
           <div className="rounded-2xl border border-border bg-card p-5 space-y-2">
             <h3 className="font-semibold">Actions</h3>
 
-            {isTasker && inProgress && !awaitingRelease && (
+            {isTaskerFinal && inProgress && !awaitingRelease && !isCompleted && (
               <button onClick={() => completeM.mutate()} disabled={completeM.isPending} className="w-full inline-flex items-center justify-center gap-1.5 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-50">
                 {completeM.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />} Mark task as complete
               </button>
             )}
 
-            {isTasker && awaitingRelease && (
+            {isTaskerFinal && awaitingRelease && !isCompleted && (
               <div className="rounded-lg border border-border bg-muted/40 p-3 text-xs text-muted-foreground">
                 You've marked this task complete. Awaiting the poster to release payment.
               </div>
             )}
 
-            {isPoster && awaitingRelease && (
+            {isPoster && awaitingRelease && !isCompleted && (
               <>
                 <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-3 text-xs text-foreground/80">
                   The tasker has marked this task complete. Review the work, then release payment to finish.
