@@ -42,13 +42,27 @@ function MyTasksPage() {
     return d.tasks ?? d.results ?? d.data ?? d.items ?? d.posted_tasks ?? d.user_tasks ?? d.my_tasks ?? [];
   })();
 
+  const normalize = (t: any) => {
+    const row = t?.task ?? t;
+    return {
+      id: row.task_id ?? row.id ?? t.task_id ?? t.id,
+      title: row.title ?? t.task_title ?? t.title ?? "Untitled task",
+      budget: row.budget ?? t.task_budget ?? t.budget ?? 0,
+      remote: !!(row.is_remote ?? t.is_remote),
+      loc: row.location_text ?? row.location ?? t.location_text ?? t.location,
+      deadline: row.deadline ?? t.deadline,
+      status: String(row.status ?? t.task_status ?? t.status ?? "open").toLowerCase(),
+      offers: row.offers_count ?? row.applications_count ?? t.offers_count ?? t.applications_count ?? 0,
+    };
+  };
+
   const filtered = useMemo(() => {
     const term = q.trim().toLowerCase();
-    return rows.filter((t) => {
-      const s = String(t.status ?? "open").toLowerCase();
+    return rows.map((t) => ({ raw: t, n: normalize(t) })).filter(({ n }) => {
+      const s = n.status;
       if (filter !== "All" && s !== filter.toLowerCase() && !(filter === "Assigned" && (s === "in_progress" || s === "accepted"))) return false;
       if (!term) return true;
-      return String(t.title ?? "").toLowerCase().includes(term);
+      return n.title.toLowerCase().includes(term);
     });
   }, [rows, q, filter]);
 
