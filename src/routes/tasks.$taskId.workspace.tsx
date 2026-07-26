@@ -9,9 +9,10 @@ import { useAuth } from "@/lib/auth";
 import { LiveTaskMap } from "@/components/LiveTaskMap";
 import {
   getTask, listMessages, sendMessage, completeTask, disputeTask, rateTask,
-  releaseTask,
+  releaseTask, getMyRating,
   getTaskLocation, toggleTaskLocation, markArrived,
 } from "@/lib/findtask.functions";
+import { MilestoneActions } from "@/components/MilestoneActions";
 
 
 export const Route = createFileRoute("/tasks/$taskId/workspace")({
