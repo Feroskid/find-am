@@ -123,6 +123,7 @@ function WorkspacePage() {
   const isCompleted = status === "completed" && paymentReleased;
   const inProgress = IN_PROGRESS.includes(status);
   const isTaskerFinal = isTasker || String(task?.my_offer?.status ?? "").toLowerCase() === "accepted";
+  const hasRated = myRatingQ.data?.ok ? Boolean((myRatingQ.data.data as any)?.has_rated) : false;
 
   // If task hasn't been assigned yet, or the viewer is neither poster nor the assigned tasker,
   // send them to the pre-assignment chat instead of an empty workspace.
