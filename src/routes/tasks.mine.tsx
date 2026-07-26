@@ -60,7 +60,7 @@ function MyTasksPage() {
     const term = q.trim().toLowerCase();
     return rows.map((t) => ({ raw: t, n: normalize(t) })).filter(({ n }) => {
       const s = n.status;
-      if (filter !== "All" && s !== filter.toLowerCase() && !(filter === "Assigned" && (s === "in_progress" || s === "accepted"))) return false;
+      if (filter !== "All" && s !== filter.toLowerCase() && !(filter === "Assigned" && (s === "in_progress" || s === "accepted" || s === "assigned"))) return false;
       if (!term) return true;
       return n.title.toLowerCase().includes(term);
     });

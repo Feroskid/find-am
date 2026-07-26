@@ -517,10 +517,14 @@ export const getUserTasks = createServerFn({ method: "POST" })
       if (!r.ok) return r;
       const rd: any = r.data ?? {};
       const apps: any[] = rd.applications ?? rd.results ?? (Array.isArray(rd) ? rd : []);
-      const tasks = apps.map((a: any) => {
-        const t = a.task ?? a;
-        return { ...t, my_application_status: a.status ?? a.application_status };
-      });
+      const tasks = apps.map((a: any) => ({
+        task_id: a.task_id,
+        title: a.task_title ?? a.title,
+        budget: a.budget,
+        status: a.task_status ?? a.status,
+        location_text: a.location_text,
+        my_application_status: a.status,
+      }));
       return { ok: true as const, data: { tasks } };
     }
     // Poster: their posted tasks via the real endpoint
