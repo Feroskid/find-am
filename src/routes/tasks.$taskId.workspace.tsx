@@ -103,18 +103,10 @@ function WorkspacePage() {
   const status = String(task?.status ?? "").toLowerCase();
   const isPoster = posterId !== undefined && String(posterId) === String(myId);
   const isTasker = taskerId !== undefined && String(taskerId) === String(myId);
-  const AWAITING = [
-    "completed_by_tasker","pending_release","awaiting_release",
-    "work_submitted","submitted",
-    "awaiting_confirmation","awaiting_payment","pending_confirmation",
-    "pending_payment","tasker_completed",
-  ];
-  const COMPLETED = ["completed", "released", "paid_out", "paid"];
   const IN_PROGRESS = ["assigned", "accepted", "in_progress", "active"];
-  const awaitingRelease =
-    AWAITING.includes(status) ||
-    Boolean(task?.tasker_marked_complete ?? task?.completed_by_tasker ?? task?.is_awaiting_release);
-  const isCompleted = COMPLETED.includes(status);
+  const paymentReleased = Boolean(task?.payment_released);
+  const awaitingRelease = status === "completed" && !paymentReleased;
+  const isCompleted = status === "completed" && paymentReleased;
   const inProgress = IN_PROGRESS.includes(status);
   const isTaskerFinal = isTasker || String(task?.my_offer?.status ?? "").toLowerCase() === "accepted";
 

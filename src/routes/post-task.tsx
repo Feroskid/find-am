@@ -237,16 +237,20 @@ function PostTaskPage() {
 
               <Field label="Number of taskers">
                 <div className="flex items-center gap-2">
-                  <button type="button" onClick={() => setQuantity((q) => Math.max(1, q - 1))} className="h-10 w-10 rounded-lg border border-border font-bold hover:bg-muted">−</button>
+                  <button type="button" disabled={isMilestone} onClick={() => setQuantity((q) => Math.max(1, q - 1))} className="h-10 w-10 rounded-lg border border-border font-bold hover:bg-muted disabled:opacity-40 disabled:cursor-not-allowed">−</button>
                   <input
                     type="number"
                     value={quantity}
                     min={1}
+                    disabled={isMilestone}
                     onChange={(e) => setQuantity(Math.max(1, Number(e.target.value) || 1))}
-                    className="w-full text-center rounded-lg border border-border bg-background px-3 py-2.5 text-sm focus:border-primary outline-none"
+                    className="w-full text-center rounded-lg border border-border bg-background px-3 py-2.5 text-sm focus:border-primary outline-none disabled:opacity-60 disabled:cursor-not-allowed"
                   />
-                  <button type="button" onClick={() => setQuantity((q) => q + 1)} className="h-10 w-10 rounded-lg border border-border font-bold hover:bg-muted">+</button>
+                  <button type="button" disabled={isMilestone} onClick={() => setQuantity((q) => q + 1)} className="h-10 w-10 rounded-lg border border-border font-bold hover:bg-muted disabled:opacity-40 disabled:cursor-not-allowed">+</button>
                 </div>
+                {isMilestone && (
+                  <p className="mt-1 text-xs text-muted-foreground">Milestone tasks are limited to a single tasker, so quantity is fixed at 1.</p>
+                )}
               </Field>
             </div>
 
@@ -266,7 +270,11 @@ function PostTaskPage() {
               <input
                 type="checkbox"
                 checked={isMilestone}
-                onChange={(e) => { setIsMilestone(e.target.checked); if (e.target.checked && milestones.length === 0) setMilestones([{ title: "", amount: "", description: "", due_date: "" }]); }}
+                onChange={(e) => {
+                  setIsMilestone(e.target.checked);
+                  if (e.target.checked) setQuantity(1);
+                  if (e.target.checked && milestones.length === 0) setMilestones([{ title: "", amount: "", description: "", due_date: "" }]);
+                }}
                 className="h-4 w-4 accent-primary"
               />
               <span className="text-sm font-medium">Use milestones for this task</span>
