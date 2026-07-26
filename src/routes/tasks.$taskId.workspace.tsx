@@ -203,33 +203,51 @@ function WorkspacePage() {
           <div className="rounded-2xl border border-border bg-card p-5 space-y-2">
             <h3 className="font-semibold">Actions</h3>
 
-            {isTaskerFinal && inProgress && !awaitingRelease && !isCompleted && (
-              <button onClick={() => completeM.mutate()} disabled={completeM.isPending} className="w-full inline-flex items-center justify-center gap-1.5 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-50">
-                {completeM.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />} Mark task as complete
-              </button>
-            )}
-
-            {isTaskerFinal && awaitingRelease && !isCompleted && (
-              <div className="rounded-lg border border-border bg-muted/40 p-3 text-xs text-muted-foreground">
-                You've marked this task complete. Awaiting the poster to release payment.
-              </div>
-            )}
-
-            {isPoster && awaitingRelease && !isCompleted && (
+            {task?.is_milestone ? (
+              <MilestoneActions
+                taskId={taskId}
+                token={token!}
+                isPoster={isPoster}
+                isTasker={isTaskerFinal}
+                milestones={task?.milestones ?? []}
+                onChanged={() => taskQ.refetch()}
+              />
+            ) : (
               <>
-                <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-3 text-xs text-foreground/80">
-                  The tasker has marked this task complete. Review the work, then release payment to finish.
-                </div>
-                <button onClick={() => releaseM.mutate()} disabled={releaseM.isPending} className="w-full inline-flex items-center justify-center gap-1.5 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-50">
-                  {releaseM.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Banknote className="h-4 w-4" />} Release payment
-                </button>
+                {isTaskerFinal && inProgress && !awaitingRelease && !isCompleted && (
+                  <button onClick={() => completeM.mutate()} disabled={completeM.isPending} className="w-full inline-flex items-center justify-center gap-1.5 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-50">
+                    {completeM.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />} Mark task as complete
+                  </button>
+                )}
+
+                {isTaskerFinal && awaitingRelease && !isCompleted && (
+                  <div className="rounded-lg border border-border bg-muted/40 p-3 text-xs text-muted-foreground">
+                    You've marked this task complete. Awaiting the poster to release payment.
+                  </div>
+                )}
+
+                {isPoster && awaitingRelease && !isCompleted && (
+                  <>
+                    <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-3 text-xs text-foreground/80">
+                      The tasker has marked this task complete. Review the work, then release payment to finish.
+                    </div>
+                    <button onClick={() => releaseM.mutate()} disabled={releaseM.isPending} className="w-full inline-flex items-center justify-center gap-1.5 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-50">
+                      {releaseM.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Banknote className="h-4 w-4" />} Release payment
+                    </button>
+                  </>
+                )}
               </>
             )}
 
-            {isCompleted && (
+            {isCompleted && !hasRated && (
               <button onClick={() => setShowRate(true)} className="w-full inline-flex items-center justify-center gap-1.5 rounded-full border border-border px-4 py-2 text-sm font-semibold hover:bg-muted">
                 <Star className="h-4 w-4" /> Leave a rating
               </button>
+            )}
+            {isCompleted && hasRated && (
+              <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-3 text-xs text-emerald-700 text-center font-medium">
+                Rating submitted ✓
+              </div>
             )}
             <button onClick={() => setShowDispute((s) => !s)} className="w-full inline-flex items-center justify-center gap-1.5 rounded-full border border-destructive/40 text-destructive px-4 py-2 text-sm font-semibold hover:bg-destructive/10">
               <AlertTriangle className="h-4 w-4" /> Raise a dispute
