@@ -92,9 +92,21 @@ function WorkspacePage() {
     mutationFn: () => dFn({ data: { taskId, reason: disputeReason.trim(), token: token! } }),
     onSuccess: (r) => r.ok ? (toast.success("Dispute filed."), setShowDispute(false), taskQ.refetch()) : toast.error(r.error),
   });
+  const task_forRating: any = taskQ.data?.ok ? ((taskQ.data.data as any)?.task ?? taskQ.data.data) : null;
+  const _isCompletedForRating =
+    String(task_forRating?.status ?? "").toLowerCase() === "completed" &&
+    Boolean(task_forRating?.payment_released);
+  const myRatingQ = useQuery({
+    queryKey: ["task", taskId, "my-rating", token],
+    enabled: !!token && _isCompletedForRating,
+    queryFn: () => myRatingFn({ data: { taskId, token: token! } }),
+  });
   const rateM = useMutation({
     mutationFn: () => rFn({ data: { taskId, rating, review_text: review.trim() || undefined, token: token! } }),
-    onSuccess: (r) => r.ok ? (toast.success("Rating submitted."), setShowRate(false)) : toast.error(r.error),
+    onSuccess: (r) => {
+      if (r.ok) { toast.success("Rating submitted."); setShowRate(false); myRatingQ.refetch(); }
+      else toast.error(r.error);
+    },
   });
 
   useEffect(() => {
