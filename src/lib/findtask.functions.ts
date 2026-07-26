@@ -325,6 +325,12 @@ export const rateTask = createServerFn({ method: "POST" })
     }),
   );
 
+export const getMyRating = createServerFn({ method: "POST" })
+  .inputValidator((i: unknown) => z.object({ taskId: TaskId, token: Token }).parse(i))
+  .handler(async ({ data }) =>
+    call(`/task/${data.taskId}/my-rating`, { token: data.token }),
+  );
+
 // ---- Messages -----------------------------------------------------------
 export const listMessages = createServerFn({ method: "POST" })
   .inputValidator((i: unknown) => z.object({ taskId: TaskId, token: Token }).parse(i))
