@@ -41,6 +41,7 @@ function WorkspacePage() {
   const relFn = useServerFn(releaseTask);
   const dFn = useServerFn(disputeTask);
   const rFn = useServerFn(rateTask);
+  const myRatingFn = useServerFn(getMyRating);
 
   const taskQ = useQuery({ queryKey: ["task", taskId], queryFn: () => tFn({ data: { taskId } }) });
   const msgsQ = useQuery({
