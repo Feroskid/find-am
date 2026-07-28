@@ -620,14 +620,14 @@ export const paymentCallback = createServerFn({ method: "POST" })
   .inputValidator((i: unknown) =>
     z.object({
       tx_ref: z.string().min(1).max(200),
-      transaction_id: z.string().min(1).max(200),
+      transaction_id: z.string().max(200).optional(),
       status: z.string().min(1).max(40),
     }).parse(i),
   )
   .handler(async ({ data }) => {
     const qs = new URLSearchParams({
       tx_ref: data.tx_ref,
-      transaction_id: data.transaction_id,
+      transaction_id: data.transaction_id ?? "",
       status: data.status,
     }).toString();
     return call(`/task/payment/callback?${qs}`);
