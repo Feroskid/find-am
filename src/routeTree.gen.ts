@@ -50,7 +50,6 @@ import { Route as AdminDisputesRouteImport } from './routes/admin.disputes'
 import { Route as AdminBlacklistRouteImport } from './routes/admin.blacklist'
 import { Route as AdminAuditRouteImport } from './routes/admin.audit'
 import { Route as TasksTaskIdIndexRouteImport } from './routes/tasks.$taskId.index'
-import { Route as TasksPaymentCallbackRouteImport } from './routes/tasks.payment.callback'
 import { Route as TasksTaskIdWorkspaceRouteImport } from './routes/tasks.$taskId.workspace'
 import { Route as TasksTaskIdApplicationsRouteImport } from './routes/tasks.$taskId.applications'
 import { Route as TaskPaymentCallbackRouteImport } from './routes/task.payment.callback'
@@ -264,11 +263,6 @@ const TasksTaskIdIndexRoute = TasksTaskIdIndexRouteImport.update({
   path: '/$taskId/',
   getParentRoute: () => TasksRoute,
 } as any)
-const TasksPaymentCallbackRoute = TasksPaymentCallbackRouteImport.update({
-  id: '/payment/callback',
-  path: '/payment/callback',
-  getParentRoute: () => TasksRoute,
-} as any)
 const TasksTaskIdWorkspaceRoute = TasksTaskIdWorkspaceRouteImport.update({
   id: '/$taskId/workspace',
   path: '/$taskId/workspace',
@@ -353,7 +347,6 @@ export interface FileRoutesByFullPath {
   '/task/payment/callback': typeof TaskPaymentCallbackRoute
   '/tasks/$taskId/applications': typeof TasksTaskIdApplicationsRoute
   '/tasks/$taskId/workspace': typeof TasksTaskIdWorkspaceRoute
-  '/tasks/payment/callback': typeof TasksPaymentCallbackRoute
   '/tasks/$taskId/': typeof TasksTaskIdIndexRoute
 }
 export interface FileRoutesByTo {
@@ -402,7 +395,6 @@ export interface FileRoutesByTo {
   '/task/payment/callback': typeof TaskPaymentCallbackRoute
   '/tasks/$taskId/applications': typeof TasksTaskIdApplicationsRoute
   '/tasks/$taskId/workspace': typeof TasksTaskIdWorkspaceRoute
-  '/tasks/payment/callback': typeof TasksPaymentCallbackRoute
   '/tasks/$taskId': typeof TasksTaskIdIndexRoute
 }
 export interface FileRoutesById {
@@ -454,7 +446,6 @@ export interface FileRoutesById {
   '/task/payment/callback': typeof TaskPaymentCallbackRoute
   '/tasks/$taskId/applications': typeof TasksTaskIdApplicationsRoute
   '/tasks/$taskId/workspace': typeof TasksTaskIdWorkspaceRoute
-  '/tasks/payment/callback': typeof TasksPaymentCallbackRoute
   '/tasks/$taskId/': typeof TasksTaskIdIndexRoute
 }
 export interface FileRouteTypes {
@@ -507,7 +498,6 @@ export interface FileRouteTypes {
     | '/task/payment/callback'
     | '/tasks/$taskId/applications'
     | '/tasks/$taskId/workspace'
-    | '/tasks/payment/callback'
     | '/tasks/$taskId/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -556,7 +546,6 @@ export interface FileRouteTypes {
     | '/task/payment/callback'
     | '/tasks/$taskId/applications'
     | '/tasks/$taskId/workspace'
-    | '/tasks/payment/callback'
     | '/tasks/$taskId'
   id:
     | '__root__'
@@ -607,7 +596,6 @@ export interface FileRouteTypes {
     | '/task/payment/callback'
     | '/tasks/$taskId/applications'
     | '/tasks/$taskId/workspace'
-    | '/tasks/payment/callback'
     | '/tasks/$taskId/'
   fileRoutesById: FileRoutesById
 }
@@ -938,13 +926,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TasksTaskIdIndexRouteImport
       parentRoute: typeof TasksRoute
     }
-    '/tasks/payment/callback': {
-      id: '/tasks/payment/callback'
-      path: '/payment/callback'
-      fullPath: '/tasks/payment/callback'
-      preLoaderRoute: typeof TasksPaymentCallbackRouteImport
-      parentRoute: typeof TasksRoute
-    }
     '/tasks/$taskId/workspace': {
       id: '/tasks/$taskId/workspace'
       path: '/$taskId/workspace'
@@ -1023,7 +1004,6 @@ interface TasksRouteChildren {
   TasksIndexRoute: typeof TasksIndexRoute
   TasksTaskIdApplicationsRoute: typeof TasksTaskIdApplicationsRoute
   TasksTaskIdWorkspaceRoute: typeof TasksTaskIdWorkspaceRoute
-  TasksPaymentCallbackRoute: typeof TasksPaymentCallbackRoute
   TasksTaskIdIndexRoute: typeof TasksTaskIdIndexRoute
 }
 
@@ -1035,7 +1015,6 @@ const TasksRouteChildren: TasksRouteChildren = {
   TasksIndexRoute: TasksIndexRoute,
   TasksTaskIdApplicationsRoute: TasksTaskIdApplicationsRoute,
   TasksTaskIdWorkspaceRoute: TasksTaskIdWorkspaceRoute,
-  TasksPaymentCallbackRoute: TasksPaymentCallbackRoute,
   TasksTaskIdIndexRoute: TasksTaskIdIndexRoute,
 }
 
