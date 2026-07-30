@@ -112,7 +112,16 @@ function WalletPage() {
         <div className="mt-6 grid gap-4 sm:grid-cols-2">
           <div className="rounded-2xl border border-border bg-card p-5">
             <div className="text-xs uppercase tracking-wide text-muted-foreground">Available balance</div>
-            <div className="mt-1 text-3xl font-bold">₦{Number(balance ?? 0).toLocaleString()}</div>
+            <div className="mt-1 text-3xl font-bold">
+              {bQ.isPending ? (
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              ) : (
+                <>₦{Number(balance ?? 0).toLocaleString()}</>
+              )}
+            </div>
+            {!bQ.isPending && bQ.data && !bQ.data.ok && (
+              <div className="mt-1 text-xs text-destructive">{errText((bQ.data as any).error, "Couldn't load your balance.")}</div>
+            )}
           </div>
           {pending != null && (
             <div className="rounded-2xl border border-border bg-card p-5">
@@ -121,6 +130,7 @@ function WalletPage() {
             </div>
           )}
         </div>
+
 
         {/* KYC + bank account cards */}
         <div className="mt-6 grid gap-4 sm:grid-cols-2">
