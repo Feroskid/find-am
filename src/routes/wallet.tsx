@@ -223,14 +223,14 @@ function WalletPage() {
         onOpenChange={setShowKyc}
         banks={banks}
         kycFn={(args: any) => kycFn({ data: { ...args, token: token! } })}
-        onDone={() => { bQ.refetch(); }}
+        onDone={refreshAccount}
       />
       <BankDialog
         open={showBank}
         onOpenChange={setShowBank}
         banks={banks}
         bankFn={(args: any) => bankFn({ data: { ...args, token: token! } })}
-        onDone={() => { bQ.refetch(); }}
+        onDone={refreshAccount}
       />
     </div>
   );
