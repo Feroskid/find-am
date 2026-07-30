@@ -688,9 +688,8 @@ function TaskDetail() {
               Log in to make an offer
             </Link>
           )}
-          {myApplication && (
-            {conversationCTA("block w-full text-center rounded-full border border-primary text-primary py-3 text-sm font-bold")}
-          )}
+          {myApplication &&
+            conversationCTA("block w-full text-center rounded-full border border-primary text-primary py-3 text-sm font-bold")}
         </div>
       )}
 
