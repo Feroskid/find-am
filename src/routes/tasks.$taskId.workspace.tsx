@@ -126,12 +126,12 @@ function WorkspacePage() {
   const hasRated = myRatingQ.data?.ok ? Boolean((myRatingQ.data.data as any)?.has_rated) : false;
 
   // If task hasn't been assigned yet, or the viewer is neither poster nor the assigned tasker,
-  // send them to the pre-assignment chat instead of an empty workspace.
+  // send them back to the task page where the offer/messages threads live.
   useEffect(() => {
     if (!ready || !token || !task) return;
     const assigned = inProgress || awaitingRelease || isCompleted;
     if (!assigned || (!isPoster && !isTaskerFinal)) {
-      navigate({ to: "/messages/$taskId", params: { taskId }, replace: true });
+      navigate({ to: "/tasks/$taskId", params: { taskId }, replace: true });
     }
   }, [ready, token, task, inProgress, awaitingRelease, isCompleted, isPoster, isTaskerFinal, taskId, navigate]);
 
@@ -157,9 +157,22 @@ function WorkspacePage() {
             ) : rawMessages.length === 0 ? (
               <div className="text-center text-sm text-muted-foreground py-10">Say hello to start the conversation.</div>
             ) : rawMessages.map((m: any, i: number) => {
+              const isSystem = m.is_system === 1 || m.is_system === true;
+              const text = m.message_text ?? m.body ?? m.message ?? m.text ?? "";
+
+              // System/opener messages render as a neutral centered pill, not attributed to anyone.
+              if (isSystem) {
+                return (
+                  <div key={m.message_id ?? m.id ?? i} className="flex justify-center my-1">
+                    <span className="rounded-full bg-muted px-3 py-1 text-[11px] text-muted-foreground text-center max-w-[85%]">
+                      {text}
+                    </span>
+                  </div>
+                );
+              }
+
               const senderId = m.sender_id ?? m.user_id ?? m.from;
               const mine = senderId !== undefined && String(senderId) === String(myId);
-              const text = m.message_text ?? m.body ?? m.message ?? m.text ?? "";
               return (
                 <div key={m.message_id ?? m.id ?? i} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
                   <div className={`max-w-[75%] rounded-2xl px-3.5 py-2 text-sm ${mine ? "bg-primary text-primary-foreground" : "bg-background border border-border"}`}>

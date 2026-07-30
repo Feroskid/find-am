@@ -10,8 +10,17 @@ import {
 } from "@/components/ui/dialog";
 import { useAuth } from "@/lib/auth";
 import {
-  walletBalance, walletTransactions, withdrawFunds, listBanks, verifyKyc, registerBank,
+  walletBalance, walletTransactions, withdrawFunds, listBanks, verifyKyc, registerBank, getMe,
 } from "@/lib/findtask.functions";
+
+/** Backend errors can be a string, an array of FastAPI validation objects, or an object. */
+function errText(e: any, fallback = "Something went wrong. Please try again."): string {
+  if (!e) return fallback;
+  if (typeof e === "string") return e.trim() || fallback;
+  if (Array.isArray(e)) return e.map((x) => x?.msg ?? JSON.stringify(x)).join(", ") || fallback;
+  if (typeof e === "object") return e.msg ?? e.detail ?? e.message ?? JSON.stringify(e);
+  return String(e);
+}
 
 export const Route = createFileRoute("/wallet")({
   head: () => ({ meta: [{ title: "Wallet — Find-task" }] }),
@@ -31,10 +40,12 @@ function WalletPage() {
   const banksFn = useServerFn(listBanks);
   const kycFn = useServerFn(verifyKyc);
   const bankFn = useServerFn(registerBank);
+  const meFn = useServerFn(getMe);
 
   const bQ = useQuery({ queryKey: ["wallet", token], enabled: !!token, queryFn: () => bFn({ data: { token: token! } }) });
   const tQ = useQuery({ queryKey: ["wallet-tx", token], enabled: !!token, queryFn: () => tFn({ data: { token: token! } }) });
   const banksQ = useQuery({ queryKey: ["banks"], queryFn: () => banksFn({}), staleTime: 60 * 60_000 });
+  const meQ = useQuery({ queryKey: ["me", token], enabled: !!token, queryFn: () => meFn({ data: { token: token! } }) });
 
   const [amount, setAmount] = useState("");
   const [bankCode, setBankCode] = useState("");
@@ -42,7 +53,12 @@ function WalletPage() {
   const [showKyc, setShowKyc] = useState(false);
   const [showBank, setShowBank] = useState(false);
 
-  const banks: any[] = banksQ.data?.ok ? ((banksQ.data.data as any)?.banks ?? []) : [];
+  // /banks may return { banks: [...] } or a bare array.
+  const banks: any[] = useMemo(() => {
+    const d: any = banksQ.data?.ok ? banksQ.data.data : null;
+    if (!d) return [];
+    return d.banks ?? d.data ?? d.results ?? (Array.isArray(d) ? d : []);
+  }, [banksQ.data]);
 
   const withdraw = useMutation({
     mutationFn: () =>
@@ -59,19 +75,30 @@ function WalletPage() {
         toast.success("Withdrawal requested.");
         setAmount("");
         bQ.refetch(); tQ.refetch();
-      } else toast.error(r.error);
+      } else toast.error(errText(r.error));
     },
   });
 
   if (!token) return null;
   const bal: any = bQ.data?.ok ? bQ.data.data : null;
-  const balance = bal?.balance ?? bal?.available_balance ?? 0;
-  const pending = bal?.pending ?? bal?.in_escrow ?? null;
-  const kycVerified = !!(bal?.kyc_verified ?? bal?.bvn_verified);
-  const savedBank: any = bal?.bank ?? bal?.bank_details ?? null;
+  const me: any = meQ.data?.ok ? ((meQ.data.data as any)?.user ?? meQ.data.data) : null;
+  // Backend /wallet/balance returns withdrawable_balance (same key the dashboard reads).
+  const balance =
+    bal?.withdrawable_balance ?? bal?.available_balance ?? bal?.balance ?? bal?.wallet_balance ?? 0;
+  const pending =
+    bal?.frozen_balance ?? bal?.escrow_balance ?? bal?.pending ?? bal?.in_escrow ?? null;
+  const kycVerified = !!(
+    bal?.kyc_verified ?? bal?.bvn_verified ?? me?.kyc_verified ?? me?.bvn_verified ?? me?.is_kyc_verified
+  );
+  const savedBank: any =
+    bal?.bank ?? bal?.bank_details ?? me?.bank ?? me?.bank_details ??
+    (me?.bank_code || me?.account_number
+      ? { bank_code: me?.bank_code, bank_name: me?.bank_name, account_number: me?.account_number, account_name: me?.account_name }
+      : null);
   const txs: any[] = tQ.data?.ok
     ? ((tQ.data.data as any)?.transactions ?? (tQ.data.data as any)?.results ?? (Array.isArray(tQ.data.data) ? tQ.data.data : []))
     : [];
+  const refreshAccount = () => { bQ.refetch(); meQ.refetch(); };
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -85,7 +112,16 @@ function WalletPage() {
         <div className="mt-6 grid gap-4 sm:grid-cols-2">
           <div className="rounded-2xl border border-border bg-card p-5">
             <div className="text-xs uppercase tracking-wide text-muted-foreground">Available balance</div>
-            <div className="mt-1 text-3xl font-bold">₦{Number(balance ?? 0).toLocaleString()}</div>
+            <div className="mt-1 text-3xl font-bold">
+              {bQ.isPending ? (
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              ) : (
+                <>₦{Number(balance ?? 0).toLocaleString()}</>
+              )}
+            </div>
+            {!bQ.isPending && bQ.data && !bQ.data.ok && (
+              <div className="mt-1 text-xs text-destructive">{errText((bQ.data as any).error, "Couldn't load your balance.")}</div>
+            )}
           </div>
           {pending != null && (
             <div className="rounded-2xl border border-border bg-card p-5">
@@ -94,6 +130,7 @@ function WalletPage() {
             </div>
           )}
         </div>
+
 
         {/* KYC + bank account cards */}
         <div className="mt-6 grid gap-4 sm:grid-cols-2">
@@ -186,14 +223,14 @@ function WalletPage() {
         onOpenChange={setShowKyc}
         banks={banks}
         kycFn={(args: any) => kycFn({ data: { ...args, token: token! } })}
-        onDone={() => { bQ.refetch(); }}
+        onDone={refreshAccount}
       />
       <BankDialog
         open={showBank}
         onOpenChange={setShowBank}
         banks={banks}
         bankFn={(args: any) => bankFn({ data: { ...args, token: token! } })}
-        onDone={() => { bQ.refetch(); }}
+        onDone={refreshAccount}
       />
     </div>
   );
@@ -227,10 +264,15 @@ function KycDialog({ open, onOpenChange, banks, kycFn, onDone }: any) {
             disabled={submitting || bvn.length !== 11 || !bankCode || acct.length < 10}
             onClick={async () => {
               setErr(null); setSubmitting(true);
-              const r = await kycFn({ bvn, bank_code: bankCode, account_number: acct });
+              let r: any;
+              try {
+                r = await kycFn({ bvn, bank_code: bankCode, account_number: acct });
+              } catch (e: any) {
+                r = { ok: false, error: e?.message ?? "Network error" };
+              }
               setSubmitting(false);
-              if (r.ok) { toast.success("KYC submitted"); onOpenChange(false); onDone?.(); }
-              else setErr(r.error);
+              if (r?.ok) { toast.success("BVN verified"); onOpenChange(false); onDone?.(); }
+              else { const m = errText(r?.error, "BVN verification failed."); setErr(m); toast.error(m); }
             }}
             className="inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-bold text-primary-foreground disabled:opacity-50"
           >
@@ -270,10 +312,15 @@ function BankDialog({ open, onOpenChange, banks, bankFn, onDone }: any) {
             disabled={submitting || !bankCode || acct.length < 10 || name.trim().length < 2}
             onClick={async () => {
               setErr(null); setSubmitting(true);
-              const r = await bankFn({ bank_code: bankCode, account_number: acct, account_name: name.trim() });
+              let r: any;
+              try {
+                r = await bankFn({ bank_code: bankCode, account_number: acct, account_name: name.trim() });
+              } catch (e: any) {
+                r = { ok: false, error: e?.message ?? "Network error" };
+              }
               setSubmitting(false);
-              if (r.ok) { toast.success("Bank saved"); onOpenChange(false); onDone?.(); }
-              else setErr(r.error);
+              if (r?.ok) { toast.success("Bank saved"); onOpenChange(false); onDone?.(); }
+              else { const m = errText(r?.error, "Couldn't save your bank."); setErr(m); toast.error(m); }
             }}
             className="inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-bold text-primary-foreground disabled:opacity-50"
           >

@@ -37,7 +37,6 @@ import { Route as TasksOffersRouteImport } from './routes/tasks.offers'
 import { Route as TasksMineRouteImport } from './routes/tasks.mine'
 import { Route as TasksCategoriesRouteImport } from './routes/tasks.categories'
 import { Route as TasksBrowseRouteImport } from './routes/tasks.browse'
-import { Route as MessagesTaskIdRouteImport } from './routes/messages.$taskId'
 import { Route as CommunitySettingsRouteImport } from './routes/community.settings'
 import { Route as CommunitySearchRouteImport } from './routes/community.search'
 import { Route as CommunityNotificationsRouteImport } from './routes/community.notifications'
@@ -198,11 +197,6 @@ const TasksBrowseRoute = TasksBrowseRouteImport.update({
   path: '/browse',
   getParentRoute: () => TasksRoute,
 } as any)
-const MessagesTaskIdRoute = MessagesTaskIdRouteImport.update({
-  id: '/messages/$taskId',
-  path: '/messages/$taskId',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const CommunitySettingsRoute = CommunitySettingsRouteImport.update({
   id: '/community/settings',
   path: '/community/settings',
@@ -330,7 +324,6 @@ export interface FileRoutesByFullPath {
   '/community/notifications': typeof CommunityNotificationsRoute
   '/community/search': typeof CommunitySearchRoute
   '/community/settings': typeof CommunitySettingsRoute
-  '/messages/$taskId': typeof MessagesTaskIdRoute
   '/tasks/browse': typeof TasksBrowseRoute
   '/tasks/categories': typeof TasksCategoriesRoute
   '/tasks/mine': typeof TasksMineRoute
@@ -378,7 +371,6 @@ export interface FileRoutesByTo {
   '/community/notifications': typeof CommunityNotificationsRoute
   '/community/search': typeof CommunitySearchRoute
   '/community/settings': typeof CommunitySettingsRoute
-  '/messages/$taskId': typeof MessagesTaskIdRoute
   '/tasks/browse': typeof TasksBrowseRoute
   '/tasks/categories': typeof TasksCategoriesRoute
   '/tasks/mine': typeof TasksMineRoute
@@ -429,7 +421,6 @@ export interface FileRoutesById {
   '/community/notifications': typeof CommunityNotificationsRoute
   '/community/search': typeof CommunitySearchRoute
   '/community/settings': typeof CommunitySettingsRoute
-  '/messages/$taskId': typeof MessagesTaskIdRoute
   '/tasks/browse': typeof TasksBrowseRoute
   '/tasks/categories': typeof TasksCategoriesRoute
   '/tasks/mine': typeof TasksMineRoute
@@ -481,7 +472,6 @@ export interface FileRouteTypes {
     | '/community/notifications'
     | '/community/search'
     | '/community/settings'
-    | '/messages/$taskId'
     | '/tasks/browse'
     | '/tasks/categories'
     | '/tasks/mine'
@@ -529,7 +519,6 @@ export interface FileRouteTypes {
     | '/community/notifications'
     | '/community/search'
     | '/community/settings'
-    | '/messages/$taskId'
     | '/tasks/browse'
     | '/tasks/categories'
     | '/tasks/mine'
@@ -579,7 +568,6 @@ export interface FileRouteTypes {
     | '/community/notifications'
     | '/community/search'
     | '/community/settings'
-    | '/messages/$taskId'
     | '/tasks/browse'
     | '/tasks/categories'
     | '/tasks/mine'
@@ -626,7 +614,6 @@ export interface RootRouteChildren {
   CommunityNotificationsRoute: typeof CommunityNotificationsRoute
   CommunitySearchRoute: typeof CommunitySearchRoute
   CommunitySettingsRoute: typeof CommunitySettingsRoute
-  MessagesTaskIdRoute: typeof MessagesTaskIdRoute
   UUserIdRoute: typeof UUserIdRoute
   CommunityIndexRoute: typeof CommunityIndexRoute
   MessagesIndexRoute: typeof MessagesIndexRoute
@@ -835,13 +822,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TasksBrowseRouteImport
       parentRoute: typeof TasksRoute
     }
-    '/messages/$taskId': {
-      id: '/messages/$taskId'
-      path: '/messages/$taskId'
-      fullPath: '/messages/$taskId'
-      preLoaderRoute: typeof MessagesTaskIdRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/community/settings': {
       id: '/community/settings'
       path: '/community/settings'
@@ -1047,7 +1027,6 @@ const rootRouteChildren: RootRouteChildren = {
   CommunityNotificationsRoute: CommunityNotificationsRoute,
   CommunitySearchRoute: CommunitySearchRoute,
   CommunitySettingsRoute: CommunitySettingsRoute,
-  MessagesTaskIdRoute: MessagesTaskIdRoute,
   UUserIdRoute: UUserIdRoute,
   CommunityIndexRoute: CommunityIndexRoute,
   MessagesIndexRoute: MessagesIndexRoute,
@@ -1060,13 +1039,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

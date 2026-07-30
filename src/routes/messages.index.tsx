@@ -125,7 +125,7 @@ function MessagesInbox() {
                 return (
                   <li key={id + (c.other_id ?? "")}>
                     <Link
-                      to="/messages/$taskId"
+                      to="/tasks/$taskId/workspace"
                       params={{ taskId: id }}
                       className="flex items-center gap-3 px-4 py-3 hover:bg-muted/40 transition-colors"
                     >

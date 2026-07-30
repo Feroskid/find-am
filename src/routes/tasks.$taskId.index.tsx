@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import {
   ArrowLeft, MapPin, Clock, Loader2, Flag, ChevronDown, BadgeCheck, Star, Globe, CheckCircle2, RefreshCw, Wallet, CreditCard,
 } from "lucide-react";
@@ -252,7 +252,24 @@ function TaskDetail() {
     "completed", "released", "paid_out", "paid",
   ]);
   const useWorkspace = WORKSPACE_STATUSES.has(status) && (isPoster || (!!myApplication && String(myApplication?.status ?? "").toLowerCase() === "accepted"));
-  const conversationTo = useWorkspace ? "/tasks/$taskId/workspace" : "/messages/$taskId";
+  // Assigned participants get the full workspace; everyone else (taskers with a
+  // pending offer, posters reviewing offers) uses the Messages tab on this page.
+  const threadsRef = useRef<HTMLElement | null>(null);
+  const openThread = () => {
+    setTab("questions");
+    setTimeout(() => threadsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 40);
+  };
+  const conversationCTA = (className: string, label = "Open conversation", onDone?: () => void) =>
+    useWorkspace ? (
+      <Link to="/tasks/$taskId/workspace" params={{ taskId }} onClick={onDone} className={className}>
+        {label}
+      </Link>
+    ) : (
+      <button type="button" onClick={() => { onDone?.(); openThread(); }} className={className}>
+        {label}
+      </button>
+    );
+
   const location = task?.location_text ?? task?.location;
   const remote = !!task?.is_remote;
   const date = task?.deadline ? new Date(task.deadline) : null;
@@ -430,7 +447,7 @@ function TaskDetail() {
               )}
 
               {/* Offers / Messages */}
-              <section className="mt-8">
+              <section className="mt-8" ref={threadsRef}>
                 <div className="inline-flex w-full sm:w-auto rounded-full bg-muted p-1">
                   <button
                     onClick={() => setTab("offers")}
@@ -557,9 +574,7 @@ function TaskDetail() {
                 </div>
                 {isPoster ? (
                   <div className="mt-5 space-y-2">
-                    <Link to={conversationTo} params={{ taskId }} className="block w-full rounded-full bg-primary py-3 text-sm font-bold text-primary-foreground hover:opacity-90">
-                      Open conversation
-                    </Link>
+                    {conversationCTA("block w-full rounded-full bg-primary py-3 text-sm font-bold text-primary-foreground hover:opacity-90")}
                     {status === "open" && (
                       <Link to="/tasks/$taskId/applications" params={{ taskId }} className="block w-full rounded-full border border-border py-3 text-sm font-bold hover:bg-muted">
                         View applications
@@ -603,9 +618,10 @@ function TaskDetail() {
                   </Link>
                 ) : myApplication ? (
                   <div className="mt-5 space-y-2">
-                    <Link to={conversationTo} params={{ taskId }} className="block w-full rounded-full border border-primary text-primary py-3 text-sm font-bold hover:bg-primary/5">
-                      {status !== "open" ? "Open conversation" : "Offer sent · Open conversation"}
-                    </Link>
+                    {conversationCTA(
+                      "block w-full rounded-full border border-primary text-primary py-3 text-sm font-bold hover:bg-primary/5",
+                      status !== "open" ? "Open conversation" : "Offer sent · Open conversation",
+                    )}
                     {status !== "open" && status !== "completed" && status !== "cancelled" && (
                       <Link
                         to="/tasks/$taskId/workspace"
@@ -672,11 +688,8 @@ function TaskDetail() {
               Log in to make an offer
             </Link>
           )}
-          {myApplication && (
-            <Link to={conversationTo} params={{ taskId }} className="block w-full text-center rounded-full border border-primary text-primary py-3 text-sm font-bold">
-              Open conversation
-            </Link>
-          )}
+          {myApplication &&
+            conversationCTA("block w-full text-center rounded-full border border-primary text-primary py-3 text-sm font-bold")}
         </div>
       )}
 
@@ -866,14 +879,11 @@ function TaskDetail() {
             >
               Keep browsing
             </button>
-            <Link
-              to={conversationTo}
-              params={{ taskId }}
-              onClick={() => setShowOfferSuccess(false)}
-              className="inline-flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-bold text-primary-foreground hover:opacity-90"
-            >
-              Open conversation
-            </Link>
+            {conversationCTA(
+              "inline-flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-bold text-primary-foreground hover:opacity-90",
+              "Open conversation",
+              () => setShowOfferSuccess(false),
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>

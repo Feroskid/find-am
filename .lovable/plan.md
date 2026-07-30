@@ -1,71 +1,44 @@
-## Issues
+## 1. Workspace chat: system messages as neutral pills
 
-**1. "My assigned tasks" shows "Untitled task" for every row (tasker side)**
+In `src/routes/tasks.$taskId.workspace.tsx`, replace the message-rendering block (lines 159–172) with your version: messages where `is_system` is `1`/`true` render as a centered grey pill with no sender attribution; all other messages keep the current left/right bubble treatment with timestamp.
 
-`src/routes/tasks.mine.tsx` reads each row as a flat task: `t.title`, `t.budget`, `t.status`, `t.is_remote`, `t.location_text`, `t.deadline`. That's correct for the poster's `role=poster` response, but the tasker's `role=tasker` response from `GET /user/{id}/tasks` returns each row as an offer/assignment wrapper — the task fields live under `t.task` (with fallbacks like `t.task_title`, `t.task_budget`). Because the wrapper has no top-level `title`, every card falls back to "Untitled task" and shows ₦0 style defaults (that's also why status shows "accepted" from the offer, not the task).
+## 2. Remove the WhatsApp-style chat page
 
-**2. Workspace: Tasker never sees "Mark complete", Poster never sees "Release payment"**
+Verified: `src/routes/messages.$taskId.tsx` is a full dark WhatsApp clone (hardcoded `#0b141a` / `#005c4b` colours, bubble tails, "Switch to task" button).
 
-In `src/routes/tasks.$taskId.workspace.tsx`:
+- Delete `src/routes/messages.$taskId.tsx`.
+- Update every link that pointed at it so nobody hits a dead route:
+  - Assigned task participants → `/tasks/$taskId/workspace`.
+  - Unassigned taskers who made an offer, and posters browsing offers → the task detail page `/tasks/$taskId`, Messages tab (where the offer thread already lives).
+- Remove the defensive redirect in the workspace that currently bounces non-assigned viewers to `/messages/$taskId`; it will send them to `/tasks/$taskId` instead.
+- Check `src/routes/messages.index.tsx`, `notifications.tsx`, `tasks.$taskId.index.tsx`, and `TaskCard` for links to the removed route and repoint them.
 
-- `isTasker` compares `myId` against `task.tasker_id ?? accepted_tasker_id ?? assigned_to`. For accepted offers the backend commonly returns the assigned user under different keys (e.g. `assigned_tasker_id`, `accepted_user_id`, `tasker.user_id`), so `isTasker` resolves to `false` and the "Mark task as complete" button is hidden.
-- `awaitingRelease` only flips on for a narrow status whitelist (`completed_by_tasker`, `pending_release`, etc.) plus `task.tasker_marked_complete`. The real backend status after tasker completion is typically `awaiting_confirmation` / `awaiting_payment` / `pending_confirmation` — none of which are in the list — so the Poster's "Release payment" block never renders.
+## 3. Wallet balance showing ₦0
 
-## Fix — two files only
+Confirmed root cause: the dashboard reads `withdrawable_balance` from `/wallet/balance`, but `src/routes/wallet.tsx` reads `balance` / `available_balance`, which the backend doesn't return — so it always renders 0.
 
-### `src/routes/tasks.mine.tsx`
+- Read the balance with the same key order the dashboard uses (`withdrawable_balance` first, then the other aliases as fallback).
+- Do the same for the escrow/pending figure, and show a proper loading state instead of a hard `₦0` while the query is in flight.
 
-Normalize each tasker row before rendering so the card reads from the nested task when present:
+## 4 & 5. BVN verification and "Add bank" not saving
 
-```ts
-const row = t.task ?? t;                       // unwrap offer/assignment wrapper
-const id = row.task_id ?? row.id ?? t.task_id ?? t.id;
-const title = row.title ?? t.task_title ?? t.title ?? "Untitled task";
-const budget = row.budget ?? t.task_budget ?? t.budget ?? 0;
-const remote = !!(row.is_remote ?? t.is_remote);
-const loc = row.location_text ?? row.location ?? t.location_text;
-const deadline = row.deadline ?? t.deadline;
-const status = String(row.status ?? t.task_status ?? t.status ?? "open").toLowerCase();
-const offers = row.offers_count ?? row.applications_count ?? 0;
-```
+Checked against the live backend spec (`https://api.find-am.com/openapi.json`):
 
-Use these in the JSX and in the search/filter memo (so search-by-title and status filter also work for taskers). Poster mode is unaffected because `row = t.task ?? t` falls back to `t`.
+- `POST /wallet/verify-kyc` expects `{ bvn, bank_code, account_number }` — our payload matches.
+- `POST /auth/register-bank` expects `{ bank_code, account_number, account_name }` — our payload matches.
 
-### `src/routes/tasks.$taskId.workspace.tsx`
+So the request shapes are correct; what's broken on the frontend is the **feedback and state** around them:
 
-Broaden identity and status detection so both buttons render:
+- The wallet page decides "Verified" / "bank on file" from `bal?.kyc_verified` and `bal?.bank`, keys the balance response does not necessarily return — so even a successful save still shows "Required" / "No bank account on file", making it look like nothing saved.
+  Fix: source verification and bank state from the user profile (`/auth/me`) as well as the balance payload, and refetch both after a successful submit.
+- Errors are only shown as small text inside the dialog and can be an empty string when the backend returns a `detail` object. Fix: surface the backend's real message (including 422 validation detail) in a toast plus inline, so a genuine backend rejection is visible rather than looking like a silent no-op.
+- Bank list: if `/banks` returns a bare array rather than `{ banks: [...] }`, the select is empty and no code can be picked — handle both shapes.
 
-1. Widen `taskerId` resolution:
-   ```ts
-   const taskerId =
-     task?.tasker_id ?? task?.accepted_tasker_id ?? task?.assigned_to ??
-     task?.assigned_tasker_id ?? task?.accepted_user_id ??
-     task?.tasker?.user_id ?? task?.tasker?.id ?? task?.assignee_id;
-   ```
-   Also treat the viewer as the tasker when they own the accepted offer: if `task.accepted_offer?.user_id === myId` (or `task.my_offer?.status === "accepted"`), set `isTasker = true`.
+Once these are in, if the backend still rejects a real BVN/bank submission, the exact server message will be visible on screen and we'll know whether the remaining problem is backend-side.
 
-2. Expand `AWAITING` to include the statuses the backend actually emits:
-   ```ts
-   const AWAITING = [
-     "completed_by_tasker","pending_release","awaiting_release",
-     "work_submitted","submitted",
-     "awaiting_confirmation","awaiting_payment","pending_confirmation",
-     "pending_payment","tasker_completed",
-   ];
-   const awaitingRelease =
-     AWAITING.includes(status) ||
-     Boolean(task?.tasker_marked_complete ?? task?.completed_by_tasker ?? task?.is_awaiting_release);
-   ```
+## Verification note
 
-3. Enforce the ordering rule you asked for — Poster's "Release payment" only appears after Tasker clicks "Mark complete":
-   - Tasker button visible when `isTasker && inProgress && !awaitingRelease && !isCompleted`.
-   - Poster release visible when `isPoster && awaitingRelease && !isCompleted` (already correct once `awaitingRelease` is computed properly).
+The saved test account no longer authenticates (`/auth/login` returns "Invalid email or password"), and no password was supplied, so I can't log in to confirm the live wallet payload end to end. I'll implement against the published API spec and the working dashboard behaviour; send a valid password when you have one and I'll re-run a live check on the wallet, BVN and bank flows.
 
-No other files change. No changes to auth, routing, or data fetching — just field-name normalization and status-set widening.
-
-## Verification
-
-After the edit, use Playwright with the provided account to:
-- Open `/tasks/mine` in tasker mode and confirm titles/budgets/statuses show for the 5 assigned rows in the screenshot.
-- Open the workspace for one assigned task as the tasker → "Mark task as complete" is visible; click it.
-- Switch to the poster account (or check a task the user posted that's now `awaiting_release`) → "Release payment" is visible only after the tasker's click.
+### Files touched
+`src/routes/tasks.$taskId.workspace.tsx`, `src/routes/messages.$taskId.tsx` (deleted), `src/routes/messages.index.tsx`, `src/routes/wallet.tsx`, plus any route linking to the removed chat page.
