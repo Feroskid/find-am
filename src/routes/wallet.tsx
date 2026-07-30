@@ -40,10 +40,12 @@ function WalletPage() {
   const banksFn = useServerFn(listBanks);
   const kycFn = useServerFn(verifyKyc);
   const bankFn = useServerFn(registerBank);
+  const meFn = useServerFn(getMe);
 
   const bQ = useQuery({ queryKey: ["wallet", token], enabled: !!token, queryFn: () => bFn({ data: { token: token! } }) });
   const tQ = useQuery({ queryKey: ["wallet-tx", token], enabled: !!token, queryFn: () => tFn({ data: { token: token! } }) });
   const banksQ = useQuery({ queryKey: ["banks"], queryFn: () => banksFn({}), staleTime: 60 * 60_000 });
+  const meQ = useQuery({ queryKey: ["me", token], enabled: !!token, queryFn: () => meFn({ data: { token: token! } }) });
 
   const [amount, setAmount] = useState("");
   const [bankCode, setBankCode] = useState("");
@@ -51,7 +53,12 @@ function WalletPage() {
   const [showKyc, setShowKyc] = useState(false);
   const [showBank, setShowBank] = useState(false);
 
-  const banks: any[] = banksQ.data?.ok ? ((banksQ.data.data as any)?.banks ?? []) : [];
+  // /banks may return { banks: [...] } or a bare array.
+  const banks: any[] = useMemo(() => {
+    const d: any = banksQ.data?.ok ? banksQ.data.data : null;
+    if (!d) return [];
+    return d.banks ?? d.data ?? d.results ?? (Array.isArray(d) ? d : []);
+  }, [banksQ.data]);
 
   const withdraw = useMutation({
     mutationFn: () =>
@@ -68,19 +75,30 @@ function WalletPage() {
         toast.success("Withdrawal requested.");
         setAmount("");
         bQ.refetch(); tQ.refetch();
-      } else toast.error(r.error);
+      } else toast.error(errText(r.error));
     },
   });
 
   if (!token) return null;
   const bal: any = bQ.data?.ok ? bQ.data.data : null;
-  const balance = bal?.balance ?? bal?.available_balance ?? 0;
-  const pending = bal?.pending ?? bal?.in_escrow ?? null;
-  const kycVerified = !!(bal?.kyc_verified ?? bal?.bvn_verified);
-  const savedBank: any = bal?.bank ?? bal?.bank_details ?? null;
+  const me: any = meQ.data?.ok ? ((meQ.data.data as any)?.user ?? meQ.data.data) : null;
+  // Backend /wallet/balance returns withdrawable_balance (same key the dashboard reads).
+  const balance =
+    bal?.withdrawable_balance ?? bal?.available_balance ?? bal?.balance ?? bal?.wallet_balance ?? 0;
+  const pending =
+    bal?.frozen_balance ?? bal?.escrow_balance ?? bal?.pending ?? bal?.in_escrow ?? null;
+  const kycVerified = !!(
+    bal?.kyc_verified ?? bal?.bvn_verified ?? me?.kyc_verified ?? me?.bvn_verified ?? me?.is_kyc_verified
+  );
+  const savedBank: any =
+    bal?.bank ?? bal?.bank_details ?? me?.bank ?? me?.bank_details ??
+    (me?.bank_code || me?.account_number
+      ? { bank_code: me?.bank_code, bank_name: me?.bank_name, account_number: me?.account_number, account_name: me?.account_name }
+      : null);
   const txs: any[] = tQ.data?.ok
     ? ((tQ.data.data as any)?.transactions ?? (tQ.data.data as any)?.results ?? (Array.isArray(tQ.data.data) ? tQ.data.data : []))
     : [];
+  const refreshAccount = () => { bQ.refetch(); meQ.refetch(); };
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
