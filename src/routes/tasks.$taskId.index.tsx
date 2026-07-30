@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import {
   ArrowLeft, MapPin, Clock, Loader2, Flag, ChevronDown, BadgeCheck, Star, Globe, CheckCircle2, RefreshCw, Wallet, CreditCard,
 } from "lucide-react";
@@ -252,7 +252,24 @@ function TaskDetail() {
     "completed", "released", "paid_out", "paid",
   ]);
   const useWorkspace = WORKSPACE_STATUSES.has(status) && (isPoster || (!!myApplication && String(myApplication?.status ?? "").toLowerCase() === "accepted"));
-  const conversationTo = useWorkspace ? "/tasks/$taskId/workspace" : "/messages/$taskId";
+  // Assigned participants get the full workspace; everyone else (taskers with a
+  // pending offer, posters reviewing offers) uses the Messages tab on this page.
+  const threadsRef = useRef<HTMLElement | null>(null);
+  const openThread = () => {
+    setTab("questions");
+    setTimeout(() => threadsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 40);
+  };
+  const conversationCTA = (className: string, label = "Open conversation", onDone?: () => void) =>
+    useWorkspace ? (
+      <Link to="/tasks/$taskId/workspace" params={{ taskId }} onClick={onDone} className={className}>
+        {label}
+      </Link>
+    ) : (
+      <button type="button" onClick={() => { onDone?.(); openThread(); }} className={className}>
+        {label}
+      </button>
+    );
+
   const location = task?.location_text ?? task?.location;
   const remote = !!task?.is_remote;
   const date = task?.deadline ? new Date(task.deadline) : null;
