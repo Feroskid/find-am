@@ -264,10 +264,15 @@ function KycDialog({ open, onOpenChange, banks, kycFn, onDone }: any) {
             disabled={submitting || bvn.length !== 11 || !bankCode || acct.length < 10}
             onClick={async () => {
               setErr(null); setSubmitting(true);
-              const r = await kycFn({ bvn, bank_code: bankCode, account_number: acct });
+              let r: any;
+              try {
+                r = await kycFn({ bvn, bank_code: bankCode, account_number: acct });
+              } catch (e: any) {
+                r = { ok: false, error: e?.message ?? "Network error" };
+              }
               setSubmitting(false);
-              if (r.ok) { toast.success("KYC submitted"); onOpenChange(false); onDone?.(); }
-              else setErr(r.error);
+              if (r?.ok) { toast.success("BVN verified"); onOpenChange(false); onDone?.(); }
+              else { const m = errText(r?.error, "BVN verification failed."); setErr(m); toast.error(m); }
             }}
             className="inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-bold text-primary-foreground disabled:opacity-50"
           >
@@ -307,10 +312,15 @@ function BankDialog({ open, onOpenChange, banks, bankFn, onDone }: any) {
             disabled={submitting || !bankCode || acct.length < 10 || name.trim().length < 2}
             onClick={async () => {
               setErr(null); setSubmitting(true);
-              const r = await bankFn({ bank_code: bankCode, account_number: acct, account_name: name.trim() });
+              let r: any;
+              try {
+                r = await bankFn({ bank_code: bankCode, account_number: acct, account_name: name.trim() });
+              } catch (e: any) {
+                r = { ok: false, error: e?.message ?? "Network error" };
+              }
               setSubmitting(false);
-              if (r.ok) { toast.success("Bank saved"); onOpenChange(false); onDone?.(); }
-              else setErr(r.error);
+              if (r?.ok) { toast.success("Bank saved"); onOpenChange(false); onDone?.(); }
+              else { const m = errText(r?.error, "Couldn't save your bank."); setErr(m); toast.error(m); }
             }}
             className="inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-bold text-primary-foreground disabled:opacity-50"
           >
