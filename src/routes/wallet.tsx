@@ -10,8 +10,17 @@ import {
 } from "@/components/ui/dialog";
 import { useAuth } from "@/lib/auth";
 import {
-  walletBalance, walletTransactions, withdrawFunds, listBanks, verifyKyc, registerBank,
+  walletBalance, walletTransactions, withdrawFunds, listBanks, verifyKyc, registerBank, getMe,
 } from "@/lib/findtask.functions";
+
+/** Backend errors can be a string, an array of FastAPI validation objects, or an object. */
+function errText(e: any, fallback = "Something went wrong. Please try again."): string {
+  if (!e) return fallback;
+  if (typeof e === "string") return e.trim() || fallback;
+  if (Array.isArray(e)) return e.map((x) => x?.msg ?? JSON.stringify(x)).join(", ") || fallback;
+  if (typeof e === "object") return e.msg ?? e.detail ?? e.message ?? JSON.stringify(e);
+  return String(e);
+}
 
 export const Route = createFileRoute("/wallet")({
   head: () => ({ meta: [{ title: "Wallet — Find-task" }] }),
