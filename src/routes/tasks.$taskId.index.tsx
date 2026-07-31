@@ -246,6 +246,10 @@ function TaskDetail() {
   });
 
   const status = String(task?.status ?? "open").toLowerCase();
+  // A still-open task whose deadline has passed is expired: nobody can offer on it.
+  const isExpired =
+    status === "expired" ||
+    (status === "open" && !!task?.deadline && new Date(task.deadline).getTime() < Date.now());
   const WORKSPACE_STATUSES = new Set([
     "assigned", "accepted", "in_progress", "active",
     "completed_by_tasker", "pending_release", "awaiting_release", "work_submitted", "submitted",
@@ -487,7 +491,7 @@ function TaskDetail() {
                       )}
                       {offers.length === 0 ? (
                         <div className="rounded-2xl border border-dashed border-border p-8 text-center text-muted-foreground">
-                          No offers yet. {!isPoster && token && status === "open" && (
+                          No offers yet. {!isPoster && token && status === "open" && !isExpired && (
                             <button onClick={openApplyModal} className="text-primary font-bold hover:underline">Be the first to make one →</button>
                           )}
                         </div>
@@ -596,6 +600,10 @@ function TaskDetail() {
                       >
                         {cancelM.isPending ? "Cancelling…" : "Cancel task"}
                       </button>
+                    ) : isExpired ? (
+                      <div className="rounded-xl border border-border bg-muted/40 p-2.5 text-xs text-muted-foreground">
+                        This task has expired — its deadline has passed, so it no longer accepts offers.
+                      </div>
                     ) : status !== "completed" && status !== "cancelled" ? (
                       <>
                         <div className="rounded-xl border border-border bg-muted/40 p-2.5 text-xs text-muted-foreground">
@@ -632,6 +640,10 @@ function TaskDetail() {
                         Open dispute
                       </Link>
                     )}
+                  </div>
+                ) : isExpired ? (
+                  <div className="mt-5 rounded-xl border border-border bg-muted/40 p-3 text-sm text-muted-foreground">
+                    This task has expired — its deadline has passed, so it no longer accepts offers.
                   </div>
                 ) : status !== "open" ? (
                   <div className="mt-5 rounded-xl border border-border bg-muted/40 p-3 text-sm text-muted-foreground capitalize">
@@ -678,7 +690,7 @@ function TaskDetail() {
               <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Task Budget</div>
             </div>
           </div>
-          {!isPoster && token && status === "open" && !myApplication && (
+          {!isPoster && token && status === "open" && !isExpired && !myApplication && (
             <button onClick={openApplyModal} className="w-full rounded-full bg-primary py-3 text-sm font-bold text-primary-foreground">
               Make an offer
             </button>
