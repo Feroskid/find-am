@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Clock, MapPin, Banknote, Globe, MessageSquare } from "lucide-react";
+import { Clock, MapPin, Banknote, Globe, MessageSquare, Sparkles } from "lucide-react";
 
 export interface TaskCardData {
   id: string | number;
@@ -13,6 +13,7 @@ export interface TaskCardData {
   is_remote?: number | boolean;
   poster_name?: string;
   offers_count?: number;
+  isAdmin?: boolean;
 }
 
 /** Adapter — accepts the raw API row and normalises field names. */
@@ -29,8 +30,10 @@ export function toCardData(t: any): TaskCardData {
     is_remote: t.is_remote,
     poster_name: t.poster_name,
     offers_count: t.offers_count ?? t.applications_count ?? t.applicants_count ?? t.offer_count ?? 0,
+    isAdmin: Boolean(t.poster_is_admin ?? t.is_admin),
   };
 }
+
 
 
 function formatBudget(b: number | string | undefined) {
