@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Clock, MapPin, Banknote, Globe, MessageSquare } from "lucide-react";
+import { Clock, MapPin, Banknote, Globe, MessageSquare, Sparkles } from "lucide-react";
 
 export interface TaskCardData {
   id: string | number;
@@ -13,6 +13,7 @@ export interface TaskCardData {
   is_remote?: number | boolean;
   poster_name?: string;
   offers_count?: number;
+  isAdmin?: boolean;
 }
 
 /** Adapter — accepts the raw API row and normalises field names. */
@@ -29,8 +30,10 @@ export function toCardData(t: any): TaskCardData {
     is_remote: t.is_remote,
     poster_name: t.poster_name,
     offers_count: t.offers_count ?? t.applications_count ?? t.applicants_count ?? t.offer_count ?? 0,
+    isAdmin: Boolean(t.poster_is_admin ?? t.is_admin),
   };
 }
+
 
 
 function formatBudget(b: number | string | undefined) {
@@ -49,12 +52,25 @@ function formatDate(d?: string) {
 
 export function TaskCard({ task }: { task: TaskCardData }) {
   if (task.id == null || task.id === "" || task.id === "undefined") return null;
+  const isAdmin = Boolean(task.isAdmin);
   return (
     <Link
       to="/tasks/$taskId"
       params={{ taskId: String(task.id) }}
-      className="block rounded-2xl border border-border bg-card p-5 hover:border-primary hover:shadow-md transition-all"
+      className={
+        isAdmin
+          ? "block rounded-2xl border-2 border-primary/40 bg-gradient-to-br from-amber-50 via-card to-primary/5 dark:from-amber-500/10 dark:via-card dark:to-primary/10 p-5 shadow-sm hover:shadow-lg hover:border-primary/60 transition-all relative overflow-hidden"
+          : "block rounded-2xl border border-border bg-card p-5 hover:border-primary hover:shadow-md transition-all"
+      }
     >
+      {isAdmin && (
+        <>
+          <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-amber-400 via-amber-300 to-primary" />
+          <div className="mb-2 inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-amber-400 to-primary px-2.5 py-0.5 text-[11px] font-bold text-white shadow-sm">
+            <Sparkles className="h-3 w-3" /> Official Find-am task
+          </div>
+        </>
+      )}
       <div className="flex items-start justify-between gap-3">
         <h3 className="text-base font-semibold leading-snug line-clamp-2">{task.title}</h3>
         <span className="inline-flex items-center gap-1 text-sm font-semibold text-primary shrink-0">

@@ -260,7 +260,7 @@ export const declineApplicant = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) =>
     call(`/task/${data.taskId}/decline/${data.taskerId}`, {
-      method: "PUT",
+      method: "POST",
       token: data.token,
     }),
   );
@@ -333,9 +333,14 @@ export const getMyRating = createServerFn({ method: "POST" })
 
 // ---- Messages -----------------------------------------------------------
 export const listMessages = createServerFn({ method: "POST" })
-  .inputValidator((i: unknown) => z.object({ taskId: TaskId, token: Token }).parse(i))
+  .inputValidator((i: unknown) =>
+    z.object({ taskId: TaskId, taskerId: z.string().optional(), token: Token }).parse(i),
+  )
   .handler(async ({ data }) =>
-    call(`/task/${data.taskId}/messages`, { token: data.token }),
+    call(
+      `/task/${data.taskId}/messages${data.taskerId ? `?tasker_id=${encodeURIComponent(data.taskerId)}` : ""}`,
+      { token: data.token },
+    ),
   );
 
 export const sendMessage = createServerFn({ method: "POST" })
@@ -344,6 +349,7 @@ export const sendMessage = createServerFn({ method: "POST" })
       taskId: TaskId,
       message_text: z.string().min(1).max(4000),
       attachment_url: z.string().url().max(2048).optional(),
+      recipient_id: z.string().optional(),
       token: Token,
     }).parse(i),
   )

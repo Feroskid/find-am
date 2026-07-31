@@ -16,6 +16,9 @@ import { MilestoneActions } from "@/components/MilestoneActions";
 
 
 export const Route = createFileRoute("/tasks/$taskId/workspace")({
+  validateSearch: (s: Record<string, unknown>) => ({
+    with: typeof s.with === "string" ? s.with : undefined,
+  }),
   head: () => ({ meta: [{ title: "Task workspace — Find-task" }] }),
   component: WorkspacePage,
 });
@@ -28,6 +31,7 @@ function extractMsgs(d: any): any[] {
 
 function WorkspacePage() {
   const { taskId } = Route.useParams();
+  const { with: withTasker } = Route.useSearch();
   const { token, ready, user } = useAuth();
   const navigate = useNavigate();
   useEffect(() => {
@@ -45,9 +49,9 @@ function WorkspacePage() {
 
   const taskQ = useQuery({ queryKey: ["task", taskId], queryFn: () => tFn({ data: { taskId } }) });
   const msgsQ = useQuery({
-    queryKey: ["task", taskId, "messages", token],
+    queryKey: ["task", taskId, "messages", token, withTasker ?? ""],
     enabled: !!token,
-    queryFn: () => mFn({ data: { taskId, token: token! } }),
+    queryFn: () => mFn({ data: { taskId, taskerId: withTasker, token: token! } }),
     refetchInterval: 8000,
   });
 
@@ -71,7 +75,7 @@ function WorkspacePage() {
 
   const sendM = useMutation({
     mutationFn: async () =>
-      sFn({ data: { taskId, message_text: draft.trim(), token: token! } }),
+      sFn({ data: { taskId, message_text: draft.trim(), recipient_id: withTasker, token: token! } }),
     onSuccess: (r) => {
       if (r.ok) { setDraft(""); msgsQ.refetch(); } else toast.error(r.error);
     },
@@ -203,7 +207,7 @@ function WorkspacePage() {
         <aside className="space-y-4">
           {task && (
             <div className="rounded-2xl border border-border bg-card p-5">
-              <div className="text-xs text-muted-foreground">Budget (escrow)</div>
+              <div className="text-xs text-muted-foreground">Budget (held)</div>
               <div className="mt-1 flex items-center gap-2 text-2xl font-bold">
                 <Banknote className="h-5 w-5 text-primary" /> ₦{Number(task.budget ?? 0).toLocaleString()}
               </div>

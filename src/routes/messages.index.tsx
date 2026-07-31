@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
-import { Loader2, MessageSquare, Search } from "lucide-react";
+import { Loader2, MessageSquare, Search, Users, ChevronDown } from "lucide-react";
 import { TaskHeader } from "@/components/TaskHeader";
 import { getMyConversations } from "@/lib/findtask.functions";
 import { useAuth } from "@/lib/auth";
@@ -70,6 +70,36 @@ function MessagesInbox() {
     });
   }, [convQ.data, q]);
 
+  // Group conversations by task. Single-tasker tasks stay flat; multi-tasker tasks
+  // collapse into one expandable entry.
+  const grouped = useMemo(() => {
+    const byTask = new Map<string, any[]>();
+    for (const c of conversations) {
+      const tid = String(c.task_id ?? c.id);
+      if (!byTask.has(tid)) byTask.set(tid, []);
+      byTask.get(tid)!.push(c);
+    }
+    return Array.from(byTask.entries()).map(([taskId, items]) => ({
+      taskId,
+      items,
+      isGroup: items.length > 1,
+      taskTitle: items[0]?.task_title ?? "Task",
+      lastAt: items.reduce((max, c) => {
+        const t = new Date(c.last_message_at ?? 0).getTime();
+        return t > max ? t : max;
+      }, 0),
+      unreadTotal: items.reduce((s, c) => s + Number(c.unread_count ?? 0), 0),
+    })).sort((a, b) => b.lastAt - a.lastAt);
+  }, [conversations]);
+
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const toggle = (id: string) =>
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+
   if (!token) return null;
 
   return (
@@ -118,40 +148,119 @@ function MessagesInbox() {
             </div>
           ) : (
             <ul className="divide-y divide-border">
-              {conversations.map((c) => {
-                const id = String(c.task_id ?? c.id);
-                const name = c.other_name ?? c.name ?? "Chat";
-                const unread = Number(c.unread_count ?? 0);
+              {grouped.map((g) => {
+                if (!g.isGroup) {
+                  const c = g.items[0];
+                  const name = c.other_name ?? c.name ?? "Chat";
+                  const unread = Number(c.unread_count ?? 0);
+                  return (
+                    <li key={g.taskId}>
+                      <Link
+                        to="/tasks/$taskId/workspace"
+                        params={{ taskId: g.taskId }}
+                        search={{ with: c.other_id } as any}
+                        className="flex items-center gap-3 px-4 py-3 hover:bg-muted/40 transition-colors"
+                      >
+                        <div className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-gradient-to-br from-primary to-primary/60 text-primary-foreground font-bold">
+                          {initials(name)}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-baseline justify-between gap-2">
+                            <div className="font-semibold text-ink truncate">{name}</div>
+                            <div className="text-[11px] text-muted-foreground shrink-0">{relativeTime(c.last_message_at)}</div>
+                          </div>
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="text-xs text-muted-foreground truncate">
+                              <span className="text-foreground/70 font-medium">{c.task_title ?? "Task"}</span>
+                              {c.last_message ? <span> · {c.last_message}</span> : null}
+                            </div>
+                            {unread > 0 && (
+                              <span className="shrink-0 min-w-[20px] h-5 px-1.5 rounded-full bg-primary text-primary-foreground text-[11px] font-bold inline-flex items-center justify-center">
+                                {unread > 99 ? "99+" : unread}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </Link>
+                    </li>
+                  );
+                }
+
+                const isOpen = expanded.has(g.taskId);
+                const names = g.items.map((c) => c.other_name ?? "Tasker");
+                const preview = names.length <= 2
+                  ? names.join(" and ")
+                  : `${names[0]} and ${names.length - 1} others`;
                 return (
-                  <li key={id + (c.other_id ?? "")}>
-                    <Link
-                      to="/tasks/$taskId/workspace"
-                      params={{ taskId: id }}
-                      className="flex items-center gap-3 px-4 py-3 hover:bg-muted/40 transition-colors"
+                  <li key={g.taskId} className="bg-primary/[0.03]">
+                    <button
+                      onClick={() => toggle(g.taskId)}
+                      className="w-full flex items-center gap-3 px-4 py-3 hover:bg-primary/[0.06] transition-colors text-left"
                     >
-                      <div className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-gradient-to-br from-primary to-primary/60 text-primary-foreground font-bold">
-                        {initials(name)}
+                      <div className="relative h-12 w-12 shrink-0">
+                        <div className="absolute left-0 top-0 grid h-9 w-9 place-items-center rounded-full bg-gradient-to-br from-primary to-primary/60 text-primary-foreground text-xs font-bold ring-2 ring-card">
+                          {initials(names[0])}
+                        </div>
+                        <div className="absolute right-0 bottom-0 grid h-9 w-9 place-items-center rounded-full bg-gradient-to-br from-primary/70 to-primary/40 text-primary-foreground text-xs font-bold ring-2 ring-card">
+                          {names.length > 1 ? initials(names[1]) : "+"}
+                        </div>
                       </div>
                       <div className="min-w-0 flex-1">
                         <div className="flex items-baseline justify-between gap-2">
-                          <div className="font-semibold text-ink truncate">{name}</div>
-                          <div className="text-[11px] text-muted-foreground shrink-0">
-                            {relativeTime(c.last_message_at)}
-                          </div>
+                          <div className="font-semibold text-ink truncate">{g.taskTitle}</div>
+                          <div className="text-[11px] text-muted-foreground shrink-0">{relativeTime(new Date(g.lastAt).toISOString())}</div>
                         </div>
                         <div className="flex items-center justify-between gap-2">
-                          <div className="text-xs text-muted-foreground truncate">
-                            <span className="text-foreground/70 font-medium">{c.task_title ?? "Task"}</span>
-                            {c.last_message ? <span> · {c.last_message}</span> : null}
+                          <div className="text-xs text-primary font-medium truncate inline-flex items-center gap-1">
+                            <Users className="h-3 w-3" /> {preview}
                           </div>
-                          {unread > 0 && (
+                          {g.unreadTotal > 0 && (
                             <span className="shrink-0 min-w-[20px] h-5 px-1.5 rounded-full bg-primary text-primary-foreground text-[11px] font-bold inline-flex items-center justify-center">
-                              {unread > 99 ? "99+" : unread}
+                              {g.unreadTotal > 99 ? "99+" : g.unreadTotal}
                             </span>
                           )}
                         </div>
                       </div>
-                    </Link>
+                      <ChevronDown className={`h-4 w-4 text-muted-foreground shrink-0 transition-transform ${isOpen ? "rotate-180" : ""}`} />
+                    </button>
+
+                    {isOpen && (
+                      <div className="pl-4 pb-1">
+                        {g.items.map((c) => {
+                          const name = c.other_name ?? "Tasker";
+                          const unread = Number(c.unread_count ?? 0);
+                          return (
+                            <Link
+                              key={c.other_id}
+                              to="/tasks/$taskId/workspace"
+                              params={{ taskId: g.taskId }}
+                              search={{ with: c.other_id } as any}
+                              className="flex items-center gap-3 px-4 py-2.5 rounded-lg hover:bg-muted/50 transition-colors"
+                            >
+                              <div className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-gradient-to-br from-primary/80 to-primary/50 text-primary-foreground text-xs font-bold">
+                                {initials(name)}
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-baseline justify-between gap-2">
+                                  <div className="font-medium text-ink truncate text-sm">{name}</div>
+                                  <div className="text-[11px] text-muted-foreground shrink-0">{relativeTime(c.last_message_at)}</div>
+                                </div>
+                                <div className="flex items-center justify-between gap-2">
+                                  <div className="text-xs text-muted-foreground truncate">
+                                    {c.last_message ?? "No messages yet"}
+                                  </div>
+                                  {unread > 0 && (
+                                    <span className="shrink-0 min-w-[18px] h-4 px-1.5 rounded-full bg-primary text-primary-foreground text-[10px] font-bold inline-flex items-center justify-center">
+                                      {unread > 99 ? "99+" : unread}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    )}
                   </li>
                 );
               })}
