@@ -48,8 +48,6 @@ function WalletPage() {
   const meQ = useQuery({ queryKey: ["me", token], enabled: !!token, queryFn: () => meFn({ data: { token: token! } }) });
 
   const [amount, setAmount] = useState("");
-  const [bankCode, setBankCode] = useState("");
-  const [account, setAccount] = useState("");
   const [showKyc, setShowKyc] = useState(false);
   const [showBank, setShowBank] = useState(false);
 
@@ -62,14 +60,7 @@ function WalletPage() {
 
   const withdraw = useMutation({
     mutationFn: () =>
-      wFn({
-        data: {
-          amount: Number(amount),
-          bank_code: bankCode.trim() || undefined,
-          account_number: account.trim() || undefined,
-          token: token!,
-        },
-      }),
+      wFn({ data: { amount: Number(amount), token: token! } }),
     onSuccess: (r) => {
       if (r.ok) {
         toast.success("Withdrawal requested.");
@@ -90,11 +81,18 @@ function WalletPage() {
   const kycVerified = !!(
     bal?.kyc_verified ?? bal?.bvn_verified ?? me?.kyc_verified ?? me?.bvn_verified ?? me?.is_kyc_verified
   );
-  const savedBank: any =
-    bal?.bank ?? bal?.bank_details ?? me?.bank ?? me?.bank_details ??
-    (me?.bank_code || me?.account_number
-      ? { bank_code: me?.bank_code, bank_name: me?.bank_name, account_number: me?.account_number, account_name: me?.account_name }
-      : null);
+  const savedBank: any = useMemo(() => {
+    const code = bal?.bank_code ?? me?.bank_code;
+    const acctNum = bal?.account_number ?? me?.account_number ?? me?.bank_account_number;
+    if (!code && !acctNum) return null;
+    const matched = banks.find((b: any) => String(b.code) === String(code));
+    return {
+      bank_code: code,
+      bank_name: matched?.name ?? null,
+      account_number: acctNum,
+      account_name: me?.account_name ?? me?.bank_account_name,
+    };
+  }, [bal, me, banks]);
   const txs: any[] = tQ.data?.ok
     ? ((tQ.data.data as any)?.transactions ?? (tQ.data.data as any)?.results ?? (Array.isArray(tQ.data.data) ? tQ.data.data : []))
     : [];
@@ -173,24 +171,62 @@ function WalletPage() {
 
         <section className="mt-8 rounded-2xl border border-border bg-card p-6">
           <h2 className="text-lg font-semibold inline-flex items-center gap-2"><ArrowDownCircle className="h-5 w-5" /> Withdraw</h2>
-          <form
-            className="mt-3 grid gap-3 sm:grid-cols-3"
-            onSubmit={(e) => { e.preventDefault(); if (Number(amount) > 0) withdraw.mutate(); }}
-          >
-            <input className="input" placeholder="Amount (₦)" type="number" min={100} value={amount} onChange={(e) => setAmount(e.target.value)} />
-            <select className="input" value={bankCode} onChange={(e) => setBankCode(e.target.value)}>
-              <option value="">{savedBank ? `Use saved bank (${savedBank.bank_name ?? savedBank.bank_code})` : "Select bank"}</option>
-              {banks.map((b: any) => <option key={b.id ?? b.code} value={b.code}>{b.name}</option>)}
-            </select>
-            <input className="input" placeholder="Account number" value={account} onChange={(e) => setAccount(e.target.value)} />
-            <button
-              type="submit" disabled={withdraw.isPending || !Number(amount)}
-              className="sm:col-span-3 inline-flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground disabled:opacity-50"
-            >
-              {withdraw.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
-              Request withdrawal
-            </button>
-          </form>
+
+          {!savedBank ? (
+            <div className="mt-3 rounded-xl border border-dashed border-border p-5 text-center">
+              <p className="text-sm text-muted-foreground">Add a payout bank before you can withdraw.</p>
+              <button onClick={() => setShowBank(true)} className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-xs font-bold text-primary-foreground hover:opacity-90">
+                <Landmark className="h-3.5 w-3.5" /> Add payout bank
+              </button>
+            </div>
+          ) : !kycVerified ? (
+            <div className="mt-3 rounded-xl border border-dashed border-amber-400/50 bg-amber-500/5 p-5 text-center">
+              <p className="text-sm text-muted-foreground">Complete BVN verification before you can withdraw.</p>
+              <button onClick={() => setShowKyc(true)} className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-xs font-bold text-primary-foreground hover:opacity-90">
+                <ShieldCheck className="h-3.5 w-3.5" /> Verify BVN
+              </button>
+            </div>
+          ) : (
+            <>
+              <div className="mt-3 flex items-center gap-2 rounded-xl bg-muted/40 px-3 py-2.5 text-sm">
+                <Landmark className="h-4 w-4 text-muted-foreground shrink-0" />
+                <span className="text-muted-foreground">Withdrawing to</span>
+                <span className="font-semibold ml-auto">{savedBank.bank_name ?? savedBank.bank_code} · ••••{String(savedBank.account_number ?? "").slice(-4)}</span>
+              </div>
+
+              <form
+                className="mt-3 space-y-3"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  const amt = Number(amount);
+                  if (amt < 1000) { toast.error("Minimum withdrawal is ₦1,000"); return; }
+                  if (amt > Number(balance ?? 0)) { toast.error("Amount exceeds your withdrawable balance"); return; }
+                  withdraw.mutate();
+                }}
+              >
+                <input
+                  className="input"
+                  placeholder="Amount (₦)"
+                  type="number"
+                  min={1000}
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                />
+                {amount && Number(amount) > Number(balance ?? 0) && (
+                  <p className="text-xs text-destructive">You only have ₦{Number(balance ?? 0).toLocaleString()} available.</p>
+                )}
+                <button
+                  type="submit"
+                  disabled={withdraw.isPending || !Number(amount) || Number(amount) < 1000 || Number(amount) > Number(balance ?? 0)}
+                  className="w-full inline-flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground disabled:opacity-50"
+                >
+                  {withdraw.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+                  Request withdrawal
+                </button>
+                <p className="text-[11px] text-muted-foreground text-center">Minimum ₦1,000 · Up to 3 withdrawals per day · Sent to your saved bank</p>
+              </form>
+            </>
+          )}
           <style>{`.input{width:100%;border:1px solid hsl(var(--border));background:transparent;border-radius:0.5rem;padding:0.55rem 0.75rem;font-size:0.875rem;outline:none}.input:focus{border-color:hsl(var(--primary))}`}</style>
         </section>
 
@@ -208,8 +244,8 @@ function WalletPage() {
                     <div className="font-medium">{t.description ?? t.type ?? "Transaction"}</div>
                     <div className="text-xs text-muted-foreground">{t.created_at && new Date(t.created_at).toLocaleString()}</div>
                   </div>
-                  <div className={`font-semibold ${Number(t.amount) < 0 ? "text-destructive" : "text-emerald-600 dark:text-emerald-400"}`}>
-                    ₦{Number(t.amount ?? 0).toLocaleString()}
+                  <div className={`font-semibold ${String(t.type).toLowerCase() === "debit" ? "text-destructive" : "text-emerald-600 dark:text-emerald-400"}`}>
+                    {String(t.type).toLowerCase() === "debit" ? "−" : "+"}₦{Number(t.amount ?? 0).toLocaleString()}
                   </div>
                 </div>
               ))
