@@ -23,6 +23,7 @@ function MyTasksPage() {
   const isPoster = mode === "poster";
   const [q, setQ] = useState("");
   const [filter, setFilter] = useState<(typeof FILTERS)[number]>("All");
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (ready && !token) navigate({ to: "/login", search: { redirect: "/tasks/mine" } as any });
@@ -53,6 +54,9 @@ function MyTasksPage() {
       deadline: row.deadline ?? t.deadline,
       status: String(row.status ?? t.task_status ?? t.status ?? "open").toLowerCase(),
       offers: row.offers_count ?? row.applications_count ?? t.offers_count ?? t.applications_count ?? 0,
+      groupId: row.task_group_id ?? t.task_group_id ?? null,
+      groupIndex: row.group_index ?? t.group_index ?? null,
+      groupSize: row.group_size ?? t.group_size ?? null,
     };
   };
 
