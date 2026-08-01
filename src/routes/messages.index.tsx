@@ -75,12 +75,13 @@ function MessagesInbox() {
   const grouped = useMemo(() => {
     const byTask = new Map<string, any[]>();
     for (const c of conversations) {
-      const tid = String(c.task_id ?? c.id);
-      if (!byTask.has(tid)) byTask.set(tid, []);
-      byTask.get(tid)!.push(c);
+      const key = c.task_group_id ? `grp:${c.task_group_id}` : `task:${String(c.task_id ?? c.id)}`;
+      if (!byTask.has(key)) byTask.set(key, []);
+      byTask.get(key)!.push(c);
     }
-    return Array.from(byTask.entries()).map(([taskId, items]) => ({
-      taskId,
+    return Array.from(byTask.entries()).map(([key, items]) => ({
+      key,
+      taskId: String(items[0]?.task_id ?? items[0]?.id),
       items,
       isGroup: items.length > 1,
       taskTitle: items[0]?.task_title ?? "Task",
@@ -91,6 +92,7 @@ function MessagesInbox() {
       unreadTotal: items.reduce((s, c) => s + Number(c.unread_count ?? 0), 0),
     })).sort((a, b) => b.lastAt - a.lastAt);
   }, [conversations]);
+
 
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const toggle = (id: string) =>
@@ -154,7 +156,7 @@ function MessagesInbox() {
                   const name = c.other_name ?? c.name ?? "Chat";
                   const unread = Number(c.unread_count ?? 0);
                   return (
-                    <li key={g.taskId}>
+                    <li key={g.key}>
                       <Link
                         to="/tasks/$taskId/workspace"
                         params={{ taskId: g.taskId }}
@@ -186,15 +188,15 @@ function MessagesInbox() {
                   );
                 }
 
-                const isOpen = expanded.has(g.taskId);
+                const isOpen = expanded.has(g.key);
                 const names = g.items.map((c) => c.other_name ?? "Tasker");
                 const preview = names.length <= 2
                   ? names.join(" and ")
                   : `${names[0]} and ${names.length - 1} others`;
                 return (
-                  <li key={g.taskId} className="bg-primary/[0.03]">
+                  <li key={g.key} className="bg-primary/[0.03]">
                     <button
-                      onClick={() => toggle(g.taskId)}
+                      onClick={() => toggle(g.key)}
                       className="w-full flex items-center gap-3 px-4 py-3 hover:bg-primary/[0.06] transition-colors text-left"
                     >
                       <div className="relative h-12 w-12 shrink-0">
@@ -231,9 +233,9 @@ function MessagesInbox() {
                           const unread = Number(c.unread_count ?? 0);
                           return (
                             <Link
-                              key={c.other_id}
+                              key={`${c.task_id ?? ""}-${c.other_id}`}
                               to="/tasks/$taskId/workspace"
-                              params={{ taskId: g.taskId }}
+                              params={{ taskId: String(c.task_id ?? g.taskId) }}
                               search={{ with: c.other_id } as any}
                               className="flex items-center gap-3 px-4 py-2.5 rounded-lg hover:bg-muted/50 transition-colors"
                             >

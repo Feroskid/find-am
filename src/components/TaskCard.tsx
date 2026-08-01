@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Clock, MapPin, Banknote, Globe, MessageSquare, Sparkles } from "lucide-react";
+import { Clock, MapPin, Banknote, Globe, MessageSquare, Sparkles, Users } from "lucide-react";
 
 export interface TaskCardData {
   id: string | number;
@@ -14,6 +14,8 @@ export interface TaskCardData {
   poster_name?: string;
   offers_count?: number;
   isAdmin?: boolean;
+  groupIndex?: number | null;
+  groupSize?: number | null;
 }
 
 /** Adapter — accepts the raw API row and normalises field names. */
@@ -31,6 +33,8 @@ export function toCardData(t: any): TaskCardData {
     poster_name: t.poster_name,
     offers_count: t.offers_count ?? t.applications_count ?? t.applicants_count ?? t.offer_count ?? 0,
     isAdmin: Boolean(t.poster_is_admin ?? t.is_admin),
+    groupIndex: t.group_index ?? null,
+    groupSize: t.group_size ?? null,
   };
 }
 
@@ -77,6 +81,11 @@ export function TaskCard({ task }: { task: TaskCardData }) {
           <Banknote className="h-4 w-4" /> {formatBudget(task.budget)}
         </span>
       </div>
+      {task.groupSize && task.groupSize > 1 && (
+        <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary">
+          <Users className="h-3 w-3" /> Spot {task.groupIndex} of {task.groupSize}
+        </span>
+      )}
       {task.description && (
         <p className="mt-2 text-sm text-muted-foreground line-clamp-2">{task.description}</p>
       )}

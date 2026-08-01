@@ -23,6 +23,7 @@ function MyTasksPage() {
   const isPoster = mode === "poster";
   const [q, setQ] = useState("");
   const [filter, setFilter] = useState<(typeof FILTERS)[number]>("All");
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (ready && !token) navigate({ to: "/login", search: { redirect: "/tasks/mine" } as any });
@@ -53,6 +54,9 @@ function MyTasksPage() {
       deadline: row.deadline ?? t.deadline,
       status: String(row.status ?? t.task_status ?? t.status ?? "open").toLowerCase(),
       offers: row.offers_count ?? row.applications_count ?? t.offers_count ?? t.applications_count ?? 0,
+      groupId: row.task_group_id ?? t.task_group_id ?? null,
+      groupIndex: row.group_index ?? t.group_index ?? null,
+      groupSize: row.group_size ?? t.group_size ?? null,
     };
   };
 
@@ -121,32 +125,104 @@ function MyTasksPage() {
 
           ) : (
             <ul className="grid gap-3">
-              {filtered.map(({ n }) => {
+              {(() => {
+                // Group by task_group_id; ungrouped tasks render alone.
+                const groups = new Map<string, typeof filtered>();
+                const singles: typeof filtered = [];
+                for (const item of filtered) {
+                  const gid = item.n.groupId;
+                  if (gid) {
+                    if (!groups.has(gid)) groups.set(gid, []);
+                    groups.get(gid)!.push(item);
+                  } else {
+                    singles.push(item);
+                  }
+                }
+
+                const groupEntries = Array.from(groups.values());
+
                 return (
-                  <li key={n.id}>
-                    <Link
-                      to="/tasks/$taskId"
-                      params={{ taskId: String(n.id) }}
-                      className="block rounded-2xl border border-border bg-card p-4 hover:border-primary hover:shadow-sm transition"
-                    >
-                      <div className="flex items-start justify-between gap-3">
-                        <h3 className="font-bold text-ink leading-snug">{n.title}</h3>
-                        <span className="font-display text-xl text-ink shrink-0">₦{Number(n.budget ?? 0).toLocaleString()}</span>
-                      </div>
-                      <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
-                        <span className="inline-flex items-center gap-1">
-                          {n.remote ? <Globe className="h-3.5 w-3.5" /> : <MapPin className="h-3.5 w-3.5" />}
-                          {n.remote ? "Remote" : (n.loc ?? "On-site")}
-                        </span>
-                        <span className="inline-flex items-center gap-1"><Clock className="h-3.5 w-3.5" />{n.deadline ? new Date(n.deadline).toLocaleDateString() : "Flexible"}</span>
-                        <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 font-semibold text-primary capitalize">{n.status.replace("_", " ")}</span>
-                        {Number(n.offers) > 0 && <span>· {n.offers} offer{Number(n.offers) === 1 ? "" : "s"}</span>}
-                      </div>
-                    </Link>
-                  </li>
+                  <>
+                    {groupEntries.map((items) => {
+                      const first = items[0].n;
+                      const gid = String(first.groupId);
+                      const size = first.groupSize ?? items.length;
+                      const open = expandedGroups.has(gid);
+                      const filledCount = items.filter((it) => it.n.status !== "open" && it.n.status !== "cancelled").length;
+                      return (
+                        <li key={gid} className="rounded-2xl border border-primary/30 bg-primary/[0.03] overflow-hidden">
+                          <button
+                            onClick={() => setExpandedGroups((prev) => {
+                              const next = new Set(prev);
+                              if (next.has(gid)) next.delete(gid); else next.add(gid);
+                              return next;
+                            })}
+                            className="w-full p-4 flex items-start justify-between gap-3 hover:bg-primary/[0.06] text-left transition"
+                          >
+                            <div className="min-w-0">
+                              <h3 className="font-bold text-ink leading-snug inline-flex items-center gap-2">
+                                {first.title}
+                                <span className="rounded-full bg-primary px-2 py-0.5 text-[11px] font-bold text-primary-foreground">×{size}</span>
+                              </h3>
+                              <div className="mt-1 text-xs text-muted-foreground">
+                                {filledCount} of {size} spots filled · ₦{Number(first.budget ?? 0).toLocaleString()} each
+                              </div>
+                            </div>
+                            <ChevronDown className={`h-5 w-5 text-muted-foreground shrink-0 transition-transform ${open ? "rotate-180" : ""}`} />
+                          </button>
+
+                          {open && (
+                            <div className="px-3 pb-3 space-y-2">
+                              {[...items]
+                                .sort((a, b) => (a.n.groupIndex ?? 0) - (b.n.groupIndex ?? 0))
+                                .map(({ n }) => (
+                                  <Link
+                                    key={n.id}
+                                    to="/tasks/$taskId"
+                                    params={{ taskId: String(n.id) }}
+                                    className="block rounded-xl border border-border bg-card p-3 hover:border-primary transition"
+                                  >
+                                    <div className="flex items-center justify-between gap-3">
+                                      <span className="text-sm font-semibold text-ink">Spot {n.groupIndex} of {n.groupSize}</span>
+                                      <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary capitalize">{n.status.replace("_", " ")}</span>
+                                    </div>
+                                    {Number(n.offers) > 0 && <div className="mt-1 text-xs text-muted-foreground">{n.offers} offer{Number(n.offers) === 1 ? "" : "s"}</div>}
+                                  </Link>
+                                ))}
+                            </div>
+                          )}
+                        </li>
+                      );
+                    })}
+
+                    {singles.map(({ n }) => (
+                      <li key={n.id}>
+                        <Link
+                          to="/tasks/$taskId"
+                          params={{ taskId: String(n.id) }}
+                          className="block rounded-2xl border border-border bg-card p-4 hover:border-primary hover:shadow-sm transition"
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <h3 className="font-bold text-ink leading-snug">{n.title}</h3>
+                            <span className="font-display text-xl text-ink shrink-0">₦{Number(n.budget ?? 0).toLocaleString()}</span>
+                          </div>
+                          <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                            <span className="inline-flex items-center gap-1">
+                              {n.remote ? <Globe className="h-3.5 w-3.5" /> : <MapPin className="h-3.5 w-3.5" />}
+                              {n.remote ? "Remote" : (n.loc ?? "On-site")}
+                            </span>
+                            <span className="inline-flex items-center gap-1"><Clock className="h-3.5 w-3.5" />{n.deadline ? new Date(n.deadline).toLocaleDateString() : "Flexible"}</span>
+                            <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 font-semibold text-primary capitalize">{n.status.replace("_", " ")}</span>
+                            {Number(n.offers) > 0 && <span>· {n.offers} offer{Number(n.offers) === 1 ? "" : "s"}</span>}
+                          </div>
+                        </Link>
+                      </li>
+                    ))}
+                  </>
                 );
-              })}
+              })()}
             </ul>
+
           )}
         </div>
       </main>
