@@ -81,6 +81,11 @@ export function TaskCard({ task }: { task: TaskCardData }) {
           <Banknote className="h-4 w-4" /> {formatBudget(task.budget)}
         </span>
       </div>
+      {task.groupSize && task.groupSize > 1 && (
+        <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary">
+          <Users className="h-3 w-3" /> Spot {task.groupIndex} of {task.groupSize}
+        </span>
+      )}
       {task.description && (
         <p className="mt-2 text-sm text-muted-foreground line-clamp-2">{task.description}</p>
       )}
