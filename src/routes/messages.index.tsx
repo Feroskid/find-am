@@ -156,7 +156,7 @@ function MessagesInbox() {
                   const name = c.other_name ?? c.name ?? "Chat";
                   const unread = Number(c.unread_count ?? 0);
                   return (
-                    <li key={g.taskId}>
+                    <li key={g.key}>
                       <Link
                         to="/tasks/$taskId/workspace"
                         params={{ taskId: g.taskId }}
@@ -188,15 +188,15 @@ function MessagesInbox() {
                   );
                 }
 
-                const isOpen = expanded.has(g.taskId);
+                const isOpen = expanded.has(g.key);
                 const names = g.items.map((c) => c.other_name ?? "Tasker");
                 const preview = names.length <= 2
                   ? names.join(" and ")
                   : `${names[0]} and ${names.length - 1} others`;
                 return (
-                  <li key={g.taskId} className="bg-primary/[0.03]">
+                  <li key={g.key} className="bg-primary/[0.03]">
                     <button
-                      onClick={() => toggle(g.taskId)}
+                      onClick={() => toggle(g.key)}
                       className="w-full flex items-center gap-3 px-4 py-3 hover:bg-primary/[0.06] transition-colors text-left"
                     >
                       <div className="relative h-12 w-12 shrink-0">
@@ -235,7 +235,7 @@ function MessagesInbox() {
                             <Link
                               key={c.other_id}
                               to="/tasks/$taskId/workspace"
-                              params={{ taskId: g.taskId }}
+                              params={{ taskId: String(c.task_id ?? g.taskId) }}
                               search={{ with: c.other_id } as any}
                               className="flex items-center gap-3 px-4 py-2.5 rounded-lg hover:bg-muted/50 transition-colors"
                             >
