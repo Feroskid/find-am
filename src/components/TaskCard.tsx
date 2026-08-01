@@ -33,6 +33,8 @@ export function toCardData(t: any): TaskCardData {
     poster_name: t.poster_name,
     offers_count: t.offers_count ?? t.applications_count ?? t.applicants_count ?? t.offer_count ?? 0,
     isAdmin: Boolean(t.poster_is_admin ?? t.is_admin),
+    groupIndex: t.group_index ?? null,
+    groupSize: t.group_size ?? null,
   };
 }
 
