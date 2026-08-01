@@ -58,7 +58,16 @@ function PostTaskPage() {
 
   const budgetNum = Number(budget) || 0;
   const totalBudget = budgetNum * quantity;
-  const fee = useMemo(() => computeFees(totalBudget), [totalBudget]);
+  // Backend charges fees PER SPOT, then × quantity (each spot is its own task/transaction).
+  const perSpotFee = useMemo(() => computeFees(budgetNum), [budgetNum]);
+  const fee = useMemo(() => ({
+    budget: perSpotFee.budget * quantity,
+    serviceFee: perSpotFee.serviceFee * quantity,
+    fixedFee: perSpotFee.fixedFee * quantity,
+    vat: perSpotFee.vat * quantity,
+    total: perSpotFee.total * quantity,
+    taskerReceives: perSpotFee.taskerReceives * quantity,
+  }), [perSpotFee, quantity]);
 
   const validBudget = budgetNum >= MIN_BUDGET;
   const chosenCategory = subCat || parentCat;

@@ -75,12 +75,13 @@ function MessagesInbox() {
   const grouped = useMemo(() => {
     const byTask = new Map<string, any[]>();
     for (const c of conversations) {
-      const tid = String(c.task_id ?? c.id);
-      if (!byTask.has(tid)) byTask.set(tid, []);
-      byTask.get(tid)!.push(c);
+      const key = c.task_group_id ? `grp:${c.task_group_id}` : `task:${String(c.task_id ?? c.id)}`;
+      if (!byTask.has(key)) byTask.set(key, []);
+      byTask.get(key)!.push(c);
     }
-    return Array.from(byTask.entries()).map(([taskId, items]) => ({
-      taskId,
+    return Array.from(byTask.entries()).map(([key, items]) => ({
+      key,
+      taskId: String(items[0]?.task_id ?? items[0]?.id),
       items,
       isGroup: items.length > 1,
       taskTitle: items[0]?.task_title ?? "Task",
@@ -91,6 +92,7 @@ function MessagesInbox() {
       unreadTotal: items.reduce((s, c) => s + Number(c.unread_count ?? 0), 0),
     })).sort((a, b) => b.lastAt - a.lastAt);
   }, [conversations]);
+
 
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const toggle = (id: string) =>
