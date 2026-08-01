@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Clock, MapPin, Banknote, Globe, MessageSquare, Sparkles } from "lucide-react";
+import { Clock, MapPin, Banknote, Globe, MessageSquare, Sparkles, Users } from "lucide-react";
 
 export interface TaskCardData {
   id: string | number;
@@ -14,6 +14,8 @@ export interface TaskCardData {
   poster_name?: string;
   offers_count?: number;
   isAdmin?: boolean;
+  groupIndex?: number | null;
+  groupSize?: number | null;
 }
 
 /** Adapter — accepts the raw API row and normalises field names. */
