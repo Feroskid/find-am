@@ -233,7 +233,7 @@ function MessagesInbox() {
                           const unread = Number(c.unread_count ?? 0);
                           return (
                             <Link
-                              key={c.other_id}
+                              key={`${c.task_id ?? ""}-${c.other_id}`}
                               to="/tasks/$taskId/workspace"
                               params={{ taskId: String(c.task_id ?? g.taskId) }}
                               search={{ with: c.other_id } as any}
