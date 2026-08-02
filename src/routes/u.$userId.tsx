@@ -25,7 +25,9 @@ function PublicProfilePage() {
 
   const raw: any = uQ.data?.ok ? uQ.data.data : null;
   const u: any = raw?.profile ?? raw?.user ?? raw ?? null;
-  const categoryRatings: any[] = u?.category_ratings ?? u?.ratings_by_category ?? [];
+  const asTasker: any = u?.as_tasker ?? null;
+  const asEmployer: any = u?.as_employer ?? null;
+  const categoryRatings: any[] = asTasker?.category_ratings ?? u?.category_ratings ?? [];
   const badges: any[] = u?.badges ?? [];
   const tasks: any[] = (() => {
     const t = u?.tasks ?? u?.recent_tasks ?? u?.posted_tasks ?? [];
@@ -34,18 +36,16 @@ function PublicProfilePage() {
 
   const has = (v: any) => v !== undefined && v !== null && v !== "" && !(typeof v === "number" && Number.isNaN(v));
   const employer = {
-    posted: u?.tasks_posted ?? u?.posted_count,
-    completion: u?.completion_rate,
-    rating: u?.employer_rating ?? u?.poster_rating,
+    posted: asEmployer?.tasks_posted,
+    completion: asEmployer?.completion_rate,
+    rating: asEmployer?.average_rating,
   };
   const tasker = {
-    completed: u?.tasks_completed ?? u?.completed_count,
-    success: u?.success_rate,
-    response: u?.response_rate,
-    rating: u?.tasker_rating ?? u?.rating,
+    completed: asTasker?.jobs_completed,
+    rating: asTasker?.average_rating,
   };
   const hasEmployerStats = has(employer.posted) || has(employer.completion) || has(employer.rating);
-  const hasTaskerStats = has(tasker.completed) || has(tasker.success) || has(tasker.response) || has(tasker.rating) || categoryRatings.length > 0 || badges.length > 0;
+  const hasTaskerStats = has(tasker.completed) || has(tasker.rating) || categoryRatings.length > 0 || badges.length > 0;
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -77,6 +77,24 @@ function PublicProfilePage() {
                   {u.created_at && <span>Member since {new Date(u.created_at).toLocaleDateString(undefined, { month: "short", year: "numeric" })}</span>}
                 </div>
                 {u.about && <p className="mt-3 text-sm text-foreground/80 whitespace-pre-wrap">{u.about}</p>}
+                {Array.isArray(u.categories) && u.categories.length > 0 && (
+                  <div className="mt-3 flex flex-wrap items-center gap-1.5">
+                    <span className="text-xs text-muted-foreground mr-0.5">Works in:</span>
+                    {u.categories.slice(0, 5).map((c: any, i: number) => (
+                      <span
+                        key={c.category_id ?? i}
+                        className="inline-flex items-center rounded-full bg-muted px-2.5 py-0.5 text-[11px] font-medium text-foreground/70"
+                      >
+                        {c.category_name ?? c.name}
+                      </span>
+                    ))}
+                    {u.categories.length > 5 && (
+                      <span className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-[11px] font-semibold text-primary">
+                        +{u.categories.length - 5} more
+                      </span>
+                    )}
+                  </div>
+                )}
               </div>
             </header>
 
@@ -97,8 +115,6 @@ function PublicProfilePage() {
                   <h2 className="font-semibold inline-flex items-center gap-2"><Award className="h-4 w-4" /> As tasker</h2>
                   <dl className="mt-3 grid grid-cols-2 gap-3 text-sm">
                     {has(tasker.completed) && <Stat label="Tasks completed" value={tasker.completed} />}
-                    {has(tasker.success) && <Stat label="Success rate" value={`${tasker.success}%`} />}
-                    {has(tasker.response) && <Stat label="Response rate" value={`${tasker.response}%`} />}
                     {has(tasker.rating) && <Stat label="Overall rating" value={tasker.rating} star />}
                   </dl>
 
@@ -108,8 +124,8 @@ function PublicProfilePage() {
                       <ul className="mt-1 space-y-1 text-sm">
                         {categoryRatings.map((c: any, i: number) => (
                           <li key={i} className="flex justify-between">
-                            <span className="text-foreground/80">{c.category_name ?? c.name}</span>
-                            <span className="font-medium inline-flex items-center gap-0.5">{c.rating?.toFixed?.(1) ?? c.rating} <Star className="h-3 w-3 fill-amber-400 text-amber-400" /></span>
+                            <span className="text-foreground/80">{c.category ?? c.category_name ?? c.name}</span>
+                            <span className="font-medium inline-flex items-center gap-0.5">{(c.average_rating ?? c.rating)?.toFixed?.(1) ?? (c.average_rating ?? c.rating)} <Star className="h-3 w-3 fill-amber-400 text-amber-400" /></span>
                           </li>
                         ))}
                       </ul>
