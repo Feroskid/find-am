@@ -109,7 +109,9 @@ export function AvatarUpload({
             </button>
           </div>
         )}
+        {err && <p className="text-xs text-destructive">{err}</p>}
         <input ref={fileRef} type="file" accept="image/*" hidden onChange={handleFile} />
+
       </div>
     </div>
   );
