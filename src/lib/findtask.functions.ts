@@ -245,11 +245,17 @@ export const listTaskApplications = createServerFn({ method: "POST" })
 // Backend may return a payment_url / authorization_url for Flutterwave.
 export const acceptApplicant = createServerFn({ method: "POST" })
   .inputValidator((i: unknown) =>
-    z.object({ taskId: TaskId, taskerId: TaskerId, token: Token }).parse(i),
+    z.object({
+      taskId: TaskId,
+      taskerId: TaskerId,
+      funding_method: z.enum(["wallet", "flutterwave"]).optional(),
+      token: Token,
+    }).parse(i),
   )
   .handler(async ({ data }) =>
     call(`/task/${data.taskId}/accept/${data.taskerId}`, {
       method: "PUT",
+      body: { funding_method: data.funding_method ?? "flutterwave" },
       token: data.token,
     }),
   );
