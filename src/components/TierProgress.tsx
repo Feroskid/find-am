@@ -1,15 +1,15 @@
 import { Lock } from "lucide-react";
 
 interface Props {
-  earnings?: number; // current period earnings in NGN
+  earnings?: number; // current month earnings in NGN
   currency?: string;
 }
 
 const TIERS = [
-  { name: "Bronze", fee: "20%", min: 0 },
-  { name: "Silver", fee: "18.5%", min: 880_000 },
-  { name: "Gold", fee: "17%", min: 2_650_000 },
-  { name: "Platinum", fee: "15%", min: 5_300_000 },
+  { name: "Bronze", min: 0, color: "#CD7F32" },
+  { name: "Silver", min: 400_000, color: "#9CA3AF" },
+  { name: "Gold", min: 1_000_000, color: "#D4AF37" },
+  { name: "Platinum", min: 1_800_000, color: "#6366F1" },
 ];
 
 export function TierProgress({ earnings = 0, currency = "₦" }: Props) {
@@ -27,18 +27,16 @@ export function TierProgress({ earnings = 0, currency = "₦" }: Props) {
         <div>
           <div className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">Your current tier</div>
           <div className="mt-1 flex items-center gap-3">
-            <span className="font-display text-3xl text-ink">{cur.name}</span>
-            <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">{cur.fee} service fee</span>
+            <span className="font-display text-3xl" style={{ color: cur.color }}>{cur.name}</span>
           </div>
         </div>
         {next && (
           <div>
-            <div className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">Your next tier</div>
+            <div className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">Next tier</div>
             <div className="mt-1 flex items-center gap-3">
-              <span className="font-display text-3xl text-ink/80 inline-flex items-center gap-2">
+              <span className="font-display text-3xl text-ink/70 inline-flex items-center gap-2">
                 <Lock className="h-5 w-5 text-muted-foreground" /> {next.name}
               </span>
-              <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs font-semibold text-muted-foreground">{next.fee} service fee</span>
             </div>
           </div>
         )}
@@ -46,27 +44,32 @@ export function TierProgress({ earnings = 0, currency = "₦" }: Props) {
 
       <div className="mt-6">
         <div className="text-sm font-semibold text-ink">Your earnings (last 30 days)</div>
-        {next && (
-          <p className="text-sm text-muted-foreground mt-0.5">
-            Your earnings are <span className="font-semibold text-foreground">{currency}{away.toLocaleString()}</span> away from <span className="font-semibold text-foreground">{next.name}</span> and lowering service fees.
+        <div className="mt-0.5 font-display text-2xl text-ink">{currency}{earnings.toLocaleString()}</div>
+        {next ? (
+          <p className="text-sm text-muted-foreground mt-1">
+            You're <span className="font-semibold text-foreground">{currency}{away.toLocaleString()}</span> away from <span className="font-semibold" style={{ color: next.color }}>{next.name}</span>.
+          </p>
+        ) : (
+          <p className="text-sm text-muted-foreground mt-1">
+            You've reached the top tier this month. Nice work. 🎉
           </p>
         )}
 
         <div className="mt-4 relative">
           <div className="h-2.5 w-full rounded-full bg-muted overflow-hidden">
-            <div className="h-full rounded-full bg-gradient-to-r from-primary to-primary/60 transition-all" style={{ width: `${pct}%` }} />
+            <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, background: `linear-gradient(to right, ${cur.color}, ${cur.color}99)` }} />
           </div>
           <div className="mt-2 grid grid-cols-4 text-[10px] text-muted-foreground">
             {TIERS.map((t) => (
               <div key={t.name} className="text-left first:text-left last:text-right">
-                <div className="font-semibold text-foreground">{currency}{t.min.toLocaleString()}</div>
+                <div className="font-semibold" style={{ color: t.color }}>{currency}{t.min.toLocaleString()}</div>
                 <div>{t.name}</div>
               </div>
             ))}
           </div>
         </div>
 
-        <button className="mt-5 text-xs font-semibold text-primary hover:underline">? How do tiers work?</button>
+        <p className="mt-4 text-[11px] text-muted-foreground">Resets after 30days.</p>
       </div>
     </section>
   );
