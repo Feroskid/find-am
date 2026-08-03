@@ -1,0 +1,2 @@
+CREATE POLICY "Avatar uploads allowed" ON storage.objects FOR INSERT TO anon, authenticated WITH CHECK (bucket_id = 'avatars');
+CREATE POLICY "Avatar reads allowed" ON storage.objects FOR SELECT TO anon, authenticated USING (bucket_id = 'avatars');
