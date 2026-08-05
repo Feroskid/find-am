@@ -399,7 +399,10 @@ function LiveLocationPanel({ taskId, token, isPoster, taskLat, taskLng, arrivedA
   const onArrived = async () => {
     const here = pos;
     const r: any = await arrive({ data: { taskId, token, ...(here ? { latitude: here.lat, longitude: here.lng } : {}) } });
-    if (r?.ok) toast.success("Marked arrived"); else toast.error(r?.error ?? "Could not mark arrived");
+    if (r?.ok) {
+      toast.success("Marked arrived");
+      onRefetchTask?.();
+    } else toast.error(r?.error ?? "Could not mark arrived");
   };
 
   return (
