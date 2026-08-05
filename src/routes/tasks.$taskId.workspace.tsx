@@ -434,7 +434,7 @@ function LiveLocationPanel({ taskId, token, isPoster, taskLat, taskLng, arrivedA
         isPoster={isPoster}
       />
 
-      {!isPoster && (
+      {!isPoster && !arrivedAt && (
         <button
           onClick={onArrived}
           className="w-full inline-flex items-center justify-center gap-1.5 rounded-full border border-border px-4 py-2 text-sm font-semibold hover:bg-muted"
