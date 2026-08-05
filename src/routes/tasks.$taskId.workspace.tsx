@@ -324,6 +324,8 @@ function WorkspacePage() {
               isPoster={isPoster}
               taskLat={task?.location_lat ?? task?.latitude}
               taskLng={task?.location_lng ?? task?.longitude}
+              arrivedAt={task?.arrived_at ?? null}
+              onRefetchTask={() => taskQ.refetch()}
             />
           )}
         </aside>
