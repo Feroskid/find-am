@@ -334,7 +334,7 @@ function WorkspacePage() {
   );
 }
 
-function LiveLocationPanel({ taskId, token, isPoster, taskLat, taskLng }: { taskId: string; token: string; isPoster: boolean; taskLat?: number | null; taskLng?: number | null }) {
+function LiveLocationPanel({ taskId, token, isPoster, taskLat, taskLng, arrivedAt, onRefetchTask }: { taskId: string; token: string; isPoster: boolean; taskLat?: number | null; taskLng?: number | null; arrivedAt?: string | null; onRefetchTask?: () => void }) {
   const getLoc = useServerFn(getTaskLocation);
   const toggle = useServerFn(toggleTaskLocation);
   const arrive = useServerFn(markArrived);
