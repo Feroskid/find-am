@@ -1,8 +1,8 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { useEffect, useRef, useState } from "react";
-import { Loader2, ArrowLeft, Send, CheckCircle2, AlertTriangle, Star, Banknote, MapPin, Navigation, Flag } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Loader2, ArrowLeft, Send, CheckCircle2, AlertTriangle, Star, Banknote, MapPin, Navigation, Flag, Paperclip, X } from "lucide-react";
 import { toast } from "sonner";
 import { TaskHeader } from "@/components/TaskHeader";
 import { useAuth } from "@/lib/auth";
@@ -12,11 +12,12 @@ import {
   releaseTask, getMyRating,
   getTaskLocation, toggleTaskLocation, markArrived,
 } from "@/lib/findtask.functions";
+import { uploadTaskMedia } from "@/lib/media.functions";
 import { MilestoneActions } from "@/components/MilestoneActions";
 
 
 export const Route = createFileRoute("/tasks/$taskId/workspace")({
-  validateSearch: (s: Record<string, unknown>) => ({
+  validateSearch: (s: Record<string, unknown> = {}) => ({
     with: typeof s.with === "string" ? s.with : undefined,
   }),
   head: () => ({ meta: [{ title: "Task workspace — Find-task" }] }),
@@ -27,6 +28,27 @@ function extractMsgs(d: any): any[] {
   if (!d) return [];
   if (Array.isArray(d)) return d;
   return d.messages ?? d.results ?? d.data ?? [];
+}
+
+const IMAGE_RE = /\.(png|jpe?g|gif|webp|avif|heic)(\?|$)/i;
+const VIDEO_RE = /\.(mp4|webm|mov|m4v|ogg)(\?|$)/i;
+
+function Attachment({ url }: { url: string }) {
+  if (VIDEO_RE.test(url)) {
+    return <video src={url} controls className="mt-1 max-h-64 w-full rounded-xl bg-black/40" />;
+  }
+  if (IMAGE_RE.test(url)) {
+    return (
+      <a href={url} target="_blank" rel="noreferrer">
+        <img src={url} alt="Attachment shared in this task conversation" loading="lazy" className="mt-1 max-h-64 rounded-xl object-cover" />
+      </a>
+    );
+  }
+  return (
+    <a href={url} target="_blank" rel="noreferrer" className="mt-1 inline-flex items-center gap-1.5 text-xs underline">
+      <Paperclip className="h-3.5 w-3.5" /> View attachment
+    </a>
+  );
 }
 
 function WorkspacePage() {
@@ -46,6 +68,7 @@ function WorkspacePage() {
   const dFn = useServerFn(disputeTask);
   const rFn = useServerFn(rateTask);
   const myRatingFn = useServerFn(getMyRating);
+  const uploadFn = useServerFn(uploadTaskMedia);
 
   const taskQ = useQuery({ queryKey: ["task", taskId], queryFn: () => tFn({ data: { taskId } }) });
   const msgsQ = useQuery({
@@ -61,6 +84,9 @@ function WorkspacePage() {
   const [disputeReason, setDisputeReason] = useState("");
   const [showDispute, setShowDispute] = useState(false);
   const [showRate, setShowRate] = useState(false);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const fileRef = useRef<HTMLInputElement | null>(null);
   const scrollerRef = useRef<HTMLDivElement | null>(null);
 
   const task: any = taskQ.data?.ok ? ((taskQ.data.data as any)?.task ?? taskQ.data.data) : null;
@@ -73,12 +99,57 @@ function WorkspacePage() {
     task?.tasker?.user_id ?? task?.tasker?.id ?? task?.assignee_id ??
     task?.accepted_offer?.user_id ?? task?.accepted_offer?.tasker_id;
 
+  const messagingClosed = useMemo(() => {
+    const released = task?.payment_released === 1 || task?.payment_released === true;
+    if (!released || !task?.payment_released_at) return false;
+    if (String(task?.status).toLowerCase() === "disputed") return false; // open dispute keeps it open
+    const releasedAt = new Date(task.payment_released_at).getTime();
+    const hoursSince = (Date.now() - releasedAt) / 3_600_000;
+    return hoursSince >= 48;
+  }, [task]);
+
+  const readFileAsBase64 = (file: File) =>
+    new Promise<string>((resolve, reject) => {
+      const fr = new FileReader();
+      fr.onload = () => resolve(String(fr.result ?? ""));
+      fr.onerror = () => reject(new Error("Could not read the file"));
+      fr.readAsDataURL(file);
+    });
+
   const sendM = useMutation({
-    mutationFn: async () =>
-      sFn({ data: { taskId, message_text: draft.trim(), recipient_id: withTasker, token: token! } }),
-    onSuccess: (r) => {
-      if (r.ok) { setDraft(""); msgsQ.refetch(); } else toast.error(r.error);
+    mutationFn: async () => {
+      let attachment_url: string | undefined;
+      if (pendingFile) {
+        setUploading(true);
+        try {
+          const dataBase64 = await readFileAsBase64(pendingFile);
+          const up: any = await uploadFn({
+            data: {
+              taskId,
+              token: token!,
+              filename: pendingFile.name,
+              contentType: pendingFile.type || "image/jpeg",
+              dataBase64,
+            },
+          });
+          if (!up?.ok) throw new Error(up?.error ?? "Upload failed");
+          attachment_url = up.url as string;
+        } finally {
+          setUploading(false);
+        }
+      }
+      const text = draft.trim() || (attachment_url ? "📎 Attachment" : "");
+      return sFn({ data: { taskId, message_text: text, attachment_url, recipient_id: withTasker, token: token! } });
     },
+    onSuccess: (r) => {
+      if (r.ok) {
+        setDraft("");
+        setPendingFile(null);
+        if (fileRef.current) fileRef.current.value = "";
+        msgsQ.refetch();
+      } else toast.error(r.error);
+    },
+    onError: (e: any) => toast.error(e?.message ?? "Could not send message"),
   });
   const completeM = useMutation({
     mutationFn: () => cFn({ data: { taskId, token: token! } }),
@@ -163,6 +234,7 @@ function WorkspacePage() {
             ) : rawMessages.map((m: any, i: number) => {
               const isSystem = m.is_system === 1 || m.is_system === true;
               const text = m.message_text ?? m.body ?? m.message ?? m.text ?? "";
+              const attachment = m.attachment_url ?? m.attachment ?? m.media_url ?? null;
 
               // System/opener messages render as a neutral centered pill, not attributed to anyone.
               if (isSystem) {
@@ -181,6 +253,7 @@ function WorkspacePage() {
                 <div key={m.message_id ?? m.id ?? i} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
                   <div className={`max-w-[75%] rounded-2xl px-3.5 py-2 text-sm ${mine ? "bg-primary text-primary-foreground" : "bg-background border border-border"}`}>
                     <div className="whitespace-pre-wrap break-words">{text}</div>
+                    {attachment && <Attachment url={String(attachment)} />}
                     {m.created_at && <div className={`mt-0.5 text-[10px] ${mine ? "text-primary-foreground/70" : "text-muted-foreground"}`}>{new Date(m.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</div>}
                   </div>
                 </div>
@@ -188,20 +261,56 @@ function WorkspacePage() {
             })}
           </div>
 
-          <form
-            onSubmit={(e) => { e.preventDefault(); if (draft.trim()) sendM.mutate(); }}
-            className="border-t border-border p-3 flex items-center gap-2"
-          >
-            <input
-              value={draft}
-              onChange={(e) => setDraft(e.target.value)}
-              placeholder="Type a message…"
-              className="flex-1 rounded-full border border-border bg-background px-4 py-2 text-sm outline-none focus:border-primary"
-            />
-            <button type="submit" disabled={!draft.trim() || sendM.isPending} className="inline-flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-50">
-              {sendM.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />} Send
-            </button>
-          </form>
+          {messagingClosed ? (
+            <div className="border-t border-border p-3 text-center text-sm text-muted-foreground">
+              This conversation is closed.
+            </div>
+          ) : (
+            <div className="border-t border-border">
+              {pendingFile && (
+                <div className="flex items-center gap-2 px-3 pt-3 text-xs text-muted-foreground">
+                  <Paperclip className="h-3.5 w-3.5" />
+                  <span className="truncate max-w-[60%]">{pendingFile.name}</span>
+                  <button type="button" onClick={() => { setPendingFile(null); if (fileRef.current) fileRef.current.value = ""; }} className="text-destructive">
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              )}
+              <form
+                onSubmit={(e) => { e.preventDefault(); if (draft.trim() || pendingFile) sendM.mutate(); }}
+                className="p-3 flex items-center gap-2"
+              >
+                <input
+                  ref={fileRef}
+                  type="file"
+                  accept="image/*,video/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0] ?? null;
+                    if (f && f.size > 25 * 1024 * 1024) { toast.error("Please choose a file under 25MB."); return; }
+                    setPendingFile(f);
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => fileRef.current?.click()}
+                  aria-label="Attach a photo or video"
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-border text-muted-foreground hover:text-foreground"
+                >
+                  <Paperclip className="h-4 w-4" />
+                </button>
+                <input
+                  value={draft}
+                  onChange={(e) => setDraft(e.target.value)}
+                  placeholder="Type a message…"
+                  className="flex-1 rounded-full border border-border bg-background px-4 py-2 text-sm outline-none focus:border-primary"
+                />
+                <button type="submit" disabled={(!draft.trim() && !pendingFile) || sendM.isPending} className="inline-flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-50">
+                  {sendM.isPending || uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />} Send
+                </button>
+              </form>
+            </div>
+          )}
         </section>
 
         <aside className="space-y-4">
@@ -266,9 +375,11 @@ function WorkspacePage() {
                 Rating submitted ✓
               </div>
             )}
-            <button onClick={() => setShowDispute((s) => !s)} className="w-full inline-flex items-center justify-center gap-1.5 rounded-full border border-destructive/40 text-destructive px-4 py-2 text-sm font-semibold hover:bg-destructive/10">
-              <AlertTriangle className="h-4 w-4" /> Raise a dispute
-            </button>
+            {!messagingClosed && (
+              <button onClick={() => setShowDispute((s) => !s)} className="w-full inline-flex items-center justify-center gap-1.5 rounded-full border border-destructive/40 text-destructive px-4 py-2 text-sm font-semibold hover:bg-destructive/10">
+                <AlertTriangle className="h-4 w-4" /> Raise a dispute
+              </button>
+            )}
 
             {showDispute && (
               <div className="mt-2 space-y-2">
@@ -402,7 +513,9 @@ function LiveLocationPanel({ taskId, token, isPoster, taskLat, taskLng, arrivedA
     if (r?.ok) {
       toast.success("Marked arrived");
       onRefetchTask?.();
-    } else toast.error(r?.error ?? "Could not mark arrived");
+    } else {
+      toast.error(r?.error ?? "You may be too far from the task location to mark arrival.");
+    }
   };
 
   return (
@@ -445,4 +558,3 @@ function LiveLocationPanel({ taskId, token, isPoster, taskLat, taskLng, arrivedA
     </div>
   );
 }
-

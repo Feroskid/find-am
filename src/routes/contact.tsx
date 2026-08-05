@@ -3,6 +3,8 @@ import { useState } from "react";
 import { Mail, Send, ArrowLeft, Phone, MapPin } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
+import { useServerFn } from "@tanstack/react-start";
+import { submitSupportTicket } from "@/lib/support.functions";
 
 const CONTACT_PHONE = "+2348115880524";
 const CONTACT_PHONE_DISPLAY = "+234 811 588 0524";
@@ -24,18 +26,25 @@ export const Route = createFileRoute("/contact")({
   component: ContactPage,
 });
 
+const CATEGORIES = ["general", "payment", "dispute", "account", "task", "bug"] as const;
+
 const schema = z.object({
   name: z.string().trim().min(1, "Name is required").max(80),
   email: z.string().trim().email("Enter a valid email").max(200),
   subject: z.string().trim().min(3, "Subject too short").max(120),
   message: z.string().trim().min(10, "Please share a bit more").max(3000),
+  category: z.enum(CATEGORIES),
 });
 
 function ContactPage() {
-  const [form, setForm] = useState({ name: "", email: "", subject: "", message: "" });
+  const [form, setForm] = useState<{
+    name: string; email: string; subject: string; message: string; category: (typeof CATEGORIES)[number];
+  }>({ name: "", email: "", subject: "", message: "", category: "general" });
   const [sending, setSending] = useState(false);
+  const [sent, setSent] = useState(false);
+  const submit = useServerFn(submitSupportTicket);
 
-  const onSubmit = (e: React.FormEvent) => {
+  const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const parsed = schema.safeParse(form);
     if (!parsed.success) {
@@ -43,10 +52,20 @@ function ContactPage() {
       return;
     }
     setSending(true);
-    const body = `From: ${parsed.data.name} <${parsed.data.email}>\n\n${parsed.data.message}`;
-    const url = `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(parsed.data.subject)}&body=${encodeURIComponent(body)}`;
-    window.location.href = url;
-    setTimeout(() => setSending(false), 1200);
+    try {
+      const r: any = await submit({ data: parsed.data });
+      if (r?.ok) {
+        toast.success("Message sent — our support team will reply by email.");
+        setSent(true);
+        setForm({ name: "", email: "", subject: "", message: "", category: "general" });
+      } else {
+        toast.error(r?.error ?? "Could not send your message");
+      }
+    } catch (err: any) {
+      toast.error(err?.message ?? "Could not send your message");
+    } finally {
+      setSending(false);
+    }
   };
 
   return (
@@ -64,7 +83,7 @@ function ContactPage() {
           </div>
           <h2 className="text-2xl font-bold text-ink">We'd love to hear from you</h2>
           <p className="text-muted-foreground text-sm mt-2">
-            Share feedback, report an issue, or ask a question. Your default mail app will open with the message pre-filled.
+            Share feedback, report an issue, or ask a question. Your message goes straight to our support team and we'll reply by email.
           </p>
         </div>
 
@@ -72,6 +91,21 @@ function ContactPage() {
           <Field label="Your name" value={form.name} onChange={(v) => setForm({ ...form, name: v })} />
           <Field label="Email" type="email" value={form.email} onChange={(v) => setForm({ ...form, email: v })} />
           <Field label="Subject" value={form.subject} onChange={(v) => setForm({ ...form, subject: v })} />
+          <div>
+            <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">What is it about?</label>
+            <select
+              value={form.category}
+              onChange={(e) => setForm({ ...form, category: e.target.value as typeof form.category })}
+              className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-primary"
+            >
+              <option value="general">General question</option>
+              <option value="payment">Payment or wallet</option>
+              <option value="dispute">Dispute with a task</option>
+              <option value="account">My account</option>
+              <option value="task">Posting or doing a task</option>
+              <option value="bug">Something is broken</option>
+            </select>
+          </div>
           <div>
             <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Message</label>
             <textarea
@@ -88,7 +122,7 @@ function ContactPage() {
             disabled={sending}
             className="w-full inline-flex items-center justify-center gap-2 rounded-full bg-primary text-primary-foreground px-5 py-3 font-bold text-sm disabled:opacity-60"
           >
-            <Send className="h-4 w-4" /> {sending ? "Opening mail app…" : "Submit message"}
+            <Send className="h-4 w-4" /> {sending ? "Sending…" : sent ? "Send another message" : "Submit message"}
           </button>
           <p className="text-xs text-center text-muted-foreground">
             Or email us directly at{" "}

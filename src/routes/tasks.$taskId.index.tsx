@@ -431,7 +431,7 @@ function TaskDetail() {
                     <Clock className="h-5 w-5" />
                   </span>
                   <div>
-                    <dt className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">To be done on</dt>
+                    <dt className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Deadline</dt>
                     <dd className="font-semibold text-ink">{dateLabel}</dd>
                     {!date && <div className="text-xs text-muted-foreground">Anytime</div>}
                   </div>
