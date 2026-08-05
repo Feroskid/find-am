@@ -107,9 +107,11 @@ export async function patchTicket(input: {
   status?: string | undefined;
   priority?: string | undefined;
 }) {
-  const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
-  if (input.status) patch['status'] = input.status;
-  if (input.priority) patch['priority'] = input.priority;
+  const patch: { updated_at: string; status?: string; priority?: string } = {
+    updated_at: new Date().toISOString(),
+  };
+  if (input.status) patch.status = input.status;
+  if (input.priority) patch.priority = input.priority;
   const { error } = await supabaseAdmin.from("support_tickets").update(patch).eq("id", input.ticketId);
   if (error) throw error;
 }
