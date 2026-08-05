@@ -81,19 +81,8 @@ export function Footer() {
           ))}
         </div>
 
-        <div className="mt-12 pt-8 border-t border-background/15 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+        <div className="mt-12 pt-8 border-t border-background/15">
           <div className="font-display text-3xl text-primary">Find-task</div>
-          <div className="flex flex-wrap items-center gap-3">
-            <span className="inline-flex items-center gap-2 rounded-xl border border-background/30 px-4 py-2 text-xs font-semibold text-background/90">
-              DOWNLOAD ON THE App Store
-            </span>
-            <span className="inline-flex items-center gap-2 rounded-xl border border-background/30 px-4 py-2 text-xs font-semibold text-background/90">
-              GET IT ON Google Play
-            </span>
-            <span className="text-background/60 text-lg">f</span>
-            <span className="text-background/60 text-lg">◎</span>
-            <span className="text-background/60 text-lg">♪</span>
-          </div>
         </div>
 
         <div className="mt-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between text-xs text-background/60">
