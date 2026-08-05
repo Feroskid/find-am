@@ -3,6 +3,8 @@ import { useState } from "react";
 import { Mail, Send, ArrowLeft, Phone, MapPin } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
+import { useServerFn } from "@tanstack/react-start";
+import { submitSupportTicket } from "@/lib/support.functions";
 
 const CONTACT_PHONE = "+2348115880524";
 const CONTACT_PHONE_DISPLAY = "+234 811 588 0524";
