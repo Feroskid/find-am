@@ -33,6 +33,7 @@ import { Route as AdminAuditRouteImport } from './routes/admin.audit'
 import { Route as AdminBlacklistRouteImport } from './routes/admin.blacklist'
 import { Route as AdminDisputesRouteImport } from './routes/admin.disputes'
 import { Route as AdminLoginRouteImport } from './routes/admin.login'
+import { Route as AdminSupportRouteImport } from './routes/admin.support'
 import { Route as AdminUsersRouteImport } from './routes/admin.users'
 import { Route as AuthVerifyEmailRouteImport } from './routes/auth.verify-email'
 import { Route as CommunityIndexRouteImport } from './routes/community.index'
@@ -176,6 +177,11 @@ const AdminDisputesRoute = AdminDisputesRouteImport.update({
 const AdminLoginRoute = AdminLoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminSupportRoute = AdminSupportRouteImport.update({
+  id: '/support',
+  path: '/support',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminUsersRoute = AdminUsersRouteImport.update({
@@ -323,6 +329,7 @@ export interface FileRoutesByFullPath {
   '/admin/blacklist': typeof AdminBlacklistRoute
   '/admin/disputes': typeof AdminDisputesRoute
   '/admin/login': typeof AdminLoginRoute
+  '/admin/support': typeof AdminSupportRoute
   '/admin/users': typeof AdminUsersRoute
   '/auth/verify-email': typeof AuthVerifyEmailRoute
   '/community/auth': typeof CommunityAuthRoute
@@ -371,6 +378,7 @@ export interface FileRoutesByTo {
   '/admin/blacklist': typeof AdminBlacklistRoute
   '/admin/disputes': typeof AdminDisputesRoute
   '/admin/login': typeof AdminLoginRoute
+  '/admin/support': typeof AdminSupportRoute
   '/admin/users': typeof AdminUsersRoute
   '/auth/verify-email': typeof AuthVerifyEmailRoute
   '/community/auth': typeof CommunityAuthRoute
@@ -422,6 +430,7 @@ export interface FileRoutesById {
   '/admin/blacklist': typeof AdminBlacklistRoute
   '/admin/disputes': typeof AdminDisputesRoute
   '/admin/login': typeof AdminLoginRoute
+  '/admin/support': typeof AdminSupportRoute
   '/admin/users': typeof AdminUsersRoute
   '/auth/verify-email': typeof AuthVerifyEmailRoute
   '/community/auth': typeof CommunityAuthRoute
@@ -474,6 +483,7 @@ export interface FileRouteTypes {
     | '/admin/blacklist'
     | '/admin/disputes'
     | '/admin/login'
+    | '/admin/support'
     | '/admin/users'
     | '/auth/verify-email'
     | '/community/auth'
@@ -522,6 +532,7 @@ export interface FileRouteTypes {
     | '/admin/blacklist'
     | '/admin/disputes'
     | '/admin/login'
+    | '/admin/support'
     | '/admin/users'
     | '/auth/verify-email'
     | '/community/auth'
@@ -572,6 +583,7 @@ export interface FileRouteTypes {
     | '/admin/blacklist'
     | '/admin/disputes'
     | '/admin/login'
+    | '/admin/support'
     | '/admin/users'
     | '/auth/verify-email'
     | '/community/auth'
@@ -806,6 +818,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminLoginRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/support': {
+      id: '/admin/support'
+      path: '/support'
+      fullPath: '/admin/support'
+      preLoaderRoute: typeof AdminSupportRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/users': {
       id: '/admin/users'
       path: '/users'
@@ -982,6 +1001,7 @@ interface AdminRouteChildren {
   AdminBlacklistRoute: typeof AdminBlacklistRoute
   AdminDisputesRoute: typeof AdminDisputesRoute
   AdminLoginRoute: typeof AdminLoginRoute
+  AdminSupportRoute: typeof AdminSupportRoute
   AdminUsersRoute: typeof AdminUsersRoute
   AdminIndexRoute: typeof AdminIndexRoute
 }
@@ -991,6 +1011,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminBlacklistRoute: AdminBlacklistRoute,
   AdminDisputesRoute: AdminDisputesRoute,
   AdminLoginRoute: AdminLoginRoute,
+  AdminSupportRoute: AdminSupportRoute,
   AdminUsersRoute: AdminUsersRoute,
   AdminIndexRoute: AdminIndexRoute,
 }
