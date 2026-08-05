@@ -324,6 +324,8 @@ function WorkspacePage() {
               isPoster={isPoster}
               taskLat={task?.location_lat ?? task?.latitude}
               taskLng={task?.location_lng ?? task?.longitude}
+              arrivedAt={task?.arrived_at ?? null}
+              onRefetchTask={() => taskQ.refetch()}
             />
           )}
         </aside>
@@ -332,7 +334,7 @@ function WorkspacePage() {
   );
 }
 
-function LiveLocationPanel({ taskId, token, isPoster, taskLat, taskLng }: { taskId: string; token: string; isPoster: boolean; taskLat?: number | null; taskLng?: number | null }) {
+function LiveLocationPanel({ taskId, token, isPoster, taskLat, taskLng, arrivedAt, onRefetchTask }: { taskId: string; token: string; isPoster: boolean; taskLat?: number | null; taskLng?: number | null; arrivedAt?: string | null; onRefetchTask?: () => void }) {
   const getLoc = useServerFn(getTaskLocation);
   const toggle = useServerFn(toggleTaskLocation);
   const arrive = useServerFn(markArrived);
@@ -397,7 +399,10 @@ function LiveLocationPanel({ taskId, token, isPoster, taskLat, taskLng }: { task
   const onArrived = async () => {
     const here = pos;
     const r: any = await arrive({ data: { taskId, token, ...(here ? { latitude: here.lat, longitude: here.lng } : {}) } });
-    if (r?.ok) toast.success("Marked arrived"); else toast.error(r?.error ?? "Could not mark arrived");
+    if (r?.ok) {
+      toast.success("Marked arrived");
+      onRefetchTask?.();
+    } else toast.error(r?.error ?? "Could not mark arrived");
   };
 
   return (
@@ -429,7 +434,7 @@ function LiveLocationPanel({ taskId, token, isPoster, taskLat, taskLng }: { task
         isPoster={isPoster}
       />
 
-      {!isPoster && (
+      {!isPoster && !arrivedAt && (
         <button
           onClick={onArrived}
           className="w-full inline-flex items-center justify-center gap-1.5 rounded-full border border-border px-4 py-2 text-sm font-semibold hover:bg-muted"

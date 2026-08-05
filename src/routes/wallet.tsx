@@ -238,17 +238,28 @@ function WalletPage() {
             ) : txs.length === 0 ? (
               <div className="p-10 text-center text-muted-foreground text-sm">No transactions yet.</div>
             ) : (
-              txs.map((t: any, i: number) => (
-                <div key={t.id ?? t.transaction_id ?? i} className="p-4 flex items-center justify-between text-sm">
-                  <div>
-                    <div className="font-medium">{t.description ?? t.type ?? "Transaction"}</div>
-                    <div className="text-xs text-muted-foreground">{t.created_at && new Date(t.created_at).toLocaleString()}</div>
+              txs.map((t: any, i: number) => {
+                const isReversed = String(t.status).toLowerCase() === "reversed";
+                const isDebit = String(t.type).toLowerCase() === "debit";
+                return (
+                  <div key={t.id ?? t.transaction_id ?? i} className={`p-4 flex items-center justify-between text-sm ${isReversed ? "opacity-60" : ""}`}>
+                    <div>
+                      <div className="font-medium inline-flex items-center gap-2">
+                        {t.description ?? t.type ?? "Transaction"}
+                        {isReversed && (
+                          <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">
+                            Reversed
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-xs text-muted-foreground">{t.created_at && new Date(t.created_at).toLocaleString()}</div>
+                    </div>
+                    <div className={`font-semibold ${isReversed ? "text-muted-foreground line-through" : isDebit ? "text-destructive" : "text-emerald-600 dark:text-emerald-400"}`}>
+                      {isDebit ? "−" : "+"}₦{Number(t.amount ?? 0).toLocaleString()}
+                    </div>
                   </div>
-                  <div className={`font-semibold ${String(t.type).toLowerCase() === "debit" ? "text-destructive" : "text-emerald-600 dark:text-emerald-400"}`}>
-                    {String(t.type).toLowerCase() === "debit" ? "−" : "+"}₦{Number(t.amount ?? 0).toLocaleString()}
-                  </div>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
         </section>
