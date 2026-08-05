@@ -24,18 +24,25 @@ export const Route = createFileRoute("/contact")({
   component: ContactPage,
 });
 
+const CATEGORIES = ["general", "payment", "dispute", "account", "task", "bug"] as const;
+
 const schema = z.object({
   name: z.string().trim().min(1, "Name is required").max(80),
   email: z.string().trim().email("Enter a valid email").max(200),
   subject: z.string().trim().min(3, "Subject too short").max(120),
   message: z.string().trim().min(10, "Please share a bit more").max(3000),
+  category: z.enum(CATEGORIES),
 });
 
 function ContactPage() {
-  const [form, setForm] = useState({ name: "", email: "", subject: "", message: "" });
+  const [form, setForm] = useState<{
+    name: string; email: string; subject: string; message: string; category: (typeof CATEGORIES)[number];
+  }>({ name: "", email: "", subject: "", message: "", category: "general" });
   const [sending, setSending] = useState(false);
+  const [sent, setSent] = useState(false);
+  const submit = useServerFn(submitSupportTicket);
 
-  const onSubmit = (e: React.FormEvent) => {
+  const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const parsed = schema.safeParse(form);
     if (!parsed.success) {
@@ -43,10 +50,20 @@ function ContactPage() {
       return;
     }
     setSending(true);
-    const body = `From: ${parsed.data.name} <${parsed.data.email}>\n\n${parsed.data.message}`;
-    const url = `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(parsed.data.subject)}&body=${encodeURIComponent(body)}`;
-    window.location.href = url;
-    setTimeout(() => setSending(false), 1200);
+    try {
+      const r: any = await submit({ data: parsed.data });
+      if (r?.ok) {
+        toast.success("Message sent — our support team will reply by email.");
+        setSent(true);
+        setForm({ name: "", email: "", subject: "", message: "", category: "general" });
+      } else {
+        toast.error(r?.error ?? "Could not send your message");
+      }
+    } catch (err: any) {
+      toast.error(err?.message ?? "Could not send your message");
+    } finally {
+      setSending(false);
+    }
   };
 
   return (
