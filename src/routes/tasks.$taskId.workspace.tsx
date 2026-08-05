@@ -16,7 +16,7 @@ import { MilestoneActions } from "@/components/MilestoneActions";
 
 
 export const Route = createFileRoute("/tasks/$taskId/workspace")({
-  validateSearch: (s: Record<string, unknown>) => ({
+  validateSearch: (s: Record<string, unknown> = {}) => ({
     with: typeof s.with === "string" ? s.with : undefined,
   }),
   head: () => ({ meta: [{ title: "Task workspace — Find-task" }] }),

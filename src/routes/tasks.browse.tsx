@@ -7,7 +7,7 @@ import { TaskHeader } from "@/components/TaskHeader";
 import { listTasks, getCategories } from "@/lib/findtask.functions";
 
 export const Route = createFileRoute("/tasks/browse")({
-  validateSearch: (s: Record<string, unknown>) => ({
+  validateSearch: (s: Record<string, unknown> = {}) => ({
     q: typeof s.q === "string" ? s.q : "",
     category_id:
       typeof s.category_id === "string" || typeof s.category_id === "number"
