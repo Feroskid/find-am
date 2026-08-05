@@ -9,137 +9,57 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as WalletRouteImport } from './routes/wallet'
-import { Route as VerifyEmailRouteImport } from './routes/verify-email'
-import { Route as TermsRouteImport } from './routes/terms'
-import { Route as TasksRouteImport } from './routes/tasks'
-import { Route as SearchRouteImport } from './routes/search'
-import { Route as ResetPasswordRouteImport } from './routes/reset-password'
-import { Route as RegisterRouteImport } from './routes/register'
-import { Route as RefundRouteImport } from './routes/refund'
-import { Route as ProfileRouteImport } from './routes/profile'
-import { Route as PrivacyRouteImport } from './routes/privacy'
-import { Route as PostTaskRouteImport } from './routes/post-task'
-import { Route as NotificationsRouteImport } from './routes/notifications'
-import { Route as MapRouteImport } from './routes/map'
-import { Route as LoginRouteImport } from './routes/login'
-import { Route as ExploreRouteImport } from './routes/explore'
-import { Route as DashboardRouteImport } from './routes/dashboard'
-import { Route as ContactRouteImport } from './routes/contact'
-import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as TasksIndexRouteImport } from './routes/tasks.index'
-import { Route as MessagesIndexRouteImport } from './routes/messages.index'
-import { Route as CommunityIndexRouteImport } from './routes/community.index'
+import { Route as AdminRouteImport } from './routes/admin'
+import { Route as ContactRouteImport } from './routes/contact'
+import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as ExploreRouteImport } from './routes/explore'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as MapRouteImport } from './routes/map'
+import { Route as NotificationsRouteImport } from './routes/notifications'
+import { Route as PostTaskRouteImport } from './routes/post-task'
+import { Route as PrivacyRouteImport } from './routes/privacy'
+import { Route as ProfileRouteImport } from './routes/profile'
+import { Route as RefundRouteImport } from './routes/refund'
+import { Route as RegisterRouteImport } from './routes/register'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as SearchRouteImport } from './routes/search'
+import { Route as TasksRouteImport } from './routes/tasks'
+import { Route as TermsRouteImport } from './routes/terms'
+import { Route as VerifyEmailRouteImport } from './routes/verify-email'
+import { Route as WalletRouteImport } from './routes/wallet'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
-import { Route as UUserIdRouteImport } from './routes/u.$userId'
-import { Route as TasksOffersRouteImport } from './routes/tasks.offers'
-import { Route as TasksMineRouteImport } from './routes/tasks.mine'
-import { Route as TasksCategoriesRouteImport } from './routes/tasks.categories'
-import { Route as TasksBrowseRouteImport } from './routes/tasks.browse'
-import { Route as CommunitySettingsRouteImport } from './routes/community.settings'
-import { Route as CommunitySearchRouteImport } from './routes/community.search'
-import { Route as CommunityNotificationsRouteImport } from './routes/community.notifications'
-import { Route as CommunityNewRouteImport } from './routes/community.new'
-import { Route as CommunityModerationRouteImport } from './routes/community.moderation'
-import { Route as CommunityAuthRouteImport } from './routes/community.auth'
-import { Route as AuthVerifyEmailRouteImport } from './routes/auth.verify-email'
-import { Route as AdminUsersRouteImport } from './routes/admin.users'
-import { Route as AdminDisputesRouteImport } from './routes/admin.disputes'
-import { Route as AdminBlacklistRouteImport } from './routes/admin.blacklist'
 import { Route as AdminAuditRouteImport } from './routes/admin.audit'
-import { Route as TasksTaskIdIndexRouteImport } from './routes/tasks.$taskId.index'
-import { Route as TasksTaskIdWorkspaceRouteImport } from './routes/tasks.$taskId.workspace'
-import { Route as TasksTaskIdApplicationsRouteImport } from './routes/tasks.$taskId.applications'
-import { Route as TaskPaymentCallbackRouteImport } from './routes/task.payment.callback'
-import { Route as CommunityUUsernameRouteImport } from './routes/community.u.$username'
-import { Route as CommunityTThreadIdRouteImport } from './routes/community.t.$threadId'
-import { Route as CommunityCSlugRouteImport } from './routes/community.c.$slug'
+import { Route as AdminBlacklistRouteImport } from './routes/admin.blacklist'
+import { Route as AdminDisputesRouteImport } from './routes/admin.disputes'
+import { Route as AdminUsersRouteImport } from './routes/admin.users'
+import { Route as AuthVerifyEmailRouteImport } from './routes/auth.verify-email'
+import { Route as CommunityIndexRouteImport } from './routes/community.index'
+import { Route as CommunityAuthRouteImport } from './routes/community.auth'
+import { Route as CommunityModerationRouteImport } from './routes/community.moderation'
+import { Route as CommunityNewRouteImport } from './routes/community.new'
+import { Route as CommunityNotificationsRouteImport } from './routes/community.notifications'
+import { Route as CommunitySearchRouteImport } from './routes/community.search'
+import { Route as CommunitySettingsRouteImport } from './routes/community.settings'
+import { Route as MessagesIndexRouteImport } from './routes/messages.index'
+import { Route as TasksIndexRouteImport } from './routes/tasks.index'
+import { Route as TasksBrowseRouteImport } from './routes/tasks.browse'
+import { Route as TasksCategoriesRouteImport } from './routes/tasks.categories'
+import { Route as TasksMineRouteImport } from './routes/tasks.mine'
+import { Route as TasksOffersRouteImport } from './routes/tasks.offers'
+import { Route as UUserIdRouteImport } from './routes/u.$userId'
 import { Route as ApiPublicSearchRouteImport } from './routes/api/public/search'
+import { Route as CommunityCSlugRouteImport } from './routes/community.c.$slug'
+import { Route as CommunityTThreadIdRouteImport } from './routes/community.t.$threadId'
+import { Route as CommunityUUsernameRouteImport } from './routes/community.u.$username'
+import { Route as TaskPaymentCallbackRouteImport } from './routes/task.payment.callback'
+import { Route as TasksTaskIdIndexRouteImport } from './routes/tasks.$taskId.index'
+import { Route as TasksTaskIdApplicationsRouteImport } from './routes/tasks.$taskId.applications'
+import { Route as TasksTaskIdWorkspaceRouteImport } from './routes/tasks.$taskId.workspace'
 
-const WalletRoute = WalletRouteImport.update({
-  id: '/wallet',
-  path: '/wallet',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const VerifyEmailRoute = VerifyEmailRouteImport.update({
-  id: '/verify-email',
-  path: '/verify-email',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const TermsRoute = TermsRouteImport.update({
-  id: '/terms',
-  path: '/terms',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const TasksRoute = TasksRouteImport.update({
-  id: '/tasks',
-  path: '/tasks',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SearchRoute = SearchRouteImport.update({
-  id: '/search',
-  path: '/search',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ResetPasswordRoute = ResetPasswordRouteImport.update({
-  id: '/reset-password',
-  path: '/reset-password',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const RegisterRoute = RegisterRouteImport.update({
-  id: '/register',
-  path: '/register',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const RefundRoute = RefundRouteImport.update({
-  id: '/refund',
-  path: '/refund',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ProfileRoute = ProfileRouteImport.update({
-  id: '/profile',
-  path: '/profile',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PrivacyRoute = PrivacyRouteImport.update({
-  id: '/privacy',
-  path: '/privacy',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PostTaskRoute = PostTaskRouteImport.update({
-  id: '/post-task',
-  path: '/post-task',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const NotificationsRoute = NotificationsRouteImport.update({
-  id: '/notifications',
-  path: '/notifications',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const MapRoute = MapRouteImport.update({
-  id: '/map',
-  path: '/map',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LoginRoute = LoginRouteImport.update({
-  id: '/login',
-  path: '/login',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ExploreRoute = ExploreRouteImport.update({
-  id: '/explore',
-  path: '/explore',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DashboardRoute = DashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ContactRoute = ContactRouteImport.update({
-  id: '/contact',
-  path: '/contact',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminRoute = AdminRouteImport.update({
@@ -147,24 +67,89 @@ const AdminRoute = AdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const ContactRoute = ContactRouteImport.update({
+  id: '/contact',
+  path: '/contact',
   getParentRoute: () => rootRouteImport,
 } as any)
-const TasksIndexRoute = TasksIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => TasksRoute,
-} as any)
-const MessagesIndexRoute = MessagesIndexRouteImport.update({
-  id: '/messages/',
-  path: '/messages/',
+const DashboardRoute = DashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
-const CommunityIndexRoute = CommunityIndexRouteImport.update({
-  id: '/community/',
-  path: '/community/',
+const ExploreRoute = ExploreRouteImport.update({
+  id: '/explore',
+  path: '/explore',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MapRoute = MapRouteImport.update({
+  id: '/map',
+  path: '/map',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NotificationsRoute = NotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PostTaskRoute = PostTaskRouteImport.update({
+  id: '/post-task',
+  path: '/post-task',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProfileRoute = ProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RefundRoute = RefundRouteImport.update({
+  id: '/refund',
+  path: '/refund',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RegisterRoute = RegisterRouteImport.update({
+  id: '/register',
+  path: '/register',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SearchRoute = SearchRouteImport.update({
+  id: '/search',
+  path: '/search',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TasksRoute = TasksRouteImport.update({
+  id: '/tasks',
+  path: '/tasks',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const VerifyEmailRoute = VerifyEmailRouteImport.update({
+  id: '/verify-email',
+  path: '/verify-email',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const WalletRoute = WalletRouteImport.update({
+  id: '/wallet',
+  path: '/wallet',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminIndexRoute = AdminIndexRouteImport.update({
@@ -172,74 +157,9 @@ const AdminIndexRoute = AdminIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AdminRoute,
 } as any)
-const UUserIdRoute = UUserIdRouteImport.update({
-  id: '/u/$userId',
-  path: '/u/$userId',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const TasksOffersRoute = TasksOffersRouteImport.update({
-  id: '/offers',
-  path: '/offers',
-  getParentRoute: () => TasksRoute,
-} as any)
-const TasksMineRoute = TasksMineRouteImport.update({
-  id: '/mine',
-  path: '/mine',
-  getParentRoute: () => TasksRoute,
-} as any)
-const TasksCategoriesRoute = TasksCategoriesRouteImport.update({
-  id: '/categories',
-  path: '/categories',
-  getParentRoute: () => TasksRoute,
-} as any)
-const TasksBrowseRoute = TasksBrowseRouteImport.update({
-  id: '/browse',
-  path: '/browse',
-  getParentRoute: () => TasksRoute,
-} as any)
-const CommunitySettingsRoute = CommunitySettingsRouteImport.update({
-  id: '/community/settings',
-  path: '/community/settings',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CommunitySearchRoute = CommunitySearchRouteImport.update({
-  id: '/community/search',
-  path: '/community/search',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CommunityNotificationsRoute = CommunityNotificationsRouteImport.update({
-  id: '/community/notifications',
-  path: '/community/notifications',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CommunityNewRoute = CommunityNewRouteImport.update({
-  id: '/community/new',
-  path: '/community/new',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CommunityModerationRoute = CommunityModerationRouteImport.update({
-  id: '/community/moderation',
-  path: '/community/moderation',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CommunityAuthRoute = CommunityAuthRouteImport.update({
-  id: '/community/auth',
-  path: '/community/auth',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthVerifyEmailRoute = AuthVerifyEmailRouteImport.update({
-  id: '/auth/verify-email',
-  path: '/auth/verify-email',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AdminUsersRoute = AdminUsersRouteImport.update({
-  id: '/users',
-  path: '/users',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminDisputesRoute = AdminDisputesRouteImport.update({
-  id: '/disputes',
-  path: '/disputes',
+const AdminAuditRoute = AdminAuditRouteImport.update({
+  id: '/audit',
+  path: '/audit',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminBlacklistRoute = AdminBlacklistRouteImport.update({
@@ -247,39 +167,94 @@ const AdminBlacklistRoute = AdminBlacklistRouteImport.update({
   path: '/blacklist',
   getParentRoute: () => AdminRoute,
 } as any)
-const AdminAuditRoute = AdminAuditRouteImport.update({
-  id: '/audit',
-  path: '/audit',
+const AdminDisputesRoute = AdminDisputesRouteImport.update({
+  id: '/disputes',
+  path: '/disputes',
   getParentRoute: () => AdminRoute,
 } as any)
-const TasksTaskIdIndexRoute = TasksTaskIdIndexRouteImport.update({
-  id: '/$taskId/',
-  path: '/$taskId/',
-  getParentRoute: () => TasksRoute,
+const AdminUsersRoute = AdminUsersRouteImport.update({
+  id: '/users',
+  path: '/users',
+  getParentRoute: () => AdminRoute,
 } as any)
-const TasksTaskIdWorkspaceRoute = TasksTaskIdWorkspaceRouteImport.update({
-  id: '/$taskId/workspace',
-  path: '/$taskId/workspace',
-  getParentRoute: () => TasksRoute,
-} as any)
-const TasksTaskIdApplicationsRoute = TasksTaskIdApplicationsRouteImport.update({
-  id: '/$taskId/applications',
-  path: '/$taskId/applications',
-  getParentRoute: () => TasksRoute,
-} as any)
-const TaskPaymentCallbackRoute = TaskPaymentCallbackRouteImport.update({
-  id: '/task/payment/callback',
-  path: '/task/payment/callback',
+const AuthVerifyEmailRoute = AuthVerifyEmailRouteImport.update({
+  id: '/auth/verify-email',
+  path: '/auth/verify-email',
   getParentRoute: () => rootRouteImport,
 } as any)
-const CommunityUUsernameRoute = CommunityUUsernameRouteImport.update({
-  id: '/community/u/$username',
-  path: '/community/u/$username',
+const CommunityIndexRoute = CommunityIndexRouteImport.update({
+  id: '/community/',
+  path: '/community/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const CommunityTThreadIdRoute = CommunityTThreadIdRouteImport.update({
-  id: '/community/t/$threadId',
-  path: '/community/t/$threadId',
+const CommunityAuthRoute = CommunityAuthRouteImport.update({
+  id: '/community/auth',
+  path: '/community/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CommunityModerationRoute = CommunityModerationRouteImport.update({
+  id: '/community/moderation',
+  path: '/community/moderation',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CommunityNewRoute = CommunityNewRouteImport.update({
+  id: '/community/new',
+  path: '/community/new',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CommunityNotificationsRoute = CommunityNotificationsRouteImport.update({
+  id: '/community/notifications',
+  path: '/community/notifications',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CommunitySearchRoute = CommunitySearchRouteImport.update({
+  id: '/community/search',
+  path: '/community/search',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CommunitySettingsRoute = CommunitySettingsRouteImport.update({
+  id: '/community/settings',
+  path: '/community/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MessagesIndexRoute = MessagesIndexRouteImport.update({
+  id: '/messages/',
+  path: '/messages/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TasksIndexRoute = TasksIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => TasksRoute,
+} as any)
+const TasksBrowseRoute = TasksBrowseRouteImport.update({
+  id: '/browse',
+  path: '/browse',
+  getParentRoute: () => TasksRoute,
+} as any)
+const TasksCategoriesRoute = TasksCategoriesRouteImport.update({
+  id: '/categories',
+  path: '/categories',
+  getParentRoute: () => TasksRoute,
+} as any)
+const TasksMineRoute = TasksMineRouteImport.update({
+  id: '/mine',
+  path: '/mine',
+  getParentRoute: () => TasksRoute,
+} as any)
+const TasksOffersRoute = TasksOffersRouteImport.update({
+  id: '/offers',
+  path: '/offers',
+  getParentRoute: () => TasksRoute,
+} as any)
+const UUserIdRoute = UUserIdRouteImport.update({
+  id: '/u/$userId',
+  path: '/u/$userId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicSearchRoute = ApiPublicSearchRouteImport.update({
+  id: '/api/public/search',
+  path: '/api/public/search',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CommunityCSlugRoute = CommunityCSlugRouteImport.update({
@@ -287,10 +262,35 @@ const CommunityCSlugRoute = CommunityCSlugRouteImport.update({
   path: '/community/c/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiPublicSearchRoute = ApiPublicSearchRouteImport.update({
-  id: '/api/public/search',
-  path: '/api/public/search',
+const CommunityTThreadIdRoute = CommunityTThreadIdRouteImport.update({
+  id: '/community/t/$threadId',
+  path: '/community/t/$threadId',
   getParentRoute: () => rootRouteImport,
+} as any)
+const CommunityUUsernameRoute = CommunityUUsernameRouteImport.update({
+  id: '/community/u/$username',
+  path: '/community/u/$username',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TaskPaymentCallbackRoute = TaskPaymentCallbackRouteImport.update({
+  id: '/task/payment/callback',
+  path: '/task/payment/callback',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TasksTaskIdIndexRoute = TasksTaskIdIndexRouteImport.update({
+  id: '/$taskId/',
+  path: '/$taskId/',
+  getParentRoute: () => TasksRoute,
+} as any)
+const TasksTaskIdApplicationsRoute = TasksTaskIdApplicationsRouteImport.update({
+  id: '/$taskId/applications',
+  path: '/$taskId/applications',
+  getParentRoute: () => TasksRoute,
+} as any)
+const TasksTaskIdWorkspaceRoute = TasksTaskIdWorkspaceRouteImport.update({
+  id: '/$taskId/workspace',
+  path: '/$taskId/workspace',
+  getParentRoute: () => TasksRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
@@ -626,123 +626,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/wallet': {
-      id: '/wallet'
-      path: '/wallet'
-      fullPath: '/wallet'
-      preLoaderRoute: typeof WalletRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/verify-email': {
-      id: '/verify-email'
-      path: '/verify-email'
-      fullPath: '/verify-email'
-      preLoaderRoute: typeof VerifyEmailRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/terms': {
-      id: '/terms'
-      path: '/terms'
-      fullPath: '/terms'
-      preLoaderRoute: typeof TermsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/tasks': {
-      id: '/tasks'
-      path: '/tasks'
-      fullPath: '/tasks'
-      preLoaderRoute: typeof TasksRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/search': {
-      id: '/search'
-      path: '/search'
-      fullPath: '/search'
-      preLoaderRoute: typeof SearchRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/reset-password': {
-      id: '/reset-password'
-      path: '/reset-password'
-      fullPath: '/reset-password'
-      preLoaderRoute: typeof ResetPasswordRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/register': {
-      id: '/register'
-      path: '/register'
-      fullPath: '/register'
-      preLoaderRoute: typeof RegisterRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/refund': {
-      id: '/refund'
-      path: '/refund'
-      fullPath: '/refund'
-      preLoaderRoute: typeof RefundRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/profile': {
-      id: '/profile'
-      path: '/profile'
-      fullPath: '/profile'
-      preLoaderRoute: typeof ProfileRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/privacy': {
-      id: '/privacy'
-      path: '/privacy'
-      fullPath: '/privacy'
-      preLoaderRoute: typeof PrivacyRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/post-task': {
-      id: '/post-task'
-      path: '/post-task'
-      fullPath: '/post-task'
-      preLoaderRoute: typeof PostTaskRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/notifications': {
-      id: '/notifications'
-      path: '/notifications'
-      fullPath: '/notifications'
-      preLoaderRoute: typeof NotificationsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/map': {
-      id: '/map'
-      path: '/map'
-      fullPath: '/map'
-      preLoaderRoute: typeof MapRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/login': {
-      id: '/login'
-      path: '/login'
-      fullPath: '/login'
-      preLoaderRoute: typeof LoginRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/explore': {
-      id: '/explore'
-      path: '/explore'
-      fullPath: '/explore'
-      preLoaderRoute: typeof ExploreRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/dashboard': {
-      id: '/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof DashboardRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/contact': {
-      id: '/contact'
-      path: '/contact'
-      fullPath: '/contact'
-      preLoaderRoute: typeof ContactRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin': {
@@ -752,32 +640,123 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/contact': {
+      id: '/contact'
+      path: '/contact'
+      fullPath: '/contact'
+      preLoaderRoute: typeof ContactRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/tasks/': {
-      id: '/tasks/'
-      path: '/'
-      fullPath: '/tasks/'
-      preLoaderRoute: typeof TasksIndexRouteImport
-      parentRoute: typeof TasksRoute
-    }
-    '/messages/': {
-      id: '/messages/'
-      path: '/messages'
-      fullPath: '/messages/'
-      preLoaderRoute: typeof MessagesIndexRouteImport
+    '/dashboard': {
+      id: '/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof DashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/community/': {
-      id: '/community/'
-      path: '/community'
-      fullPath: '/community/'
-      preLoaderRoute: typeof CommunityIndexRouteImport
+    '/explore': {
+      id: '/explore'
+      path: '/explore'
+      fullPath: '/explore'
+      preLoaderRoute: typeof ExploreRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/map': {
+      id: '/map'
+      path: '/map'
+      fullPath: '/map'
+      preLoaderRoute: typeof MapRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/notifications': {
+      id: '/notifications'
+      path: '/notifications'
+      fullPath: '/notifications'
+      preLoaderRoute: typeof NotificationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/post-task': {
+      id: '/post-task'
+      path: '/post-task'
+      fullPath: '/post-task'
+      preLoaderRoute: typeof PostTaskRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/profile': {
+      id: '/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof ProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/refund': {
+      id: '/refund'
+      path: '/refund'
+      fullPath: '/refund'
+      preLoaderRoute: typeof RefundRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/register': {
+      id: '/register'
+      path: '/register'
+      fullPath: '/register'
+      preLoaderRoute: typeof RegisterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/search': {
+      id: '/search'
+      path: '/search'
+      fullPath: '/search'
+      preLoaderRoute: typeof SearchRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tasks': {
+      id: '/tasks'
+      path: '/tasks'
+      fullPath: '/tasks'
+      preLoaderRoute: typeof TasksRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/verify-email': {
+      id: '/verify-email'
+      path: '/verify-email'
+      fullPath: '/verify-email'
+      preLoaderRoute: typeof VerifyEmailRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/wallet': {
+      id: '/wallet'
+      path: '/wallet'
+      fullPath: '/wallet'
+      preLoaderRoute: typeof WalletRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/': {
@@ -787,102 +766,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminIndexRouteImport
       parentRoute: typeof AdminRoute
     }
-    '/u/$userId': {
-      id: '/u/$userId'
-      path: '/u/$userId'
-      fullPath: '/u/$userId'
-      preLoaderRoute: typeof UUserIdRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/tasks/offers': {
-      id: '/tasks/offers'
-      path: '/offers'
-      fullPath: '/tasks/offers'
-      preLoaderRoute: typeof TasksOffersRouteImport
-      parentRoute: typeof TasksRoute
-    }
-    '/tasks/mine': {
-      id: '/tasks/mine'
-      path: '/mine'
-      fullPath: '/tasks/mine'
-      preLoaderRoute: typeof TasksMineRouteImport
-      parentRoute: typeof TasksRoute
-    }
-    '/tasks/categories': {
-      id: '/tasks/categories'
-      path: '/categories'
-      fullPath: '/tasks/categories'
-      preLoaderRoute: typeof TasksCategoriesRouteImport
-      parentRoute: typeof TasksRoute
-    }
-    '/tasks/browse': {
-      id: '/tasks/browse'
-      path: '/browse'
-      fullPath: '/tasks/browse'
-      preLoaderRoute: typeof TasksBrowseRouteImport
-      parentRoute: typeof TasksRoute
-    }
-    '/community/settings': {
-      id: '/community/settings'
-      path: '/community/settings'
-      fullPath: '/community/settings'
-      preLoaderRoute: typeof CommunitySettingsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/community/search': {
-      id: '/community/search'
-      path: '/community/search'
-      fullPath: '/community/search'
-      preLoaderRoute: typeof CommunitySearchRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/community/notifications': {
-      id: '/community/notifications'
-      path: '/community/notifications'
-      fullPath: '/community/notifications'
-      preLoaderRoute: typeof CommunityNotificationsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/community/new': {
-      id: '/community/new'
-      path: '/community/new'
-      fullPath: '/community/new'
-      preLoaderRoute: typeof CommunityNewRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/community/moderation': {
-      id: '/community/moderation'
-      path: '/community/moderation'
-      fullPath: '/community/moderation'
-      preLoaderRoute: typeof CommunityModerationRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/community/auth': {
-      id: '/community/auth'
-      path: '/community/auth'
-      fullPath: '/community/auth'
-      preLoaderRoute: typeof CommunityAuthRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/auth/verify-email': {
-      id: '/auth/verify-email'
-      path: '/auth/verify-email'
-      fullPath: '/auth/verify-email'
-      preLoaderRoute: typeof AuthVerifyEmailRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/admin/users': {
-      id: '/admin/users'
-      path: '/users'
-      fullPath: '/admin/users'
-      preLoaderRoute: typeof AdminUsersRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/disputes': {
-      id: '/admin/disputes'
-      path: '/disputes'
-      fullPath: '/admin/disputes'
-      preLoaderRoute: typeof AdminDisputesRouteImport
+    '/admin/audit': {
+      id: '/admin/audit'
+      path: '/audit'
+      fullPath: '/admin/audit'
+      preLoaderRoute: typeof AdminAuditRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/blacklist': {
@@ -892,53 +780,130 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminBlacklistRouteImport
       parentRoute: typeof AdminRoute
     }
-    '/admin/audit': {
-      id: '/admin/audit'
-      path: '/audit'
-      fullPath: '/admin/audit'
-      preLoaderRoute: typeof AdminAuditRouteImport
+    '/admin/disputes': {
+      id: '/admin/disputes'
+      path: '/disputes'
+      fullPath: '/admin/disputes'
+      preLoaderRoute: typeof AdminDisputesRouteImport
       parentRoute: typeof AdminRoute
     }
-    '/tasks/$taskId/': {
-      id: '/tasks/$taskId/'
-      path: '/$taskId'
-      fullPath: '/tasks/$taskId/'
-      preLoaderRoute: typeof TasksTaskIdIndexRouteImport
-      parentRoute: typeof TasksRoute
+    '/admin/users': {
+      id: '/admin/users'
+      path: '/users'
+      fullPath: '/admin/users'
+      preLoaderRoute: typeof AdminUsersRouteImport
+      parentRoute: typeof AdminRoute
     }
-    '/tasks/$taskId/workspace': {
-      id: '/tasks/$taskId/workspace'
-      path: '/$taskId/workspace'
-      fullPath: '/tasks/$taskId/workspace'
-      preLoaderRoute: typeof TasksTaskIdWorkspaceRouteImport
-      parentRoute: typeof TasksRoute
-    }
-    '/tasks/$taskId/applications': {
-      id: '/tasks/$taskId/applications'
-      path: '/$taskId/applications'
-      fullPath: '/tasks/$taskId/applications'
-      preLoaderRoute: typeof TasksTaskIdApplicationsRouteImport
-      parentRoute: typeof TasksRoute
-    }
-    '/task/payment/callback': {
-      id: '/task/payment/callback'
-      path: '/task/payment/callback'
-      fullPath: '/task/payment/callback'
-      preLoaderRoute: typeof TaskPaymentCallbackRouteImport
+    '/auth/verify-email': {
+      id: '/auth/verify-email'
+      path: '/auth/verify-email'
+      fullPath: '/auth/verify-email'
+      preLoaderRoute: typeof AuthVerifyEmailRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/community/u/$username': {
-      id: '/community/u/$username'
-      path: '/community/u/$username'
-      fullPath: '/community/u/$username'
-      preLoaderRoute: typeof CommunityUUsernameRouteImport
+    '/community/': {
+      id: '/community/'
+      path: '/community'
+      fullPath: '/community/'
+      preLoaderRoute: typeof CommunityIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/community/t/$threadId': {
-      id: '/community/t/$threadId'
-      path: '/community/t/$threadId'
-      fullPath: '/community/t/$threadId'
-      preLoaderRoute: typeof CommunityTThreadIdRouteImport
+    '/community/auth': {
+      id: '/community/auth'
+      path: '/community/auth'
+      fullPath: '/community/auth'
+      preLoaderRoute: typeof CommunityAuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/community/moderation': {
+      id: '/community/moderation'
+      path: '/community/moderation'
+      fullPath: '/community/moderation'
+      preLoaderRoute: typeof CommunityModerationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/community/new': {
+      id: '/community/new'
+      path: '/community/new'
+      fullPath: '/community/new'
+      preLoaderRoute: typeof CommunityNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/community/notifications': {
+      id: '/community/notifications'
+      path: '/community/notifications'
+      fullPath: '/community/notifications'
+      preLoaderRoute: typeof CommunityNotificationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/community/search': {
+      id: '/community/search'
+      path: '/community/search'
+      fullPath: '/community/search'
+      preLoaderRoute: typeof CommunitySearchRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/community/settings': {
+      id: '/community/settings'
+      path: '/community/settings'
+      fullPath: '/community/settings'
+      preLoaderRoute: typeof CommunitySettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/messages/': {
+      id: '/messages/'
+      path: '/messages'
+      fullPath: '/messages/'
+      preLoaderRoute: typeof MessagesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tasks/': {
+      id: '/tasks/'
+      path: '/'
+      fullPath: '/tasks/'
+      preLoaderRoute: typeof TasksIndexRouteImport
+      parentRoute: typeof TasksRoute
+    }
+    '/tasks/browse': {
+      id: '/tasks/browse'
+      path: '/browse'
+      fullPath: '/tasks/browse'
+      preLoaderRoute: typeof TasksBrowseRouteImport
+      parentRoute: typeof TasksRoute
+    }
+    '/tasks/categories': {
+      id: '/tasks/categories'
+      path: '/categories'
+      fullPath: '/tasks/categories'
+      preLoaderRoute: typeof TasksCategoriesRouteImport
+      parentRoute: typeof TasksRoute
+    }
+    '/tasks/mine': {
+      id: '/tasks/mine'
+      path: '/mine'
+      fullPath: '/tasks/mine'
+      preLoaderRoute: typeof TasksMineRouteImport
+      parentRoute: typeof TasksRoute
+    }
+    '/tasks/offers': {
+      id: '/tasks/offers'
+      path: '/offers'
+      fullPath: '/tasks/offers'
+      preLoaderRoute: typeof TasksOffersRouteImport
+      parentRoute: typeof TasksRoute
+    }
+    '/u/$userId': {
+      id: '/u/$userId'
+      path: '/u/$userId'
+      fullPath: '/u/$userId'
+      preLoaderRoute: typeof UUserIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/search': {
+      id: '/api/public/search'
+      path: '/api/public/search'
+      fullPath: '/api/public/search'
+      preLoaderRoute: typeof ApiPublicSearchRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/community/c/$slug': {
@@ -948,12 +913,47 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CommunityCSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/search': {
-      id: '/api/public/search'
-      path: '/api/public/search'
-      fullPath: '/api/public/search'
-      preLoaderRoute: typeof ApiPublicSearchRouteImport
+    '/community/t/$threadId': {
+      id: '/community/t/$threadId'
+      path: '/community/t/$threadId'
+      fullPath: '/community/t/$threadId'
+      preLoaderRoute: typeof CommunityTThreadIdRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/community/u/$username': {
+      id: '/community/u/$username'
+      path: '/community/u/$username'
+      fullPath: '/community/u/$username'
+      preLoaderRoute: typeof CommunityUUsernameRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/task/payment/callback': {
+      id: '/task/payment/callback'
+      path: '/task/payment/callback'
+      fullPath: '/task/payment/callback'
+      preLoaderRoute: typeof TaskPaymentCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tasks/$taskId/': {
+      id: '/tasks/$taskId/'
+      path: '/$taskId'
+      fullPath: '/tasks/$taskId/'
+      preLoaderRoute: typeof TasksTaskIdIndexRouteImport
+      parentRoute: typeof TasksRoute
+    }
+    '/tasks/$taskId/applications': {
+      id: '/tasks/$taskId/applications'
+      path: '/$taskId/applications'
+      fullPath: '/tasks/$taskId/applications'
+      preLoaderRoute: typeof TasksTaskIdApplicationsRouteImport
+      parentRoute: typeof TasksRoute
+    }
+    '/tasks/$taskId/workspace': {
+      id: '/tasks/$taskId/workspace'
+      path: '/$taskId/workspace'
+      fullPath: '/tasks/$taskId/workspace'
+      preLoaderRoute: typeof TasksTaskIdWorkspaceRouteImport
+      parentRoute: typeof TasksRoute
     }
   }
 }
@@ -1039,3 +1039,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
