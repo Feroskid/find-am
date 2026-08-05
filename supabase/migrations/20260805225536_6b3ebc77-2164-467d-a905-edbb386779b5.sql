@@ -1,0 +1,1 @@
+DELETE FROM public.support_tickets WHERE id = 'ad1334f8-e156-4245-bad7-0cab164abbf0';
