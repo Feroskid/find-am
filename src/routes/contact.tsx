@@ -83,7 +83,7 @@ function ContactPage() {
           </div>
           <h2 className="text-2xl font-bold text-ink">We'd love to hear from you</h2>
           <p className="text-muted-foreground text-sm mt-2">
-            Share feedback, report an issue, or ask a question. Your default mail app will open with the message pre-filled.
+            Share feedback, report an issue, or ask a question. Your message goes straight to our support team and we'll reply by email.
           </p>
         </div>
 
@@ -122,7 +122,7 @@ function ContactPage() {
             disabled={sending}
             className="w-full inline-flex items-center justify-center gap-2 rounded-full bg-primary text-primary-foreground px-5 py-3 font-bold text-sm disabled:opacity-60"
           >
-            <Send className="h-4 w-4" /> {sending ? "Opening mail app…" : "Submit message"}
+            <Send className="h-4 w-4" /> {sending ? "Sending…" : sent ? "Send another message" : "Submit message"}
           </button>
           <p className="text-xs text-center text-muted-foreground">
             Or email us directly at{" "}
