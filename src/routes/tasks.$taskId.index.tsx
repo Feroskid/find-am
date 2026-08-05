@@ -324,10 +324,23 @@ function TaskDetail() {
         return;
       }
       if (d.payment_link) {
+        let safeUrl: string | null = null;
+        try {
+          const parsed = new URL(String(d.payment_link));
+          if (parsed.protocol === "https:") safeUrl = parsed.toString();
+        } catch {
+          safeUrl = null;
+        }
+        if (!safeUrl) {
+          setPayError("The payment link returned was invalid. Please contact support.");
+          setPayStage("confirm");
+          return;
+        }
         setPayStage("done");
-        window.location.href = d.payment_link;
+        window.location.href = safeUrl;
         return;
       }
+
       setPayError("Accepted, but no payment link was returned. Please contact support.");
       setPayStage("confirm");
     } catch (e: any) {

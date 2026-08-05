@@ -34,10 +34,15 @@ export const searchJobsServer = createServerFn({ method: "POST" })
 
     const text = await upstream.text();
     if (!upstream.ok) {
-      throw new Error(
-        `Search backend failed with ${upstream.status}: ${text.slice(0, 180)}`,
-      );
+      console.error("Search upstream error", upstream.status, text);
+      throw new Error("Search is temporarily unavailable. Please try again.");
     }
 
-    return JSON.parse(text) as SearchResponse;
+    try {
+      return JSON.parse(text) as SearchResponse;
+    } catch (error) {
+      console.error("Search upstream returned invalid JSON", error);
+      throw new Error("Search is temporarily unavailable. Please try again.");
+    }
+
   });
