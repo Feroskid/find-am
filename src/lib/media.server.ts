@@ -38,3 +38,11 @@ export async function uploadChatMedia(opts: {
   if (signed.error || !signed.data?.signedUrl) throw signed.error ?? new Error("Could not build media URL");
   return signed.data.signedUrl;
 }
+
+export function decodeBase64(b64: string): Uint8Array {
+  const clean = b64.includes(",") ? b64.slice(b64.indexOf(",") + 1) : b64;
+  const bin = atob(clean);
+  const out = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+  return out;
+}
