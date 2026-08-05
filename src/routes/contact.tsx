@@ -73,6 +73,21 @@ function ContactPage() {
           <Field label="Email" type="email" value={form.email} onChange={(v) => setForm({ ...form, email: v })} />
           <Field label="Subject" value={form.subject} onChange={(v) => setForm({ ...form, subject: v })} />
           <div>
+            <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">What is it about?</label>
+            <select
+              value={form.category}
+              onChange={(e) => setForm({ ...form, category: e.target.value as typeof form.category })}
+              className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-primary"
+            >
+              <option value="general">General question</option>
+              <option value="payment">Payment or wallet</option>
+              <option value="dispute">Dispute with a task</option>
+              <option value="account">My account</option>
+              <option value="task">Posting or doing a task</option>
+              <option value="bug">Something is broken</option>
+            </select>
+          </div>
+          <div>
             <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Message</label>
             <textarea
               rows={6}
