@@ -42,13 +42,17 @@ export function AvatarUpload({
     setErr(null);
     setBusy(true);
     try {
+      const { data: userData } = await supabase.auth.getUser();
+      const uid = userData.user?.id;
+      if (!uid) throw new Error("Please sign in to upload a photo.");
       const ext = (f.name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "");
-      const path = `avatars/${Date.now()}-${Math.random().toString(36).slice(2, 10)}.${ext}`;
+      const path = `${uid}/${Date.now()}-${Math.random().toString(36).slice(2, 10)}.${ext}`;
       const up = await supabase.storage.from("avatars").upload(path, f, {
         contentType: f.type,
         upsert: false,
       });
       if (up.error) throw up.error;
+
       const signed = await supabase.storage.from("avatars").createSignedUrl(path, TEN_YEARS);
       if (signed.error || !signed.data?.signedUrl) throw signed.error ?? new Error("Could not build image URL.");
       onChange(signed.data.signedUrl);
