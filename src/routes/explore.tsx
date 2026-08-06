@@ -53,7 +53,7 @@ function ExplorePage() {
               Browse trending tasks, hot categories and remote gigs across Nigeria — all in one place.
             </p>
             <div className="mt-6 flex flex-wrap gap-3">
-              <Link to="/tasks/browse" className="inline-flex items-center gap-1.5 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground hover:opacity-90">
+              <Link to="/tasks/browse" search={{}} className="inline-flex items-center gap-1.5 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground hover:opacity-90">
                 Browse all tasks <ArrowRight className="h-4 w-4" />
               </Link>
               <Link to="/post-task" className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-5 py-2.5 text-sm font-semibold hover:bg-muted">
@@ -67,7 +67,7 @@ function ExplorePage() {
         <Section
           title="Trending right now"
           icon={<TrendingUp className="h-5 w-5 text-primary" />}
-          right={<Link to="/tasks/browse" className="text-sm text-primary hover:underline">See all →</Link>}
+          right={<Link to="/tasks/browse" search={{}} className="text-sm text-primary hover:underline">See all →</Link>}
         >
           {trendingQ.isLoading ? (
             <Loading />
@@ -91,7 +91,7 @@ function ExplorePage() {
               {categories.slice(0, 12).map((c: any) => (
                 <Link
                   key={c.category_id}
-                  to="/tasks/browse"
+                  to="/tasks/browse" search={{}}
                   search={{ category_id: c.category_id } as any}
                   className="group rounded-xl border border-border bg-card p-4 hover:border-primary/60 hover:shadow-md transition"
                 >
@@ -113,7 +113,7 @@ function ExplorePage() {
             {POPULAR_LOCATIONS.map((loc) => (
               <Link
                 key={loc}
-                to="/tasks/browse"
+                to="/tasks/browse" search={{}}
                 search={{ location: loc } as any}
                 className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-4 py-2 text-sm hover:bg-muted hover:border-primary/60"
               >

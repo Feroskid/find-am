@@ -161,7 +161,7 @@ function PublicProfilePage() {
             )}
 
             <div className="mt-10">
-              <Link to="/tasks/browse" className="text-sm text-primary hover:underline">← Browse all tasks</Link>
+              <Link to="/tasks/browse" search={{}} className="text-sm text-primary hover:underline">← Browse all tasks</Link>
             </div>
           </>
         )}

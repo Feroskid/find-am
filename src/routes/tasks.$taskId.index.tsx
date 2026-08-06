@@ -265,7 +265,7 @@ function TaskDetail() {
   };
   const conversationCTA = (className: string, label = "Open conversation", onDone?: () => void) =>
     useWorkspace ? (
-      <Link to="/tasks/$taskId/workspace" params={{ taskId }} onClick={onDone} className={className}>
+      <Link to="/tasks/$taskId/workspace" params={{ taskId }} search={{}} onClick={onDone} className={className}>
         {label}
       </Link>
     ) : (
@@ -374,7 +374,7 @@ function TaskDetail() {
 
               <h1 className="mt-4 font-display text-3xl sm:text-4xl text-ink leading-tight">{task.title ?? "Untitled task"}</h1>
               <Link
-                to="/tasks/browse"
+                to="/tasks/browse" search={{}}
                 search={{ q: "", category_id: 0, location: "", is_remote: 0, page: 1 }}
                 className="mt-2 inline-flex items-center gap-1 text-sm font-semibold text-primary hover:underline"
               >
@@ -598,7 +598,7 @@ function TaskDetail() {
                       </Link>
                     )}
                     {useWorkspace && (
-                      <Link to="/tasks/$taskId/workspace" params={{ taskId }} className="block w-full rounded-full border border-border py-3 text-sm font-bold hover:bg-muted">
+                      <Link to="/tasks/$taskId/workspace" params={{ taskId }} search={{}} className="block w-full rounded-full border border-border py-3 text-sm font-bold hover:bg-muted">
                         Open workspace
                       </Link>
                     )}
