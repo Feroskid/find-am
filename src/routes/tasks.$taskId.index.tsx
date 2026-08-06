@@ -374,7 +374,7 @@ function TaskDetail() {
 
               <h1 className="mt-4 font-display text-3xl sm:text-4xl text-ink leading-tight">{task.title ?? "Untitled task"}</h1>
               <Link
-                to="/tasks/browse" search={{}}
+                to="/tasks/browse"
                 search={{ q: "", category_id: 0, location: "", is_remote: 0, page: 1 }}
                 className="mt-2 inline-flex items-center gap-1 text-sm font-semibold text-primary hover:underline"
               >
