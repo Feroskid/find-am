@@ -1,8 +1,8 @@
 import { useRef, useState } from "react";
 import { Camera, Link2, Loader2, X } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-
-const TEN_YEARS = 60 * 60 * 24 * 365 * 10;
+import { useServerFn } from "@tanstack/react-start";
+import { uploadProfilePhoto } from "@/lib/avatar.functions";
+import { useAuth } from "@/lib/auth";
 
 /**
  * Avatar control — supports either:
@@ -25,8 +25,19 @@ export function AvatarUpload({
   const [showUrl, setShowUrl] = useState(false);
   const [urlDraft, setUrlDraft] = useState(value || "");
   const [err, setErr] = useState<string | null>(null);
+  const { token } = useAuth();
+  const upload = useServerFn(uploadProfilePhoto);
 
   const pickFile = () => fileRef.current?.click();
+
+  const toBase64 = (file: File) =>
+    new Promise<string>((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = () => resolve(String(r.result));
+      r.onerror = () => reject(new Error("Could not read that file."));
+      r.readAsDataURL(file);
+    });
+
   const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
     e.target.value = "";
@@ -39,30 +50,27 @@ export function AvatarUpload({
       setErr("Please pick an image under 5MB.");
       return;
     }
+    if (!token) {
+      setErr("Please sign in to upload a photo.");
+      return;
+    }
     setErr(null);
     setBusy(true);
     try {
-      const { data: userData } = await supabase.auth.getUser();
-      const uid = userData.user?.id;
-      if (!uid) throw new Error("Please sign in to upload a photo.");
-      const ext = (f.name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "");
-      const path = `${uid}/${Date.now()}-${Math.random().toString(36).slice(2, 10)}.${ext}`;
-      const up = await supabase.storage.from("avatars").upload(path, f, {
-        contentType: f.type,
-        upsert: false,
+      const dataBase64 = await toBase64(f);
+      const res: any = await upload({
+        data: { token, filename: f.name, contentType: f.type, dataBase64 },
       });
-      if (up.error) throw up.error;
-
-      const signed = await supabase.storage.from("avatars").createSignedUrl(path, TEN_YEARS);
-      if (signed.error || !signed.data?.signedUrl) throw signed.error ?? new Error("Could not build image URL.");
-      onChange(signed.data.signedUrl);
-      setUrlDraft(signed.data.signedUrl);
+      if (!res?.ok) throw new Error(res?.error ?? "Upload failed. Please try again.");
+      onChange(res.url);
+      setUrlDraft(res.url);
     } catch (e: any) {
       setErr(e?.message ?? "Upload failed. Please try again.");
     } finally {
       setBusy(false);
     }
   };
+
 
 
   return (

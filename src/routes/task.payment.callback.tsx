@@ -50,7 +50,7 @@ function PaymentCallbackPage() {
         setStage("ok");
         setMsg("Payment confirmed. Opening your task…");
         if (taskId) {
-          setTimeout(() => navigate({ to: "/tasks/$taskId/workspace", params: { taskId } }), 1200);
+          setTimeout(() => navigate({ to: "/tasks/$taskId/workspace", params: { taskId }, search: {} }), 1200);
         }
       } else {
         setStage("fail");
@@ -79,6 +79,7 @@ function PaymentCallbackPage() {
             <Link
               to="/tasks/$taskId/workspace"
               params={{ taskId }}
+              search={{}}
               className="rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground hover:opacity-90"
             >
               Open workspace

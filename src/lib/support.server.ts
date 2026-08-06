@@ -16,7 +16,11 @@ export function looksAdmin(me: any): boolean {
   return roles.some((r: string) => r === "admin" || r === "moderator" || r === "staff");
 }
 
-/** Verify a Find-am API token belongs to an admin. Throws otherwise. */
+/**
+ * Verify a Find-am API token belongs to an admin. Throws otherwise.
+ * The `/auth/me` payload does not always expose an admin flag, so we also
+ * probe a read-only admin endpoint — access there is the source of truth.
+ */
 export async function requireAdmin(token: string): Promise<AdminIdentity> {
   const res = await fetch(`${API_BASE}/auth/me`, {
     headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
@@ -24,7 +28,12 @@ export async function requireAdmin(token: string): Promise<AdminIdentity> {
   if (!res.ok) throw new Error("Your session has expired. Please sign in again.");
   const me = await res.json().catch(() => ({}));
   const inner = me?.user ?? me?.data ?? me;
-  if (!looksAdmin(inner)) throw new Error("This account does not have admin access.");
+  if (!looksAdmin(inner)) {
+    const probe = await fetch(`${API_BASE}/admin/audit-log`, {
+      headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
+    }).catch(() => null);
+    if (!probe || !probe.ok) throw new Error("This account does not have admin access.");
+  }
   return {
     userId: inner?.user_id ?? inner?.id ?? "admin",
     name: inner?.name ?? inner?.full_name ?? "Admin",
@@ -32,6 +41,7 @@ export async function requireAdmin(token: string): Promise<AdminIdentity> {
     raw: inner,
   };
 }
+
 
 export async function insertTicket(input: {
   name: string;
