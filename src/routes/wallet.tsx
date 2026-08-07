@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import { useAuth } from "@/lib/auth";
 import {
-  walletBalance, walletTransactions, withdrawFunds, listBanks, verifyKyc, registerBank, getMe,
+  walletBalance, walletTransactions, withdrawFunds, listBanks, verifyKyc, getMe,
 } from "@/lib/findtask.functions";
 
 /** Backend errors can be a string, an array of FastAPI validation objects, or an object. */
@@ -39,7 +39,6 @@ function WalletPage() {
   const wFn = useServerFn(withdrawFunds);
   const banksFn = useServerFn(listBanks);
   const kycFn = useServerFn(verifyKyc);
-  const bankFn = useServerFn(registerBank);
   const meFn = useServerFn(getMe);
 
   const bQ = useQuery({ queryKey: ["wallet", token], enabled: !!token, queryFn: () => bFn({ data: { token: token! } }) });
@@ -49,7 +48,6 @@ function WalletPage() {
 
   const [amount, setAmount] = useState("");
   const [showKyc, setShowKyc] = useState(false);
-  const [showBank, setShowBank] = useState(false);
 
   // /banks may return { banks: [...] } or a bare array.
   const banks: any[] = useMemo(() => {
@@ -154,7 +152,7 @@ function WalletPage() {
               <div className="inline-flex items-center gap-2 text-sm font-semibold">
                 <Landmark className="h-4 w-4" /> Payout bank
               </div>
-              <button onClick={() => setShowBank(true)} className="text-xs font-semibold text-primary hover:underline">
+              <button onClick={() => setShowKyc(true)} className="text-xs font-semibold text-primary hover:underline">
                 {savedBank ? "Change" : "Add"}
               </button>
             </div>
@@ -175,7 +173,7 @@ function WalletPage() {
           {!savedBank ? (
             <div className="mt-3 rounded-xl border border-dashed border-border p-5 text-center">
               <p className="text-sm text-muted-foreground">Add a payout bank before you can withdraw.</p>
-              <button onClick={() => setShowBank(true)} className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-xs font-bold text-primary-foreground hover:opacity-90">
+              <button onClick={() => setShowKyc(true)} className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-xs font-bold text-primary-foreground hover:opacity-90">
                 <Landmark className="h-3.5 w-3.5" /> Add payout bank
               </button>
             </div>
@@ -272,13 +270,6 @@ function WalletPage() {
         kycFn={(args: any) => kycFn({ data: { ...args, token: token! } })}
         onDone={refreshAccount}
       />
-      <BankDialog
-        open={showBank}
-        onOpenChange={setShowBank}
-        banks={banks}
-        bankFn={(args: any) => bankFn({ data: { ...args, token: token! } })}
-        onDone={refreshAccount}
-      />
     </div>
   );
 }
@@ -331,50 +322,3 @@ function KycDialog({ open, onOpenChange, banks, kycFn, onDone }: any) {
   );
 }
 
-function BankDialog({ open, onOpenChange, banks, bankFn, onDone }: any) {
-  const [bankCode, setBankCode] = useState("");
-  const [acct, setAcct] = useState("");
-  const [name, setName] = useState("");
-  const [submitting, setSubmitting] = useState(false);
-  const [err, setErr] = useState<string | null>(null);
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Add payout bank</DialogTitle>
-          <DialogDescription>Where Find-task sends your earnings after a task is released.</DialogDescription>
-        </DialogHeader>
-        <div className="space-y-3 py-2">
-          <select className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm" value={bankCode} onChange={(e) => setBankCode(e.target.value)}>
-            <option value="">Select bank</option>
-            {banks.map((b: any) => <option key={b.id ?? b.code} value={b.code}>{b.name}</option>)}
-          </select>
-          <input className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm" placeholder="Account number" value={acct} onChange={(e) => setAcct(e.target.value.replace(/\D/g, ""))} />
-          <input className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm" placeholder="Account holder name" value={name} onChange={(e) => setName(e.target.value)} />
-          {err && <div className="text-xs text-destructive">{err}</div>}
-        </div>
-        <DialogFooter className="gap-2">
-          <button onClick={() => onOpenChange(false)} className="rounded-full border border-border px-4 py-2 text-sm font-semibold">Cancel</button>
-          <button
-            disabled={submitting || !bankCode || acct.length < 10 || name.trim().length < 2}
-            onClick={async () => {
-              setErr(null); setSubmitting(true);
-              let r: any;
-              try {
-                r = await bankFn({ bank_code: bankCode, account_number: acct, account_name: name.trim() });
-              } catch (e: any) {
-                r = { ok: false, error: e?.message ?? "Network error" };
-              }
-              setSubmitting(false);
-              if (r?.ok) { toast.success("Bank saved"); onOpenChange(false); onDone?.(); }
-              else { const m = errText(r?.error, "Couldn't save your bank."); setErr(m); toast.error(m); }
-            }}
-            className="inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-bold text-primary-foreground disabled:opacity-50"
-          >
-            {submitting && <Loader2 className="h-4 w-4 animate-spin" />} Save bank
-          </button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
