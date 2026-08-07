@@ -62,6 +62,18 @@ function Dashboard() {
     queryFn: () => userTasks({ data: { userId: String(myId), token, role: isPoster ? "poster" : "tasker" } }),
   });
 
+  const earnings30d = useMemo(() => {
+    const list: any[] = extractList(txQ.data?.ok ? txQ.data.data : null);
+    const cutoff = Date.now() - 30 * 24 * 60 * 60 * 1000;
+    return list
+      .filter((t) => {
+        const ts = new Date(t.created_at ?? t.date ?? 0).getTime();
+        const type = String(t.type ?? "").toLowerCase();
+        return ts >= cutoff && type === "credit";
+      })
+      .reduce((s, t) => s + Number(t.amount ?? 0), 0);
+  }, [txQ.data]);
+
   if (!token) return null;
 
   const displayName =
@@ -74,17 +86,6 @@ function Dashboard() {
     ? Number((walletQ.data.data as any)?.withdrawable_balance ?? 0)
     : null;
 
-  const earnings30d = useMemo(() => {
-    const list: any[] = extractList(txQ.data?.ok ? txQ.data.data : null);
-    const cutoff = Date.now() - 30 * 24 * 60 * 60 * 1000;
-    return list
-      .filter((t) => {
-        const ts = new Date(t.created_at ?? t.date ?? 0).getTime();
-        const type = String(t.type ?? "").toLowerCase();
-        return ts >= cutoff && type === "credit";
-      })
-      .reduce((s, t) => s + Number(t.amount ?? 0), 0);
-  }, [txQ.data]);
 
   const stat = (status: string) =>
     myTasks.filter((t) => String(t.status ?? "").toLowerCase() === status).length;

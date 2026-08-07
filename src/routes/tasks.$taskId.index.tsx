@@ -395,6 +395,11 @@ function TaskDetail() {
                       <div className="flex-1 min-w-0">
                         <dt className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Posted by</dt>
                         <dd className="font-semibold text-ink hover:text-primary hover:underline">{task.poster_name ?? "Anonymous"}</dd>
+                        {Number(task.poster_rating_count ?? 0) > 0 ? (
+                          <span className="text-[11px] text-muted-foreground">★ {Number(task.poster_rating).toFixed(1)} ({task.poster_rating_count}) · View profile →</span>
+                        ) : (
+                          <span className="text-[11px] text-primary">View profile →</span>
+                        )}
                       </div>
                     </Link>
                   ) : (
@@ -925,8 +930,9 @@ function OfferCard({
 }) {
   const name = offer.applicant_name ?? offer.tasker_name ?? offer.user_name ?? offer.name ?? "Tasker";
   const applicantId = offer.applicant_id ?? offer.tasker_id ?? offer.user_id ?? null;
-  const rating = offer.rating ?? offer.average_rating ?? null;
-  const ratings = Number(offer.ratings_count ?? offer.rating_count ?? offer.review_count ?? 0);
+  const rating = offer.tasker_rating ?? offer.rating ?? offer.average_rating ?? null;
+  const ratings = Number(offer.tasker_rating_count ?? offer.ratings_count ?? offer.rating_count ?? offer.review_count ?? 0);
+  const photo = offer.tasker_photo ?? offer.photo_url ?? null;
   const completion = offer.completion_rate ?? null;
   const cleanMsg = offer.message ?? offer.comment ?? offer.body ?? "Hi! I'd love to help with this task.";
   const time = offer.applied_at
@@ -935,7 +941,9 @@ function OfferCard({
   const amount = Number(taskBudget);
   const isRejected = String(offer.status ?? "").toLowerCase() === "rejected";
 
-  const AvatarEl = (
+  const AvatarEl = photo ? (
+    <img src={photo} alt={name} className="h-12 w-12 shrink-0 rounded-full object-cover" />
+  ) : (
     <div className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-primary/10 font-display text-lg text-primary">
       {String(name).charAt(0).toUpperCase()}
     </div>
@@ -969,6 +977,11 @@ function OfferCard({
           </div>
           {completion != null && (
             <div className="text-sm font-semibold text-ink mt-0.5">{completion}% Completion rate</div>
+          )}
+          {applicantId && (
+            <Link to="/u/$userId" params={{ userId: String(applicantId) }} className="text-[11px] text-primary hover:underline">
+              View profile →
+            </Link>
           )}
         </div>
         <div className="text-right shrink-0">

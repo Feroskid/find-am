@@ -10,7 +10,7 @@ import { LiveTaskMap } from "@/components/LiveTaskMap";
 import {
   getTask, listMessages, sendMessage, completeTask, disputeTask, rateTask,
   releaseTask, getMyRating,
-  getTaskLocation, toggleTaskLocation, markArrived,
+  getTaskLocation, toggleTaskLocation, markArrived, recordLocation,
 } from "@/lib/findtask.functions";
 import { uploadTaskMedia } from "@/lib/media.functions";
 import { MilestoneActions } from "@/components/MilestoneActions";
@@ -448,6 +448,7 @@ function WorkspacePage() {
 function LiveLocationPanel({ taskId, token, isPoster, taskLat, taskLng, arrivedAt, onRefetchTask }: { taskId: string; token: string; isPoster: boolean; taskLat?: number | null; taskLng?: number | null; arrivedAt?: string | null; onRefetchTask?: () => void }) {
   const getLoc = useServerFn(getTaskLocation);
   const toggle = useServerFn(toggleTaskLocation);
+  const recordLoc = useServerFn(recordLocation);
   const arrive = useServerFn(markArrived);
 
   const locQ = useQuery({
@@ -480,7 +481,7 @@ function LiveLocationPanel({ taskId, token, isPoster, taskLat, taskLng, arrivedA
         const next = { lat: p.coords.latitude, lng: p.coords.longitude };
         setPos(next);
         setLiveTrail((t) => [...t, [next.lat, next.lng]]);
-        toggle({ data: { taskId, token, sharing: true, latitude: next.lat, longitude: next.lng } }).catch(() => {});
+        recordLoc({ data: { taskId, token, latitude: next.lat, longitude: next.lng } }).catch(() => {});
       },
       () => toast.error("Couldn't get your location."),
       { enableHighAccuracy: true, maximumAge: 10_000, timeout: 15_000 },
@@ -488,16 +489,21 @@ function LiveLocationPanel({ taskId, token, isPoster, taskLat, taskLng, arrivedA
     return () => {
       if (watchRef.current != null && navigator.geolocation) navigator.geolocation.clearWatch(watchRef.current);
     };
-  }, [sharing, taskId, token, toggle]);
+  }, [sharing, taskId, token, recordLoc]);
 
   const data: any = locQ.data?.ok ? locQ.data.data : null;
   const locErr: string = !locQ.data?.ok ? String((locQ.data as any)?.error ?? "") : "";
   const inactiveNotice = /only.*active.*(ongoing|assigned|in.progress)|not.*active|no active|inactive/i.test(locErr)
     ? "Live location is only active while this task is in progress."
     : "";
-  const poster = data?.poster ?? data?.poster_location;
-  const tasker = data?.tasker ?? data?.tasker_location;
-  const other = isPoster ? tasker : poster;
+  const other = data?.other ?? null;
+
+  useEffect(() => {
+    const mySharing = data?.me?.sharing;
+    if (typeof mySharing === "boolean") {
+      setSharing(mySharing);
+    }
+  }, [data?.me?.sharing]);
 
   const onToggle = async () => {
     const next = !sharing;
@@ -508,13 +514,20 @@ function LiveLocationPanel({ taskId, token, isPoster, taskLat, taskLng, arrivedA
   };
 
   const onArrived = async () => {
-    const here = pos;
-    const r: any = await arrive({ data: { taskId, token, ...(here ? { latitude: here.lat, longitude: here.lng } : {}) } });
-    if (r?.ok) {
-      toast.success("Marked arrived");
-      onRefetchTask?.();
-    } else {
-      toast.error(r?.error ?? "You may be too far from the task location to mark arrival.");
+    if (!pos) {
+      toast.error("We couldn't get your location. Enable location and try again.");
+      return;
+    }
+    try {
+      const r: any = await arrive({ data: { taskId, token, latitude: pos.lat, longitude: pos.lng } });
+      if (r?.ok) {
+        toast.success("Marked arrived");
+        onRefetchTask?.();
+      } else {
+        toast.error(r?.error ?? "Couldn't mark arrival. You may be too far from the task location.");
+      }
+    } catch (e: any) {
+      toast.error(e?.message ?? "Couldn't mark arrival. Please try again.");
     }
   };
 
