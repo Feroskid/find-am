@@ -43,6 +43,15 @@ function ProfilePage() {
   const categories: any[] = catsQ.data?.ok ? (catsQ.data.data as any)?.categories ?? [] : [];
 
   const me: any = meQ.data?.ok ? ((meQ.data.data as any)?.user ?? meQ.data.data) : user;
+  const myId = me?.id ?? me?.user_id ?? (user as any)?.id;
+
+  const profileFn = useServerFn(getPublicUser);
+  const profileQ = useQuery({
+    queryKey: ["my-profile-stats", myId],
+    enabled: !!token && !!myId,
+    queryFn: () => profileFn({ data: { userId: String(myId), token: token! } }),
+  });
+  const prof: any = profileQ.data?.ok ? profileQ.data.data : null;
 
   const [form, setForm] = useState({
     name: "", photo_url: "", state: "", city: "", tagline: "", about: "",
