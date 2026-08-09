@@ -258,8 +258,6 @@ function ProfilePage() {
               <h3 className="font-semibold inline-flex items-center gap-2"><Award className="h-4 w-4" /> Tasker history</h3>
               <ul className="mt-2 space-y-1.5 text-sm">
                 <li className="flex justify-between"><span className="text-muted-foreground">Tasks completed</span><span className="font-medium">{taskerStats.completed}</span></li>
-                <li className="flex justify-between"><span className="text-muted-foreground">Success rate</span><span className="font-medium">{taskerStats.success != null ? `${taskerStats.success}%` : "—"}</span></li>
-                <li className="flex justify-between"><span className="text-muted-foreground">Response rate</span><span className="font-medium">{taskerStats.response != null ? `${taskerStats.response}%` : "—"}</span></li>
                 <li className="flex justify-between"><span className="text-muted-foreground">Avg rating</span><span className="font-medium inline-flex items-center gap-0.5">{taskerStats.rating ?? "—"} {taskerStats.rating && <Star className="h-3 w-3 fill-amber-400 text-amber-400" />}</span></li>
               </ul>
               {categoryRatings.length > 0 && (
