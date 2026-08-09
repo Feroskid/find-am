@@ -11,7 +11,7 @@ import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 import { useAuth } from "@/lib/auth";
-import { getMe, updateProfile, getCategories } from "@/lib/findtask.functions";
+import { getMe, updateProfile, getCategories, getPublicUser } from "@/lib/findtask.functions";
 
 export const Route = createFileRoute("/profile")({
   head: () => ({ meta: [{ title: "Your profile — Find-task" }] }),
