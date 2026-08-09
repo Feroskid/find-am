@@ -117,15 +117,13 @@ function ProfilePage() {
   if (!token) return null;
 
   const employerStats = {
-    posted: me?.tasks_posted ?? me?.posted_count ?? 0,
-    completion: me?.completion_rate ?? null,
-    rating: me?.employer_rating ?? null,
+    posted: prof?.as_employer?.tasks_posted ?? 0,
+    completion: prof?.as_employer?.completion_rate ?? null,
+    rating: prof?.as_employer?.average_rating ?? null,
   };
   const taskerStats = {
-    completed: me?.tasks_completed ?? me?.completed_count ?? 0,
-    success: me?.success_rate ?? null,
-    response: me?.response_rate ?? null,
-    rating: me?.tasker_rating ?? null,
+    completed: prof?.as_tasker?.jobs_completed ?? 0,
+    rating: prof?.as_tasker?.average_rating ?? null,
   };
   const memberSince = me?.created_at ?? me?.member_since;
   const verifiedPayment = !!(me?.kyc_verified ?? me?.verified_payment);
