@@ -11,7 +11,7 @@ import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 import { useAuth } from "@/lib/auth";
-import { getMe, updateProfile, getCategories } from "@/lib/findtask.functions";
+import { getMe, updateProfile, getCategories, getPublicUser } from "@/lib/findtask.functions";
 
 export const Route = createFileRoute("/profile")({
   head: () => ({ meta: [{ title: "Your profile — Find-task" }] }),
@@ -43,6 +43,15 @@ function ProfilePage() {
   const categories: any[] = catsQ.data?.ok ? (catsQ.data.data as any)?.categories ?? [] : [];
 
   const me: any = meQ.data?.ok ? ((meQ.data.data as any)?.user ?? meQ.data.data) : user;
+  const myId = me?.id ?? me?.user_id ?? (user as any)?.id;
+
+  const profileFn = useServerFn(getPublicUser);
+  const profileQ = useQuery({
+    queryKey: ["my-profile-stats", myId],
+    enabled: !!token && !!myId,
+    queryFn: () => profileFn({ data: { userId: String(myId), token: token! } }),
+  });
+  const prof: any = profileQ.data?.ok ? profileQ.data.data : null;
 
   const [form, setForm] = useState({
     name: "", photo_url: "", state: "", city: "", tagline: "", about: "",
@@ -108,15 +117,13 @@ function ProfilePage() {
   if (!token) return null;
 
   const employerStats = {
-    posted: me?.tasks_posted ?? me?.posted_count ?? 0,
-    completion: me?.completion_rate ?? null,
-    rating: me?.employer_rating ?? null,
+    posted: prof?.as_employer?.tasks_posted ?? 0,
+    completion: prof?.as_employer?.completion_rate ?? null,
+    rating: prof?.as_employer?.average_rating ?? null,
   };
   const taskerStats = {
-    completed: me?.tasks_completed ?? me?.completed_count ?? 0,
-    success: me?.success_rate ?? null,
-    response: me?.response_rate ?? null,
-    rating: me?.tasker_rating ?? null,
+    completed: prof?.as_tasker?.jobs_completed ?? 0,
+    rating: prof?.as_tasker?.average_rating ?? null,
   };
   const memberSince = me?.created_at ?? me?.member_since;
   const verifiedPayment = !!(me?.kyc_verified ?? me?.verified_payment);
@@ -251,8 +258,6 @@ function ProfilePage() {
               <h3 className="font-semibold inline-flex items-center gap-2"><Award className="h-4 w-4" /> Tasker history</h3>
               <ul className="mt-2 space-y-1.5 text-sm">
                 <li className="flex justify-between"><span className="text-muted-foreground">Tasks completed</span><span className="font-medium">{taskerStats.completed}</span></li>
-                <li className="flex justify-between"><span className="text-muted-foreground">Success rate</span><span className="font-medium">{taskerStats.success != null ? `${taskerStats.success}%` : "—"}</span></li>
-                <li className="flex justify-between"><span className="text-muted-foreground">Response rate</span><span className="font-medium">{taskerStats.response != null ? `${taskerStats.response}%` : "—"}</span></li>
                 <li className="flex justify-between"><span className="text-muted-foreground">Avg rating</span><span className="font-medium inline-flex items-center gap-0.5">{taskerStats.rating ?? "—"} {taskerStats.rating && <Star className="h-3 w-3 fill-amber-400 text-amber-400" />}</span></li>
               </ul>
               {categoryRatings.length > 0 && (
