@@ -29,8 +29,8 @@ function AdminDisputesPage() {
   const err = q.data && !q.data.ok ? q.data.error : null;
 
   const resolve = useMutation({
-    mutationFn: (v: { taskId: string; resolution: Resolution; note: string }) =>
-      resolveFn({ data: { taskId: v.taskId, resolution: v.resolution, note: v.note, token: token! } }),
+    mutationFn: (v: { disputeId: string; resolution: Resolution; note: string }) =>
+      resolveFn({ data: { disputeId: v.disputeId, resolution: v.resolution, note: v.note, token: token! } }),
     onSuccess: (r) => {
       if (r.ok) { toast.success("Dispute resolved"); q.refetch(); }
       else toast.error(r.error);
@@ -63,7 +63,14 @@ function AdminDisputesPage() {
       ) : (
         <ul className="space-y-3">
           {items.map((d) => (
-            <DisputeRow key={String(d.task_id ?? d.id)} d={d} onResolve={(res, note) => resolve.mutate({ taskId: String(d.task_id ?? d.id), resolution: res, note })} pending={resolve.isPending} />
+            <DisputeRow
+              key={String(d.dispute_id ?? d.id ?? d.task_id)}
+              d={d}
+              onResolve={(res, note) =>
+                resolve.mutate({ disputeId: String(d.dispute_id ?? d.id), resolution: res, note })
+              }
+              pending={resolve.isPending}
+            />
           ))}
         </ul>
       )}
@@ -94,6 +101,16 @@ function DisputeRow({ d, onResolve, pending }: { d: any; onResolve: (r: Resoluti
           )}
         </div>
         <div className="flex flex-col gap-1 items-end">
+          {(d.task_id ?? d.task?.task_id) != null && (
+            <a
+              href={`/tasks/${d.task_id ?? d.task?.task_id}/workspace`}
+              target="_blank"
+              rel="noreferrer"
+              className="text-xs font-semibold text-primary underline"
+            >
+              View chat
+            </a>
+          )}
           <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-yellow-500/20 text-yellow-800 dark:text-yellow-200">{d.status ?? "open"}</span>
           {d.amount && <span className="text-sm font-semibold">₦{Number(d.amount).toLocaleString()}</span>}
         </div>
