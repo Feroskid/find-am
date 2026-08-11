@@ -9,6 +9,7 @@ import { listTasks, getCategories } from "@/lib/findtask.functions";
 export const Route = createFileRoute("/tasks/browse")({
   validateSearch: (s: Record<string, unknown> = {}) => ({
     q: typeof s.q === "string" ? s.q : "",
+    category: typeof s.category === "string" ? s.category : "",
     category_id:
       typeof s.category_id === "string" || typeof s.category_id === "number"
         ? Number(s.category_id) || 0
@@ -23,6 +24,7 @@ export const Route = createFileRoute("/tasks/browse")({
         ? Math.max(1, Number(s.page) || 1)
         : 1,
   }),
+
   head: () => ({
     meta: [
       { title: "Browse tasks — Find-task" },
