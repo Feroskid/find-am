@@ -20,7 +20,7 @@ export const Route = createFileRoute("/map")({
 function extractTasks(d: any): any[] {
   if (!d) return [];
   if (Array.isArray(d)) return d;
-  return d.tasks ?? d.results ?? d.data ?? [];
+  return d.pins ?? d.tasks ?? d.results ?? d.data ?? [];
 }
 
 function MapPage() {

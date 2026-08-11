@@ -14,6 +14,8 @@ type Task = {
   location_lng?: number | null;
   latitude?: number | null;
   longitude?: number | null;
+  lat?: number | null;
+  lng?: number | null;
 };
 
 export function LiveTasksMap({ tasks }: { tasks: Task[] }) {
@@ -56,8 +58,8 @@ export function LiveTasksMap({ tasks }: { tasks: Task[] }) {
     () =>
       tasks
         .map((t) => {
-          const lat = (t.location_lat ?? t.latitude) as number | null | undefined;
-          const lng = (t.location_lng ?? t.longitude) as number | null | undefined;
+          const lat = (t.location_lat ?? t.latitude ?? t.lat) as number | null | undefined;
+          const lng = (t.location_lng ?? t.longitude ?? t.lng) as number | null | undefined;
           if (lat == null || lng == null || isNaN(Number(lat)) || isNaN(Number(lng))) return null;
           return { ...t, lat: Number(lat), lng: Number(lng) };
         })
