@@ -5,6 +5,7 @@ import { useState } from "react";
 import { Search, Loader2, ChevronDown, MapPin, Clock, Globe, Plus, Map as MapIcon, List } from "lucide-react";
 import { TaskHeader } from "@/components/TaskHeader";
 import { listTasks, getCategories } from "@/lib/findtask.functions";
+import { isTaskClosed, closedTaskLabel } from "@/lib/task-status";
 
 export type BrowseSearch = {
   q?: string;
@@ -66,16 +67,10 @@ function TaskListItem({ t, active, onHover }: { t: any; active?: boolean; onHove
   const loc = t.location_text ?? t.location;
   const date = t.deadline ? new Date(t.deadline) : null;
 
-  return (
-    <Link
-      to="/tasks/$taskId"
-      params={{ taskId: String(id) }}
-      onMouseEnter={onHover}
-      className={
-        "block rounded-2xl border bg-card p-4 transition hover:border-primary hover:shadow-sm " +
-        (active ? "border-primary shadow-sm" : "border-border")
-      }
-    >
+  const closed = isTaskClosed(t);
+
+  const inner = (
+    <>
       <div className="flex items-start justify-between gap-3">
         <h3 className="font-bold text-ink leading-snug line-clamp-2">{t.title ?? "Untitled task"}</h3>
         <span className="font-display text-xl text-ink shrink-0">₦{Number(t.budget ?? 0).toLocaleString()}</span>
@@ -97,7 +92,35 @@ function TaskListItem({ t, active, onHover }: { t: any; active?: boolean; onHove
           <span className="text-muted-foreground">· {offers} offer{Number(offers) === 1 ? "" : "s"}</span>
         )}
       </div>
+    </>
+  );
 
+  if (closed) {
+    return (
+      <div
+        aria-disabled="true"
+        className="block rounded-2xl border border-border bg-muted/40 p-4 opacity-70 cursor-not-allowed"
+        title={`${closedTaskLabel(t)} — this task can no longer be opened`}
+      >
+        {inner}
+        <div className="mt-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+          {closedTaskLabel(t)} · no longer available
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <Link
+      to="/tasks/$taskId"
+      params={{ taskId: String(id) }}
+      onMouseEnter={onHover}
+      className={
+        "block rounded-2xl border bg-card p-4 transition hover:border-primary hover:shadow-sm " +
+        (active ? "border-primary shadow-sm" : "border-border")
+      }
+    >
+      {inner}
     </Link>
   );
 }

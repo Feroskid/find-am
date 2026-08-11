@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { Clock, MapPin, Banknote, Globe, MessageSquare, Sparkles, Users } from "lucide-react";
+import { isTaskClosed, closedTaskLabel } from "@/lib/task-status";
 
 export interface TaskCardData {
   id: string | number;
@@ -57,12 +58,18 @@ function formatDate(d?: string) {
 export function TaskCard({ task }: { task: TaskCardData }) {
   if (task.id == null || task.id === "" || task.id === "undefined") return null;
   const isAdmin = Boolean(task.isAdmin);
+  const closed = isTaskClosed(task);
+  const Wrapper: any = closed ? "div" : Link;
+  const wrapperProps: any = closed
+    ? { "aria-disabled": "true", title: `${closedTaskLabel(task)} — this task can no longer be opened` }
+    : { to: "/tasks/$taskId", params: { taskId: String(task.id) } };
   return (
-    <Link
-      to="/tasks/$taskId"
-      params={{ taskId: String(task.id) }}
+    <Wrapper
+      {...wrapperProps}
       className={
-        isAdmin
+        closed
+          ? "block rounded-2xl border border-border bg-muted/40 p-5 opacity-70 cursor-not-allowed relative overflow-hidden"
+          : isAdmin
           ? "block rounded-2xl border-2 border-primary/40 bg-gradient-to-br from-amber-50 via-card to-primary/5 dark:from-amber-500/10 dark:via-card dark:to-primary/10 p-5 shadow-sm hover:shadow-lg hover:border-primary/60 transition-all relative overflow-hidden"
           : "block rounded-2xl border border-border bg-card p-5 hover:border-primary hover:shadow-md transition-all"
       }
@@ -114,8 +121,13 @@ export function TaskCard({ task }: { task: TaskCardData }) {
           </span>
         )}
 
+        {closed && (
+          <span className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+            {closedTaskLabel(task)} · closed
+          </span>
+        )}
       </div>
-    </Link>
+    </Wrapper>
   );
 }
 
