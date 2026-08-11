@@ -102,31 +102,20 @@ function TaskListItem({ t, active, onHover }: { t: any; active?: boolean; onHove
   );
 }
 
+function slugify(v: string) {
+  return v.toLowerCase().trim().replace(/&/g, "and").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+}
+
 function BrowseTasks() {
   const search = Route.useSearch();
   const navigate = useNavigate();
-  const [query, setQuery] = useState(search.q);
+  const [query, setQuery] = useState(search.q ?? "");
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [mobileMap, setMobileMap] = useState(false);
 
   const list = useServerFn(listTasks);
   const cats = useServerFn(getCategories);
-
-  const limit = 20;
-  const { data, isFetching } = useQuery({
-    queryKey: ["tasks", "search", search],
-    queryFn: () =>
-      list({
-        data: {
-          q: search.q || undefined,
-          category_id: search.category_id || undefined,
-          location: search.location || undefined,
-          is_remote: search.is_remote ? 1 : undefined,
-          page: search.page,
-          limit,
-        },
-      }),
-  });
+  const page = search.page ?? 1;
 
   const catsQ = useQuery({
     queryKey: ["categories"],
@@ -136,16 +125,39 @@ function BrowseTasks() {
   const categories: { category_id: number; category_name: string }[] =
     catsQ.data?.ok ? (catsQ.data.data as any)?.categories ?? [] : [];
 
+  // Categories are selected by name in the URL (?category=home-services).
+  // Legacy ?category_id= links keep working.
+  const activeCatRow = search.category
+    ? categories.find((c) => slugify(c.category_name) === slugify(search.category!))
+    : categories.find((c) => c.category_id === (search.category_id ?? 0));
+  const resolvedCategoryId = activeCatRow?.category_id ?? (search.category ? 0 : search.category_id ?? 0);
+  const activeCat = activeCatRow?.category_name;
+
+  const limit = 20;
+  const { data, isFetching } = useQuery({
+    queryKey: ["tasks", "search", { ...search, resolvedCategoryId }],
+    queryFn: () =>
+      list({
+        data: {
+          q: search.q || undefined,
+          category_id: resolvedCategoryId || undefined,
+          location: search.location || undefined,
+          is_remote: search.is_remote ? 1 : undefined,
+          page,
+          limit,
+        },
+      }),
+  });
+
   const rows: any[] = (() => {
     if (!data?.ok) return [];
     const d: any = data.data;
     return d?.results ?? d?.tasks ?? (Array.isArray(d) ? d : []);
   })();
 
-  const setSearch = (patch: Partial<typeof search>) =>
+  const setSearch = (patch: BrowseSearch) =>
     navigate({ to: "/tasks/browse", search: { ...search, ...patch, page: patch.page ?? 1 } });
 
-  const activeCat = categories.find((c) => c.category_id === search.category_id)?.category_name;
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -167,15 +179,21 @@ function BrowseTasks() {
             />
           </form>
 
-          <button
-            onClick={() => {
-              const v = prompt("Filter by category id (0 for all)", String(search.category_id || ""));
-              if (v != null) setSearch({ category_id: Number(v) || 0 });
-            }}
-            className="inline-flex items-center gap-1 rounded-full border border-border bg-card px-3 py-1.5 text-sm font-semibold whitespace-nowrap"
-          >
-            {activeCat ? activeCat : "All categories"} <ChevronDown className="h-3.5 w-3.5" />
-          </button>
+          <div className="relative inline-flex items-center">
+            <select
+              value={activeCat ? slugify(activeCat) : ""}
+              onChange={(e) => setSearch({ category: e.target.value, category_id: 0, page: 1 })}
+              className="appearance-none rounded-full border border-border bg-card pl-3 pr-8 py-1.5 text-sm font-semibold whitespace-nowrap cursor-pointer"
+            >
+              <option value="">All categories</option>
+              {categories.map((c) => (
+                <option key={c.category_id} value={slugify(c.category_name)}>
+                  {c.category_name}
+                </option>
+              ))}
+            </select>
+            <ChevronDown className="pointer-events-none absolute right-2.5 h-3.5 w-3.5" />
+          </div>
 
           <button
             onClick={() => setSearch({ is_remote: search.is_remote ? 0 : 1 })}
@@ -189,7 +207,7 @@ function BrowseTasks() {
 
           <button
             onClick={() => {
-              const loc = prompt("Location filter", search.location);
+              const loc = prompt("Location filter", search.location ?? "");
               if (loc != null) setSearch({ location: loc });
             }}
             className="hidden sm:inline-flex items-center gap-1 rounded-full border border-border bg-card px-3 py-1.5 text-sm font-semibold whitespace-nowrap"
@@ -230,14 +248,14 @@ function BrowseTasks() {
                 </div>
                 <div className="mt-6 flex items-center justify-between">
                   <button
-                    disabled={search.page <= 1}
-                    onClick={() => setSearch({ page: search.page - 1 })}
+                    disabled={page <= 1}
+                    onClick={() => setSearch({ page: page - 1 })}
                     className="rounded-full border border-border bg-card px-4 py-1.5 text-sm font-semibold disabled:opacity-40"
                   >Previous</button>
-                  <span className="text-xs text-muted-foreground">Page {search.page}</span>
+                  <span className="text-xs text-muted-foreground">Page {page}</span>
                   <button
                     disabled={rows.length < limit}
-                    onClick={() => setSearch({ page: search.page + 1 })}
+                    onClick={() => setSearch({ page: page + 1 })}
                     className="rounded-full border border-border bg-card px-4 py-1.5 text-sm font-semibold disabled:opacity-40"
                   >Next</button>
                 </div>
