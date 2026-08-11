@@ -360,7 +360,26 @@ function TaskDetail() {
           <div className="mt-8 rounded-xl border border-destructive/40 bg-destructive/10 p-4 text-sm text-destructive">{data?.error ?? "Task not found."}</div>
         ) : !task ? (
           <div className="mt-8 text-muted-foreground">No task data.</div>
+        ) : isTaskClosed({ status: task.status, deadline: task.deadline }) && !isPoster ? (
+          <div className="mx-auto mt-10 max-w-md rounded-2xl border border-border bg-card p-8 text-center">
+            <h1 className="font-display text-2xl text-ink">
+              This task is {closedTaskLabel({ status: task.status, deadline: task.deadline }).toLowerCase()}
+            </h1>
+            <p className="mt-2 text-sm text-muted-foreground">
+              {closedTaskLabel({ status: task.status, deadline: task.deadline }) === "Cancelled"
+                ? "The poster cancelled this task, so it can no longer be opened or bid on."
+                : "The deadline for this task has passed, so it can no longer be opened or bid on."}
+            </p>
+            <Link
+              to="/tasks/browse"
+              search={{}}
+              className="mt-6 inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-bold text-primary-foreground"
+            >
+              Browse open tasks
+            </Link>
+          </div>
         ) : (
+
           <div className="grid md:grid-cols-[1fr_340px] gap-6">
             {/* MAIN COLUMN */}
             <div>
