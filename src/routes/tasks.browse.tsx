@@ -16,7 +16,7 @@ export type BrowseSearch = {
 };
 
 export const Route = createFileRoute("/tasks/browse")({
-  validateSearch: (s: Record<string, unknown> = {}): Required<BrowseSearch> => ({
+  validateSearch: (s: Record<string, unknown> = {}): BrowseSearch => ({
     q: typeof s.q === "string" ? s.q : "",
     category: typeof s.category === "string" ? s.category : "",
     category_id:
