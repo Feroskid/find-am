@@ -6,8 +6,17 @@ import { Search, Loader2, ChevronDown, MapPin, Clock, Globe, Plus, Map as MapIco
 import { TaskHeader } from "@/components/TaskHeader";
 import { listTasks, getCategories } from "@/lib/findtask.functions";
 
+export type BrowseSearch = {
+  q?: string;
+  category?: string;
+  category_id?: number;
+  location?: string;
+  is_remote?: number;
+  page?: number;
+};
+
 export const Route = createFileRoute("/tasks/browse")({
-  validateSearch: (s: Record<string, unknown> = {}) => ({
+  validateSearch: (s: Record<string, unknown> = {}): Required<BrowseSearch> => ({
     q: typeof s.q === "string" ? s.q : "",
     category: typeof s.category === "string" ? s.category : "",
     category_id:
@@ -24,6 +33,7 @@ export const Route = createFileRoute("/tasks/browse")({
         ? Math.max(1, Number(s.page) || 1)
         : 1,
   }),
+
 
   head: () => ({
     meta: [
