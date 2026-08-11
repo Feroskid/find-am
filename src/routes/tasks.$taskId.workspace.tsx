@@ -13,12 +13,15 @@ import {
   getTaskLocation, toggleTaskLocation, markArrived, recordLocation,
 } from "@/lib/findtask.functions";
 import { uploadTaskMedia } from "@/lib/media.functions";
+import { submitSupportTicket } from "@/lib/support.functions";
 import { MilestoneActions } from "@/components/MilestoneActions";
 
 
 export const Route = createFileRoute("/tasks/$taskId/workspace")({
   validateSearch: (s: Record<string, unknown> = {}) => ({
     with: typeof s.with === "string" ? s.with : undefined,
+    dispute:
+      s.dispute === 1 || s.dispute === "1" || s.dispute === true ? 1 : (undefined as 1 | undefined),
   }),
   head: () => ({ meta: [{ title: "Task workspace — Find-task" }] }),
   component: WorkspacePage,
@@ -53,7 +56,7 @@ function Attachment({ url }: { url: string }) {
 
 function WorkspacePage() {
   const { taskId } = Route.useParams();
-  const { with: withTasker } = Route.useSearch();
+  const { with: withTasker, dispute: disputeFlag } = Route.useSearch();
   const { token, ready, user } = useAuth();
   const navigate = useNavigate();
   useEffect(() => {
@@ -69,6 +72,7 @@ function WorkspacePage() {
   const rFn = useServerFn(rateTask);
   const myRatingFn = useServerFn(getMyRating);
   const uploadFn = useServerFn(uploadTaskMedia);
+  const notifyAdminFn = useServerFn(submitSupportTicket);
 
   const taskQ = useQuery({ queryKey: ["task", taskId], queryFn: () => tFn({ data: { taskId } }) });
   const msgsQ = useQuery({
@@ -107,6 +111,11 @@ function WorkspacePage() {
     const hoursSince = (Date.now() - releasedAt) / 3_600_000;
     return hoursSince >= 48;
   }, [task]);
+
+  // Arriving from the task page's "Open dispute" button opens the form directly.
+  useEffect(() => {
+    if (disputeFlag === 1) setShowDispute(true);
+  }, [disputeFlag]);
 
   const readFileAsBase64 = (file: File) =>
     new Promise<string>((resolve, reject) => {
@@ -164,8 +173,29 @@ function WorkspacePage() {
       : toast.error(r.error),
   });
   const disputeM = useMutation({
-    mutationFn: () => dFn({ data: { taskId, reason: disputeReason.trim(), token: token! } }),
-    onSuccess: (r) => r.ok ? (toast.success("Dispute filed."), setShowDispute(false), taskQ.refetch()) : toast.error(r.error),
+    mutationFn: async () => {
+      const r: any = await dFn({ data: { taskId, reason: disputeReason.trim(), token: token! } });
+      if (r?.ok) {
+        // Raise an admin ticket so moderators can review the poster/tasker chat.
+        await notifyAdminFn({
+          data: {
+            name: String((user as any)?.name ?? (user as any)?.full_name ?? "Find-am user"),
+            email: String((user as any)?.email ?? "no-reply@find-am.com"),
+            subject: `Dispute on task #${taskId}: ${task?.title ?? "task"}`,
+            message:
+              `A dispute was raised on task #${taskId} (${task?.title ?? "untitled"}).\n\n` +
+              `Reason: ${disputeReason.trim()}\n\n` +
+              `Review the conversation at /tasks/${taskId}/workspace`,
+            category: "dispute" as const,
+            user_ref: String(myId ?? ""),
+          },
+        }).catch(() => {});
+      }
+      return r;
+    },
+    onSuccess: (r) => r.ok
+      ? (toast.success("Dispute filed. Our team has been notified and will review the chat."), setShowDispute(false), setDisputeReason(""), taskQ.refetch())
+      : toast.error(r.error),
   });
   const task_forRating: any = taskQ.data?.ok ? ((taskQ.data.data as any)?.task ?? taskQ.data.data) : null;
   const _isCompletedForRating =
@@ -216,7 +246,7 @@ function WorkspacePage() {
       <main className="mx-auto w-full max-w-5xl px-4 sm:px-6 py-6 flex-1 grid gap-6 md:grid-cols-[1fr_300px]">
         <section className="flex flex-col rounded-2xl border border-border bg-card overflow-hidden h-[70vh]">
           <header className="border-b border-border p-4 flex items-center justify-between">
-            <Link to="/tasks/$taskId" params={{ taskId }} className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+            <Link to="/messages" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
               <ArrowLeft className="h-4 w-4" /> {task?.title ?? "Task"}
             </Link>
             <div className="flex items-center gap-2">
