@@ -144,6 +144,11 @@ export const listTasks = createServerFn({ method: "POST" })
     return call(`/task/search${qs ? `?${qs}` : ""}`);
   });
 
+// ---- Map pins ----------------------------------------------------------
+export const mapPins = createServerFn({ method: "POST" })
+  .inputValidator((i: unknown) => z.object({}).parse(i ?? {}))
+  .handler(async () => call(`/tasks/map-pins`, {}));
+
 // ---- Single task --------------------------------------------------------
 export const getTask = createServerFn({ method: "POST" })
   .inputValidator((i: unknown) => z.object({ taskId: TaskId }).parse(i))
@@ -711,14 +716,14 @@ export const adminListDisputes = createServerFn({ method: "POST" })
 export const adminResolveDispute = createServerFn({ method: "POST" })
   .inputValidator((i: unknown) =>
     z.object({
-      taskId: TaskId,
-      resolution: z.enum(["release", "refund", "split"]),
+      disputeId: z.union([z.string().min(1).max(64), z.number().int().positive()]),
+      resolution: z.enum(["release_to_tasker", "refund_poster", "split"]),
       note: z.string().max(2000).optional(),
       token: Token,
     }).parse(i),
   )
   .handler(async ({ data }) =>
-    call(`/admin/dispute/${data.taskId}/resolve`, {
+    call(`/admin/dispute/${data.disputeId}/resolve`, {
       method: "POST",
       body: { resolution: data.resolution, note: data.note ?? "" },
       token: data.token,

@@ -17,6 +17,7 @@ import {
 import { useAuth } from "@/lib/auth";
 import { FeeBreakdown } from "@/components/FeeBreakdown";
 import { computeFees, formatNaira } from "@/lib/fees";
+import { isTaskClosed, closedTaskLabel } from "@/lib/task-status";
 
 export const Route = createFileRoute("/tasks/$taskId/")({
   head: ({ params }) => ({

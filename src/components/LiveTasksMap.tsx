@@ -74,6 +74,7 @@ export function LiveTasksMap({ tasks }: { tasks: Task[] }) {
       pinned.forEach((t) => {
         const id = t.task_id ?? t.id;
         const marker = L.marker([t.lat, t.lng]).addTo(layerRef.current);
+        marker.bindTooltip(escapeHtml(String(t.title ?? "Task")));
         marker.bindPopup(
           `<div style="font-family:inherit"><strong>${escapeHtml(String(t.title ?? "Task"))}</strong><br/>₦${Number(t.budget ?? 0).toLocaleString()}<br/><a href="/tasks/${id}" style="color:#2563eb">View task →</a></div>`,
         );

@@ -5,7 +5,7 @@ import { Map as MapIcon, Info } from "lucide-react";
 import { TaskHeader } from "@/components/TaskHeader";
 import { Footer } from "@/components/Footer";
 import { LiveTasksMap } from "@/components/LiveTasksMap";
-import { listTasks } from "@/lib/findtask.functions";
+import { mapPins } from "@/lib/findtask.functions";
 
 export const Route = createFileRoute("/map")({
   head: () => ({
@@ -24,10 +24,10 @@ function extractTasks(d: any): any[] {
 }
 
 function MapPage() {
-  const fn = useServerFn(listTasks);
+  const fn = useServerFn(mapPins);
   const q = useQuery({
-    queryKey: ["map-tasks"],
-    queryFn: () => fn({ data: { page: 1, limit: 50 } }),
+    queryKey: ["map-pins"],
+    queryFn: () => fn({ data: {} }),
     refetchInterval: 30_000,
   });
   const tasks = q.data?.ok ? extractTasks(q.data.data) : [];
