@@ -3,7 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useMemo, useRef, useState } from "react";
 import {
-  ArrowLeft, MapPin, Clock, Loader2, Flag, ChevronDown, BadgeCheck, Star, Globe, CheckCircle2, RefreshCw, Wallet, CreditCard,
+  ArrowLeft, MapPin, Clock, Loader2, Flag, ChevronDown, BadgeCheck, Star, Globe, CheckCircle2, RefreshCw, Wallet, CreditCard, ShieldAlert,
 } from "lucide-react";
 import { toast } from "sonner";
 import { TaskHeader } from "@/components/TaskHeader";
