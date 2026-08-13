@@ -361,7 +361,10 @@ function TaskDetail() {
           <div className="mt-8 rounded-xl border border-destructive/40 bg-destructive/10 p-4 text-sm text-destructive">{data?.error ?? "Task not found."}</div>
         ) : !task ? (
           <div className="mt-8 text-muted-foreground">No task data.</div>
+        ) : status === "disputed" ? (
+          <DisputedTaskView task={task} taskId={taskId} isParticipant={isPoster || !!myApplication} />
         ) : isTaskClosed({ status: task.status, deadline: task.deadline }) && !isPoster ? (
+
           <div className="mx-auto mt-10 max-w-md rounded-2xl border border-border bg-card p-8 text-center">
             <h1 className="font-display text-2xl text-ink">
               This task is {closedTaskLabel({ status: task.status, deadline: task.deadline }).toLowerCase()}
