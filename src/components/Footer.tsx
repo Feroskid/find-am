@@ -64,16 +64,16 @@ const COLS: { title: string; links: { to: string; label: string }[] }[] = [
 
 export function Footer() {
   return (
-    <footer className="bg-ink text-background mt-16">
+    <footer className="bg-footer text-footer-foreground mt-16">
       <div className="mx-auto max-w-7xl px-5 sm:px-6 py-12">
         <div className="grid gap-10 md:grid-cols-5 text-sm">
           {COLS.map((c) => (
             <div key={c.title}>
-              <div className="font-bold mb-3 text-background">{c.title}</div>
-              <ul className="space-y-2 text-background/75">
+              <div className="font-bold mb-3 text-footer-foreground">{c.title}</div>
+              <ul className="space-y-2 text-footer-foreground/75">
                 {c.links.map((l) => (
                   <li key={l.label}>
-                    <Link to={l.to as any} className="hover:text-background hover:underline">{l.label}</Link>
+                    <Link to={l.to as any} className="hover:text-footer-foreground hover:underline">{l.label}</Link>
                   </li>
                 ))}
               </ul>
@@ -85,18 +85,18 @@ export function Footer() {
           <div className="font-display text-3xl text-primary">Find-task</div>
         </div>
 
-        <div className="mt-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between text-xs text-background/60">
+        <div className="mt-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between text-xs text-footer-foreground/60">
           <div>
             Integer Tech Ltd © {new Date().getFullYear()}. All rights reserved. Find-task is operated by Integer Tech Ltd · 🇳🇬 Nigeria
           </div>
-          <nav className="flex flex-wrap items-center gap-x-5 gap-y-2 font-semibold text-background/85">
-            <Link to="/terms" className="hover:text-background hover:underline">Terms &amp; Conditions</Link>
-            <span className="text-background/30">·</span>
-            <Link to="/privacy" className="hover:text-background hover:underline">Privacy Policy</Link>
-            <span className="text-background/30">·</span>
-            <Link to="/refund" className="hover:text-background hover:underline">Refund Policy</Link>
-            <span className="text-background/30">·</span>
-            <Link to="/community" className="hover:text-background hover:underline">Community Guidelines</Link>
+          <nav className="flex flex-wrap items-center gap-x-5 gap-y-2 font-semibold text-footer-foreground/85">
+            <Link to="/terms" className="hover:text-footer-foreground hover:underline">Terms &amp; Conditions</Link>
+            <span className="text-footer-foreground/30">·</span>
+            <Link to="/privacy" className="hover:text-footer-foreground hover:underline">Privacy Policy</Link>
+            <span className="text-footer-foreground/30">·</span>
+            <Link to="/refund" className="hover:text-footer-foreground hover:underline">Refund Policy</Link>
+            <span className="text-footer-foreground/30">·</span>
+            <Link to="/community" className="hover:text-footer-foreground hover:underline">Community Guidelines</Link>
           </nav>
         </div>
       </div>

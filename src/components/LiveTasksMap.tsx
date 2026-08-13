@@ -23,6 +23,8 @@ export function LiveTasksMap({ tasks }: { tasks: Task[] }) {
   const mapRef = useRef<any>(null);
   const layerRef = useRef<any>(null);
   const meMarkerRef = useRef<any>(null);
+  const cleanupRef = useRef<(() => void) | null>(null);
+
   const [ready, setReady] = useState(false);
   const [me, setMe] = useState<{ lat: number; lng: number } | null>(null);
   const [geoErr, setGeoErr] = useState<string | null>(null);
@@ -30,6 +32,7 @@ export function LiveTasksMap({ tasks }: { tasks: Task[] }) {
   // dyn-import leaflet (browser only)
   useEffect(() => {
     let cancelled = false;
+    let ro: ResizeObserver | null = null;
     (async () => {
       const L = (await import("leaflet")).default;
       await import("leaflet/dist/leaflet.css");
@@ -46,13 +49,28 @@ export function LiveTasksMap({ tasks }: { tasks: Task[] }) {
       layerRef.current = L.layerGroup().addTo(map);
       mapRef.current = map;
       setReady(true);
+      // The container is often still 0-height on first paint, which makes tiles
+      // never request and the map look "timed out" until a manual reload.
+      const kick = () => mapRef.current?.invalidateSize?.();
+      requestAnimationFrame(kick);
+      setTimeout(kick, 250);
+      setTimeout(kick, 800);
+      if (typeof ResizeObserver !== "undefined" && containerRef.current) {
+        ro = new ResizeObserver(kick);
+        ro.observe(containerRef.current);
+      }
+      window.addEventListener("resize", kick);
+      cleanupRef.current = () => window.removeEventListener("resize", kick);
     })();
     return () => {
       cancelled = true;
+      ro?.disconnect();
+      cleanupRef.current?.();
       mapRef.current?.remove?.();
       mapRef.current = null;
     };
   }, []);
+
 
   const pinned = useMemo(
     () =>
@@ -75,7 +93,14 @@ export function LiveTasksMap({ tasks }: { tasks: Task[] }) {
       layerRef.current.clearLayers();
       pinned.forEach((t) => {
         const id = t.task_id ?? t.id;
-        const marker = L.marker([t.lat, t.lng]).addTo(layerRef.current);
+        const TASK_PIN = L.divIcon({
+          className: "",
+          html: `<span style="display:inline-block;width:14px;height:14px;border-radius:50%;background:#7c3aed;border:2px solid white;box-shadow:0 0 0 1px rgba(0,0,0,.3)"></span>`,
+          iconSize: [14, 14],
+          iconAnchor: [7, 7],
+        });
+        const marker = L.marker([t.lat, t.lng], { icon: TASK_PIN }).addTo(layerRef.current);
+
         marker.bindTooltip(escapeHtml(String(t.title ?? "Task")));
         marker.bindPopup(
           `<div style="font-family:inherit"><strong>${escapeHtml(String(t.title ?? "Task"))}</strong><br/>₦${Number(t.budget ?? 0).toLocaleString()}<br/><a href="/tasks/${id}" style="color:#2563eb">View task →</a></div>`,

@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
-import { Loader2, MessageSquare, Search, Users, ChevronDown } from "lucide-react";
+import { Loader2, MessageSquare, Search, Users, ChevronDown, ShieldAlert } from "lucide-react";
 import { TaskHeader } from "@/components/TaskHeader";
 import { getMyConversations } from "@/lib/findtask.functions";
 import { useAuth } from "@/lib/auth";
@@ -93,6 +93,14 @@ function MessagesInbox() {
     })).sort((a, b) => b.lastAt - a.lastAt);
   }, [conversations]);
 
+  // Private support rooms opened when a dispute is raised.
+  const disputeRooms = useMemo(() => {
+    const raw: any = convQ.data?.ok ? convQ.data.data : null;
+    const list: any[] = raw?.dispute_rooms ?? [];
+    return [...list].sort(
+      (a, b) => new Date(b.last_message_at ?? 0).getTime() - new Date(a.last_message_at ?? 0).getTime(),
+    );
+  }, [convQ.data]);
 
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const toggle = (id: string) =>
@@ -103,6 +111,7 @@ function MessagesInbox() {
     });
 
   if (!token) return null;
+
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -125,7 +134,55 @@ function MessagesInbox() {
             </div>
           </div>
 
+          {/* Dispute rooms — private support conversations, kept separate on purpose */}
+          {disputeRooms.length > 0 && (
+            <div className="border-b border-border bg-amber-500/[0.07]">
+              <div className="px-4 pt-3 pb-1 text-[11px] font-bold uppercase tracking-widest text-amber-700 dark:text-amber-300 inline-flex items-center gap-1.5">
+                <ShieldAlert className="h-3.5 w-3.5" /> Support · disputes
+              </div>
+              <ul className="divide-y divide-amber-500/15">
+                {disputeRooms.map((r: any) => {
+                  const unread = Number(r.unread_count ?? 0);
+                  const closed = !!r.closed;
+                  return (
+                    <li key={String(r.dispute_id)}>
+                      <Link
+                        to="/disputes/$disputeId"
+                        params={{ disputeId: String(r.dispute_id) }}
+                        className={`flex items-center gap-3 px-4 py-3 transition-colors hover:bg-amber-500/10 ${closed ? "opacity-60" : ""}`}
+                      >
+                        <div className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-amber-500/20 text-amber-700 dark:text-amber-300">
+                          <ShieldAlert className="h-5 w-5" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-baseline justify-between gap-2">
+                            <div className="font-semibold text-ink truncate">
+                              Dispute #{r.dispute_id} · {r.task_title ?? "Task"}
+                            </div>
+                            <div className="text-[11px] text-muted-foreground shrink-0">{relativeTime(r.last_message_at)}</div>
+                          </div>
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="text-xs text-muted-foreground truncate">
+                              <span className="font-semibold text-amber-700 dark:text-amber-300">Find-am support</span>
+                              {closed ? " · Closed" : r.last_message ? ` · ${r.last_message}` : " · Room opened"}
+                            </div>
+                            {unread > 0 && !closed && (
+                              <span className="shrink-0 min-w-[20px] h-5 px-1.5 rounded-full bg-amber-600 text-white text-[11px] font-bold inline-flex items-center justify-center">
+                                {unread > 99 ? "99+" : unread}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          )}
+
           {/* List */}
+
           {convQ.isLoading ? (
             <div className="flex items-center gap-2 text-muted-foreground py-16 justify-center">
               <Loader2 className="h-4 w-4 animate-spin" /> Loading chats…

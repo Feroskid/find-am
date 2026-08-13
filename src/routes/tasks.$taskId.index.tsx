@@ -3,7 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useMemo, useRef, useState } from "react";
 import {
-  ArrowLeft, MapPin, Clock, Loader2, Flag, ChevronDown, BadgeCheck, Star, Globe, CheckCircle2, RefreshCw, Wallet, CreditCard,
+  ArrowLeft, MapPin, Clock, Loader2, Flag, ChevronDown, BadgeCheck, Star, Globe, CheckCircle2, RefreshCw, Wallet, CreditCard, ShieldAlert,
 } from "lucide-react";
 import { toast } from "sonner";
 import { TaskHeader } from "@/components/TaskHeader";
@@ -266,7 +266,7 @@ function TaskDetail() {
   };
   const conversationCTA = (className: string, label = "Open conversation", onDone?: () => void) =>
     useWorkspace ? (
-      <Link to="/tasks/$taskId/workspace" params={{ taskId }} search={{}} onClick={onDone} className={className}>
+      <Link to="/tasks/$taskId/workspace" params={{ taskId }} search={{} as any} onClick={onDone} className={className}>
         {label}
       </Link>
     ) : (
@@ -361,7 +361,10 @@ function TaskDetail() {
           <div className="mt-8 rounded-xl border border-destructive/40 bg-destructive/10 p-4 text-sm text-destructive">{data?.error ?? "Task not found."}</div>
         ) : !task ? (
           <div className="mt-8 text-muted-foreground">No task data.</div>
+        ) : status === "disputed" ? (
+          <DisputedTaskView task={task} taskId={taskId} isParticipant={isPoster || !!myApplication} />
         ) : isTaskClosed({ status: task.status, deadline: task.deadline }) && !isPoster ? (
+
           <div className="mx-auto mt-10 max-w-md rounded-2xl border border-border bg-card p-8 text-center">
             <h1 className="font-display text-2xl text-ink">
               This task is {closedTaskLabel({ status: task.status, deadline: task.deadline }).toLowerCase()}
@@ -373,7 +376,7 @@ function TaskDetail() {
             </p>
             <Link
               to="/tasks/browse"
-              search={{}}
+              search={{} as any}
               className="mt-6 inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-bold text-primary-foreground"
             >
               Browse open tasks
@@ -623,7 +626,7 @@ function TaskDetail() {
                       </Link>
                     )}
                     {useWorkspace && (
-                      <Link to="/tasks/$taskId/workspace" params={{ taskId }} search={{}} className="block w-full rounded-full border border-border py-3 text-sm font-bold hover:bg-muted">
+                      <Link to="/tasks/$taskId/workspace" params={{ taskId }} search={{} as any} className="block w-full rounded-full border border-border py-3 text-sm font-bold hover:bg-muted">
                         Open workspace
                       </Link>
                     )}
@@ -1074,5 +1077,76 @@ function QuestionCard({ q, posterId }: { q: any; posterId?: any }) {
       </div>
       <p className="mt-2 text-sm text-foreground/90 whitespace-pre-wrap">{body}</p>
     </article>
+  );
+}
+
+/** Shown instead of the normal task detail once a dispute is raised on a task. */
+function DisputedTaskView({ task, taskId, isParticipant }: { task: any; taskId: string; isParticipant: boolean }) {
+  const disputeId = task?.dispute_id ?? task?.dispute?.dispute_id ?? null;
+  return (
+    <div className="mx-auto mt-8 max-w-2xl space-y-4">
+      <div className="rounded-2xl border border-amber-500/40 bg-amber-500/10 p-6 sm:p-8">
+        <div className="flex items-center gap-2 text-amber-700 dark:text-amber-300">
+          <ShieldAlert className="h-5 w-5" />
+          <span className="text-[11px] font-bold uppercase tracking-widest">Under dispute review</span>
+        </div>
+        <h1 className="mt-3 font-display text-2xl text-ink">{task?.title ?? "Task"}</h1>
+        <p className="mt-2 text-sm text-foreground/85">
+          A dispute has been raised on this task. Find-am support is reviewing it, the task chat is closed and the escrowed funds are frozen
+          until a decision is made. No new offers can be made on this task.
+        </p>
+        <dl className="mt-5 grid grid-cols-2 gap-3 text-sm">
+          <div className="rounded-xl border border-border bg-card p-3">
+            <dt className="text-xs text-muted-foreground">Amount in escrow</dt>
+            <dd className="font-semibold text-ink">₦{Number(task?.budget ?? 0).toLocaleString()}</dd>
+          </div>
+          <div className="rounded-xl border border-border bg-card p-3">
+            <dt className="text-xs text-muted-foreground">Status</dt>
+            <dd className="font-semibold text-amber-700 dark:text-amber-300">Disputed</dd>
+          </div>
+        </dl>
+
+        {isParticipant ? (
+          <div className="mt-6 space-y-3">
+            <p className="text-xs text-muted-foreground">
+              Support speaks with each party <strong>privately</strong>. Anything you send in your dispute room stays between you and the
+              Find-am team.
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {disputeId ? (
+                <Link
+                  to="/disputes/$disputeId"
+                  params={{ disputeId: String(disputeId) }}
+                  className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-bold text-primary-foreground"
+                >
+                  <ShieldAlert className="h-4 w-4" /> Open my dispute room
+                </Link>
+              ) : (
+                <Link to="/messages" className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-bold text-primary-foreground">
+                  <ShieldAlert className="h-4 w-4" /> Go to my messages
+                </Link>
+              )}
+              <Link
+                to="/tasks/$taskId/workspace"
+                params={{ taskId }}
+                search={{} as any}
+
+                className="inline-flex items-center gap-2 rounded-full border border-border px-5 py-2.5 text-sm font-semibold"
+              >
+                View task chat history
+              </Link>
+            </div>
+          </div>
+        ) : (
+          <Link
+            to="/tasks/browse"
+            search={{} as any}
+            className="mt-6 inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-bold text-primary-foreground"
+          >
+            Browse open tasks
+          </Link>
+        )}
+      </div>
+    </div>
   );
 }

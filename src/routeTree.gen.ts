@@ -32,7 +32,11 @@ import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as AdminAuditRouteImport } from './routes/admin.audit'
 import { Route as AdminBlacklistRouteImport } from './routes/admin.blacklist'
 import { Route as AdminDisputesRouteImport } from './routes/admin.disputes'
+import { Route as AdminFundsRouteImport } from './routes/admin.funds'
+import { Route as AdminKeywordsRouteImport } from './routes/admin.keywords'
 import { Route as AdminLoginRouteImport } from './routes/admin.login'
+import { Route as AdminMonitoringRouteImport } from './routes/admin.monitoring'
+import { Route as AdminReportsRouteImport } from './routes/admin.reports'
 import { Route as AdminSupportRouteImport } from './routes/admin.support'
 import { Route as AdminUsersRouteImport } from './routes/admin.users'
 import { Route as AuthVerifyEmailRouteImport } from './routes/auth.verify-email'
@@ -43,6 +47,7 @@ import { Route as CommunityNewRouteImport } from './routes/community.new'
 import { Route as CommunityNotificationsRouteImport } from './routes/community.notifications'
 import { Route as CommunitySearchRouteImport } from './routes/community.search'
 import { Route as CommunitySettingsRouteImport } from './routes/community.settings'
+import { Route as DisputesDisputeIdRouteImport } from './routes/disputes.$disputeId'
 import { Route as MessagesIndexRouteImport } from './routes/messages.index'
 import { Route as TasksIndexRouteImport } from './routes/tasks.index'
 import { Route as TasksBrowseRouteImport } from './routes/tasks.browse'
@@ -50,6 +55,7 @@ import { Route as TasksCategoriesRouteImport } from './routes/tasks.categories'
 import { Route as TasksMineRouteImport } from './routes/tasks.mine'
 import { Route as TasksOffersRouteImport } from './routes/tasks.offers'
 import { Route as UUserIdRouteImport } from './routes/u.$userId'
+import { Route as AdminDisputeDisputeIdRouteImport } from './routes/admin.dispute.$disputeId'
 import { Route as ApiPublicSearchRouteImport } from './routes/api/public/search'
 import { Route as CommunityCSlugRouteImport } from './routes/community.c.$slug'
 import { Route as CommunityTThreadIdRouteImport } from './routes/community.t.$threadId'
@@ -174,9 +180,29 @@ const AdminDisputesRoute = AdminDisputesRouteImport.update({
   path: '/disputes',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminFundsRoute = AdminFundsRouteImport.update({
+  id: '/funds',
+  path: '/funds',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminKeywordsRoute = AdminKeywordsRouteImport.update({
+  id: '/keywords',
+  path: '/keywords',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminLoginRoute = AdminLoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminMonitoringRoute = AdminMonitoringRouteImport.update({
+  id: '/monitoring',
+  path: '/monitoring',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminReportsRoute = AdminReportsRouteImport.update({
+  id: '/reports',
+  path: '/reports',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminSupportRoute = AdminSupportRouteImport.update({
@@ -229,6 +255,11 @@ const CommunitySettingsRoute = CommunitySettingsRouteImport.update({
   path: '/community/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DisputesDisputeIdRoute = DisputesDisputeIdRouteImport.update({
+  id: '/disputes/$disputeId',
+  path: '/disputes/$disputeId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const MessagesIndexRoute = MessagesIndexRouteImport.update({
   id: '/messages/',
   path: '/messages/',
@@ -263,6 +294,11 @@ const UUserIdRoute = UUserIdRouteImport.update({
   id: '/u/$userId',
   path: '/u/$userId',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AdminDisputeDisputeIdRoute = AdminDisputeDisputeIdRouteImport.update({
+  id: '/dispute/$disputeId',
+  path: '/dispute/$disputeId',
+  getParentRoute: () => AdminRoute,
 } as any)
 const ApiPublicSearchRoute = ApiPublicSearchRouteImport.update({
   id: '/api/public/search',
@@ -328,7 +364,11 @@ export interface FileRoutesByFullPath {
   '/admin/audit': typeof AdminAuditRoute
   '/admin/blacklist': typeof AdminBlacklistRoute
   '/admin/disputes': typeof AdminDisputesRoute
+  '/admin/funds': typeof AdminFundsRoute
+  '/admin/keywords': typeof AdminKeywordsRoute
   '/admin/login': typeof AdminLoginRoute
+  '/admin/monitoring': typeof AdminMonitoringRoute
+  '/admin/reports': typeof AdminReportsRoute
   '/admin/support': typeof AdminSupportRoute
   '/admin/users': typeof AdminUsersRoute
   '/auth/verify-email': typeof AuthVerifyEmailRoute
@@ -338,6 +378,7 @@ export interface FileRoutesByFullPath {
   '/community/notifications': typeof CommunityNotificationsRoute
   '/community/search': typeof CommunitySearchRoute
   '/community/settings': typeof CommunitySettingsRoute
+  '/disputes/$disputeId': typeof DisputesDisputeIdRoute
   '/tasks/browse': typeof TasksBrowseRoute
   '/tasks/categories': typeof TasksCategoriesRoute
   '/tasks/mine': typeof TasksMineRoute
@@ -347,6 +388,7 @@ export interface FileRoutesByFullPath {
   '/community/': typeof CommunityIndexRoute
   '/messages/': typeof MessagesIndexRoute
   '/tasks/': typeof TasksIndexRoute
+  '/admin/dispute/$disputeId': typeof AdminDisputeDisputeIdRoute
   '/api/public/search': typeof ApiPublicSearchRoute
   '/community/c/$slug': typeof CommunityCSlugRoute
   '/community/t/$threadId': typeof CommunityTThreadIdRoute
@@ -377,7 +419,11 @@ export interface FileRoutesByTo {
   '/admin/audit': typeof AdminAuditRoute
   '/admin/blacklist': typeof AdminBlacklistRoute
   '/admin/disputes': typeof AdminDisputesRoute
+  '/admin/funds': typeof AdminFundsRoute
+  '/admin/keywords': typeof AdminKeywordsRoute
   '/admin/login': typeof AdminLoginRoute
+  '/admin/monitoring': typeof AdminMonitoringRoute
+  '/admin/reports': typeof AdminReportsRoute
   '/admin/support': typeof AdminSupportRoute
   '/admin/users': typeof AdminUsersRoute
   '/auth/verify-email': typeof AuthVerifyEmailRoute
@@ -387,6 +433,7 @@ export interface FileRoutesByTo {
   '/community/notifications': typeof CommunityNotificationsRoute
   '/community/search': typeof CommunitySearchRoute
   '/community/settings': typeof CommunitySettingsRoute
+  '/disputes/$disputeId': typeof DisputesDisputeIdRoute
   '/tasks/browse': typeof TasksBrowseRoute
   '/tasks/categories': typeof TasksCategoriesRoute
   '/tasks/mine': typeof TasksMineRoute
@@ -396,6 +443,7 @@ export interface FileRoutesByTo {
   '/community': typeof CommunityIndexRoute
   '/messages': typeof MessagesIndexRoute
   '/tasks': typeof TasksIndexRoute
+  '/admin/dispute/$disputeId': typeof AdminDisputeDisputeIdRoute
   '/api/public/search': typeof ApiPublicSearchRoute
   '/community/c/$slug': typeof CommunityCSlugRoute
   '/community/t/$threadId': typeof CommunityTThreadIdRoute
@@ -429,7 +477,11 @@ export interface FileRoutesById {
   '/admin/audit': typeof AdminAuditRoute
   '/admin/blacklist': typeof AdminBlacklistRoute
   '/admin/disputes': typeof AdminDisputesRoute
+  '/admin/funds': typeof AdminFundsRoute
+  '/admin/keywords': typeof AdminKeywordsRoute
   '/admin/login': typeof AdminLoginRoute
+  '/admin/monitoring': typeof AdminMonitoringRoute
+  '/admin/reports': typeof AdminReportsRoute
   '/admin/support': typeof AdminSupportRoute
   '/admin/users': typeof AdminUsersRoute
   '/auth/verify-email': typeof AuthVerifyEmailRoute
@@ -439,6 +491,7 @@ export interface FileRoutesById {
   '/community/notifications': typeof CommunityNotificationsRoute
   '/community/search': typeof CommunitySearchRoute
   '/community/settings': typeof CommunitySettingsRoute
+  '/disputes/$disputeId': typeof DisputesDisputeIdRoute
   '/tasks/browse': typeof TasksBrowseRoute
   '/tasks/categories': typeof TasksCategoriesRoute
   '/tasks/mine': typeof TasksMineRoute
@@ -448,6 +501,7 @@ export interface FileRoutesById {
   '/community/': typeof CommunityIndexRoute
   '/messages/': typeof MessagesIndexRoute
   '/tasks/': typeof TasksIndexRoute
+  '/admin/dispute/$disputeId': typeof AdminDisputeDisputeIdRoute
   '/api/public/search': typeof ApiPublicSearchRoute
   '/community/c/$slug': typeof CommunityCSlugRoute
   '/community/t/$threadId': typeof CommunityTThreadIdRoute
@@ -482,7 +536,11 @@ export interface FileRouteTypes {
     | '/admin/audit'
     | '/admin/blacklist'
     | '/admin/disputes'
+    | '/admin/funds'
+    | '/admin/keywords'
     | '/admin/login'
+    | '/admin/monitoring'
+    | '/admin/reports'
     | '/admin/support'
     | '/admin/users'
     | '/auth/verify-email'
@@ -492,6 +550,7 @@ export interface FileRouteTypes {
     | '/community/notifications'
     | '/community/search'
     | '/community/settings'
+    | '/disputes/$disputeId'
     | '/tasks/browse'
     | '/tasks/categories'
     | '/tasks/mine'
@@ -501,6 +560,7 @@ export interface FileRouteTypes {
     | '/community/'
     | '/messages/'
     | '/tasks/'
+    | '/admin/dispute/$disputeId'
     | '/api/public/search'
     | '/community/c/$slug'
     | '/community/t/$threadId'
@@ -531,7 +591,11 @@ export interface FileRouteTypes {
     | '/admin/audit'
     | '/admin/blacklist'
     | '/admin/disputes'
+    | '/admin/funds'
+    | '/admin/keywords'
     | '/admin/login'
+    | '/admin/monitoring'
+    | '/admin/reports'
     | '/admin/support'
     | '/admin/users'
     | '/auth/verify-email'
@@ -541,6 +605,7 @@ export interface FileRouteTypes {
     | '/community/notifications'
     | '/community/search'
     | '/community/settings'
+    | '/disputes/$disputeId'
     | '/tasks/browse'
     | '/tasks/categories'
     | '/tasks/mine'
@@ -550,6 +615,7 @@ export interface FileRouteTypes {
     | '/community'
     | '/messages'
     | '/tasks'
+    | '/admin/dispute/$disputeId'
     | '/api/public/search'
     | '/community/c/$slug'
     | '/community/t/$threadId'
@@ -582,7 +648,11 @@ export interface FileRouteTypes {
     | '/admin/audit'
     | '/admin/blacklist'
     | '/admin/disputes'
+    | '/admin/funds'
+    | '/admin/keywords'
     | '/admin/login'
+    | '/admin/monitoring'
+    | '/admin/reports'
     | '/admin/support'
     | '/admin/users'
     | '/auth/verify-email'
@@ -592,6 +662,7 @@ export interface FileRouteTypes {
     | '/community/notifications'
     | '/community/search'
     | '/community/settings'
+    | '/disputes/$disputeId'
     | '/tasks/browse'
     | '/tasks/categories'
     | '/tasks/mine'
@@ -601,6 +672,7 @@ export interface FileRouteTypes {
     | '/community/'
     | '/messages/'
     | '/tasks/'
+    | '/admin/dispute/$disputeId'
     | '/api/public/search'
     | '/community/c/$slug'
     | '/community/t/$threadId'
@@ -638,6 +710,7 @@ export interface RootRouteChildren {
   CommunityNotificationsRoute: typeof CommunityNotificationsRoute
   CommunitySearchRoute: typeof CommunitySearchRoute
   CommunitySettingsRoute: typeof CommunitySettingsRoute
+  DisputesDisputeIdRoute: typeof DisputesDisputeIdRoute
   UUserIdRoute: typeof UUserIdRoute
   CommunityIndexRoute: typeof CommunityIndexRoute
   MessagesIndexRoute: typeof MessagesIndexRoute
@@ -811,11 +884,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminDisputesRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/funds': {
+      id: '/admin/funds'
+      path: '/funds'
+      fullPath: '/admin/funds'
+      preLoaderRoute: typeof AdminFundsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/keywords': {
+      id: '/admin/keywords'
+      path: '/keywords'
+      fullPath: '/admin/keywords'
+      preLoaderRoute: typeof AdminKeywordsRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/login': {
       id: '/admin/login'
       path: '/login'
       fullPath: '/admin/login'
       preLoaderRoute: typeof AdminLoginRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/monitoring': {
+      id: '/admin/monitoring'
+      path: '/monitoring'
+      fullPath: '/admin/monitoring'
+      preLoaderRoute: typeof AdminMonitoringRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/reports': {
+      id: '/admin/reports'
+      path: '/reports'
+      fullPath: '/admin/reports'
+      preLoaderRoute: typeof AdminReportsRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/support': {
@@ -888,6 +989,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CommunitySettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/disputes/$disputeId': {
+      id: '/disputes/$disputeId'
+      path: '/disputes/$disputeId'
+      fullPath: '/disputes/$disputeId'
+      preLoaderRoute: typeof DisputesDisputeIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/messages/': {
       id: '/messages/'
       path: '/messages'
@@ -936,6 +1044,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/u/$userId'
       preLoaderRoute: typeof UUserIdRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/admin/dispute/$disputeId': {
+      id: '/admin/dispute/$disputeId'
+      path: '/dispute/$disputeId'
+      fullPath: '/admin/dispute/$disputeId'
+      preLoaderRoute: typeof AdminDisputeDisputeIdRouteImport
+      parentRoute: typeof AdminRoute
     }
     '/api/public/search': {
       id: '/api/public/search'
@@ -1000,20 +1115,30 @@ interface AdminRouteChildren {
   AdminAuditRoute: typeof AdminAuditRoute
   AdminBlacklistRoute: typeof AdminBlacklistRoute
   AdminDisputesRoute: typeof AdminDisputesRoute
+  AdminFundsRoute: typeof AdminFundsRoute
+  AdminKeywordsRoute: typeof AdminKeywordsRoute
   AdminLoginRoute: typeof AdminLoginRoute
+  AdminMonitoringRoute: typeof AdminMonitoringRoute
+  AdminReportsRoute: typeof AdminReportsRoute
   AdminSupportRoute: typeof AdminSupportRoute
   AdminUsersRoute: typeof AdminUsersRoute
   AdminIndexRoute: typeof AdminIndexRoute
+  AdminDisputeDisputeIdRoute: typeof AdminDisputeDisputeIdRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
   AdminAuditRoute: AdminAuditRoute,
   AdminBlacklistRoute: AdminBlacklistRoute,
   AdminDisputesRoute: AdminDisputesRoute,
+  AdminFundsRoute: AdminFundsRoute,
+  AdminKeywordsRoute: AdminKeywordsRoute,
   AdminLoginRoute: AdminLoginRoute,
+  AdminMonitoringRoute: AdminMonitoringRoute,
+  AdminReportsRoute: AdminReportsRoute,
   AdminSupportRoute: AdminSupportRoute,
   AdminUsersRoute: AdminUsersRoute,
   AdminIndexRoute: AdminIndexRoute,
+  AdminDisputeDisputeIdRoute: AdminDisputeDisputeIdRoute,
 }
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
@@ -1069,6 +1194,7 @@ const rootRouteChildren: RootRouteChildren = {
   CommunityNotificationsRoute: CommunityNotificationsRoute,
   CommunitySearchRoute: CommunitySearchRoute,
   CommunitySettingsRoute: CommunitySettingsRoute,
+  DisputesDisputeIdRoute: DisputesDisputeIdRoute,
   UUserIdRoute: UUserIdRoute,
   CommunityIndexRoute: CommunityIndexRoute,
   MessagesIndexRoute: MessagesIndexRoute,
@@ -1081,3 +1207,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
