@@ -1079,3 +1079,72 @@ function QuestionCard({ q, posterId }: { q: any; posterId?: any }) {
     </article>
   );
 }
+
+/** Shown instead of the normal task detail once a dispute is raised on a task. */
+function DisputedTaskView({ task, taskId, isParticipant }: { task: any; taskId: string; isParticipant: boolean }) {
+  const disputeId = task?.dispute_id ?? task?.dispute?.dispute_id ?? null;
+  return (
+    <div className="mx-auto mt-8 max-w-2xl space-y-4">
+      <div className="rounded-2xl border border-amber-500/40 bg-amber-500/10 p-6 sm:p-8">
+        <div className="flex items-center gap-2 text-amber-700 dark:text-amber-300">
+          <ShieldAlert className="h-5 w-5" />
+          <span className="text-[11px] font-bold uppercase tracking-widest">Under dispute review</span>
+        </div>
+        <h1 className="mt-3 font-display text-2xl text-ink">{task?.title ?? "Task"}</h1>
+        <p className="mt-2 text-sm text-foreground/85">
+          A dispute has been raised on this task. Find-am support is reviewing it, the task chat is closed and the escrowed funds are frozen
+          until a decision is made. No new offers can be made on this task.
+        </p>
+        <dl className="mt-5 grid grid-cols-2 gap-3 text-sm">
+          <div className="rounded-xl border border-border bg-card p-3">
+            <dt className="text-xs text-muted-foreground">Amount in escrow</dt>
+            <dd className="font-semibold text-ink">₦{Number(task?.budget ?? 0).toLocaleString()}</dd>
+          </div>
+          <div className="rounded-xl border border-border bg-card p-3">
+            <dt className="text-xs text-muted-foreground">Status</dt>
+            <dd className="font-semibold text-amber-700 dark:text-amber-300">Disputed</dd>
+          </div>
+        </dl>
+
+        {isParticipant ? (
+          <div className="mt-6 space-y-3">
+            <p className="text-xs text-muted-foreground">
+              Support speaks with each party <strong>privately</strong>. Anything you send in your dispute room stays between you and the
+              Find-am team.
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {disputeId ? (
+                <Link
+                  to="/disputes/$disputeId"
+                  params={{ disputeId: String(disputeId) }}
+                  className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-bold text-primary-foreground"
+                >
+                  <ShieldAlert className="h-4 w-4" /> Open my dispute room
+                </Link>
+              ) : (
+                <Link to="/messages" className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-bold text-primary-foreground">
+                  <ShieldAlert className="h-4 w-4" /> Go to my messages
+                </Link>
+              )}
+              <Link
+                to="/tasks/$taskId/workspace"
+                params={{ taskId }}
+                className="inline-flex items-center gap-2 rounded-full border border-border px-5 py-2.5 text-sm font-semibold"
+              >
+                View task chat history
+              </Link>
+            </div>
+          </div>
+        ) : (
+          <Link
+            to="/tasks/browse"
+            search={{} as any}
+            className="mt-6 inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-bold text-primary-foreground"
+          >
+            Browse open tasks
+          </Link>
+        )}
+      </div>
+    </div>
+  );
+}
