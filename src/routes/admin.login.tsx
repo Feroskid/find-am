@@ -103,7 +103,7 @@ function AdminLogin() {
           </form>
 
           <p className="mt-6 text-center text-xs text-muted-foreground">
-            Not an admin? <Link to="/login" className="text-primary font-semibold hover:underline">Use the normal sign in</Link>
+            Not an admin? <a href="/login" className="text-primary font-semibold hover:underline">Use the normal sign in</a>
           </p>
         </div>
       </div>
