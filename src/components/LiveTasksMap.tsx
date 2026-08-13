@@ -23,6 +23,8 @@ export function LiveTasksMap({ tasks }: { tasks: Task[] }) {
   const mapRef = useRef<any>(null);
   const layerRef = useRef<any>(null);
   const meMarkerRef = useRef<any>(null);
+  const cleanupRef = useRef<(() => void) | null>(null);
+
   const [ready, setReady] = useState(false);
   const [me, setMe] = useState<{ lat: number; lng: number } | null>(null);
   const [geoErr, setGeoErr] = useState<string | null>(null);
