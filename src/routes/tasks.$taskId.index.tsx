@@ -1129,6 +1129,8 @@ function DisputedTaskView({ task, taskId, isParticipant }: { task: any; taskId: 
               <Link
                 to="/tasks/$taskId/workspace"
                 params={{ taskId }}
+                search={{} as any}
+
                 className="inline-flex items-center gap-2 rounded-full border border-border px-5 py-2.5 text-sm font-semibold"
               >
                 View task chat history
