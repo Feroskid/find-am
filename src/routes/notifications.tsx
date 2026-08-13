@@ -135,7 +135,7 @@ function NotificationsPage() {
 
     if (taskId) {
       if (type.includes("message") || type.includes("chat")) {
-        return <Link key={id} to="/tasks/$taskId/workspace" params={{ taskId: String(taskId) }} search={{}} onClick={handleClick} className={cls}>{body}</Link>;
+        return <Link key={id} to="/tasks/$taskId/workspace" params={{ taskId: String(taskId) }} search={{} as any} onClick={handleClick} className={cls}>{body}</Link>;
       }
       if (type.includes("application") || type.includes("offer") || type.includes("applicant")) {
         return <Link key={id} to="/tasks/$taskId/applications" params={{ taskId: String(taskId) }} onClick={handleClick} className={cls}>{body}</Link>;

@@ -693,11 +693,12 @@ export const adminViewLedger = createServerFn({ method: "POST" })
 
 export const adminBlacklistBvn = createServerFn({ method: "POST" })
   .inputValidator((i: unknown) => z.object({ bvn_hash: z.string().min(4).max(200), reason: z.string().min(3).max(500), token: Token }).parse(i))
-  .handler(async ({ data }) => call(`/admin/blacklist/BVN`, { method: "POST", body: { bvn_hash: data.bvn_hash, reason: data.reason }, token: data.token }));
+  .handler(async ({ data }) => call(`/admin/blacklist/bvn`, { method: "POST", body: { bvn_hash: data.bvn_hash, reason: data.reason }, token: data.token }));
 
 export const adminUnblacklistBvn = createServerFn({ method: "POST" })
   .inputValidator((i: unknown) => z.object({ bvn_hash: z.string().min(4).max(200), token: Token }).parse(i))
-  .handler(async ({ data }) => call(`/admin/blacklist/BVN`, { method: "DELETE", body: { bvn_hash: data.bvn_hash }, token: data.token }));
+  .handler(async ({ data }) => call(`/admin/blacklist/bvn`, { method: "DELETE", body: { bvn_hash: data.bvn_hash }, token: data.token }));
+
 
 export const adminAuditLog = createServerFn({ method: "POST" })
   .inputValidator((i: unknown) => z.object({ target_id: z.string().max(120).optional(), token: Token }).parse(i))
@@ -717,15 +718,156 @@ export const adminResolveDispute = createServerFn({ method: "POST" })
   .inputValidator((i: unknown) =>
     z.object({
       disputeId: z.union([z.string().min(1).max(64), z.number().int().positive()]),
-      resolution: z.enum(["release_to_tasker", "refund_poster", "split"]),
+      resolution: z.enum(["release_tasker", "refund_employer", "split", "dismiss"]),
+      refund_amount: z.number().nonnegative().max(100_000_000).optional(),
       note: z.string().max(2000).optional(),
       token: Token,
     }).parse(i),
   )
-  .handler(async ({ data }) =>
-    call(`/admin/dispute/${data.disputeId}/resolve`, {
+  .handler(async ({ data }) => {
+    const body: Record<string, unknown> = { resolution: data.resolution };
+    if (data.resolution === "split") body.refund_amount = data.refund_amount ?? 0;
+    if (data.note) body.note = data.note;
+    return call(`/admin/dispute/${data.disputeId}/resolve`, {
       method: "POST",
-      body: { resolution: data.resolution, note: data.note ?? "" },
+      body,
+      token: data.token,
+    });
+  });
+
+
+// ---- Admin: task funds -------------------------------------------------
+export const adminFreezeTaskFunds = createServerFn({ method: "POST" })
+  .inputValidator((i: unknown) => z.object({ taskId: TaskId, token: Token }).parse(i))
+  .handler(async ({ data }) =>
+    call(`/admin/task/${data.taskId}/freeze-funds`, { method: "POST", token: data.token }),
+  );
+
+export const adminUnfreezeTaskFunds = createServerFn({ method: "POST" })
+  .inputValidator((i: unknown) => z.object({ taskId: TaskId, token: Token }).parse(i))
+  .handler(async ({ data }) =>
+    call(`/admin/task/${data.taskId}/unfreeze-funds`, { method: "POST", token: data.token }),
+  );
+
+// ---- Admin: monitoring queues ------------------------------------------
+export const adminFlaggedAccounts = createServerFn({ method: "POST" })
+  .inputValidator((i: unknown) => z.object({ token: Token }).parse(i))
+  .handler(async ({ data }) => call(`/admin/flagged-accounts`, { token: data.token }));
+
+export const adminFlaggedMessages = createServerFn({ method: "POST" })
+  .inputValidator((i: unknown) => z.object({ token: Token, status: z.string().max(30).optional() }).parse(i))
+  .handler(async ({ data }) =>
+    call(`/admin/flagged-messages${data.status ? `?status=${encodeURIComponent(data.status)}` : ""}`, {
       token: data.token,
     }),
   );
+
+export const adminListReports = createServerFn({ method: "POST" })
+  .inputValidator((i: unknown) => z.object({ token: Token, status: z.string().max(30).optional() }).parse(i))
+  .handler(async ({ data }) =>
+    call(`/admin/reports${data.status ? `?status=${encodeURIComponent(data.status)}` : ""}`, {
+      token: data.token,
+    }),
+  );
+
+export const adminResolveReport = createServerFn({ method: "POST" })
+  .inputValidator((i: unknown) =>
+    z.object({
+      reportId: z.union([z.number().int().positive(), z.string().regex(/^\d+$/)]),
+      dismiss: z.boolean().optional(),
+      token: Token,
+    }).parse(i),
+  )
+  .handler(async ({ data }) =>
+    call(`/admin/report/${data.reportId}/resolve?dismiss=${data.dismiss ? "true" : "false"}`, {
+      method: "POST",
+      token: data.token,
+    }),
+  );
+
+// ---- Admin: banned keywords -------------------------------------------
+export const adminAddBannedKeyword = createServerFn({ method: "POST" })
+  .inputValidator((i: unknown) =>
+    z.object({ keyword: z.string().min(2).max(80), category: z.string().min(2).max(60), token: Token }).parse(i),
+  )
+  .handler(async ({ data }) =>
+    call(`/admin/banned-keyword`, {
+      method: "POST",
+      body: { keyword: data.keyword, category: data.category },
+      token: data.token,
+    }),
+  );
+
+export const adminRemoveBannedKeyword = createServerFn({ method: "POST" })
+  .inputValidator((i: unknown) =>
+    z.object({ keywordId: z.union([z.number().int().positive(), z.string().regex(/^\d+$/)]), token: Token }).parse(i),
+  )
+  .handler(async ({ data }) =>
+    call(`/admin/banned-keyword/${data.keywordId}`, { method: "DELETE", token: data.token }),
+  );
+
+// ---- Admin: users ------------------------------------------------------
+export const adminSearchUsers = createServerFn({ method: "POST" })
+  .inputValidator((i: unknown) => z.object({ q: z.string().min(2).max(120), token: Token }).parse(i))
+  .handler(async ({ data }) =>
+    call(`/admin/users?q=${encodeURIComponent(data.q)}&limit=20`, { token: data.token }),
+  );
+
+export const adminUserContext = createServerFn({ method: "POST" })
+  .inputValidator((i: unknown) => z.object({ userId: UserId, token: Token }).parse(i))
+  .handler(async ({ data }) => call(`/admin/user/${data.userId}/context`, { token: data.token }));
+
+// ---- Dispute rooms (party side) ---------------------------------------
+const DisputeId = z.union([z.number().int().positive(), z.string().regex(/^\d+$/)]);
+
+export const getDisputeMessages = createServerFn({ method: "POST" })
+  .inputValidator((i: unknown) => z.object({ disputeId: DisputeId, token: Token }).parse(i))
+  .handler(async ({ data }) => call(`/dispute/${data.disputeId}/messages`, { token: data.token }));
+
+export const sendDisputeMessage = createServerFn({ method: "POST" })
+  .inputValidator((i: unknown) =>
+    z.object({
+      disputeId: DisputeId,
+      message_text: z.string().min(1).max(4000),
+      attachment_url: z.string().url().max(2048).optional(),
+      token: Token,
+    }).parse(i),
+  )
+  .handler(async ({ data }) =>
+    call(`/dispute/${data.disputeId}/messages`, {
+      method: "POST",
+      body: { message_text: data.message_text, attachment_url: data.attachment_url ?? null },
+      token: data.token,
+    }),
+  );
+
+// ---- Dispute rooms (admin side) ---------------------------------------
+export const adminDisputeRooms = createServerFn({ method: "POST" })
+  .inputValidator((i: unknown) => z.object({ disputeId: DisputeId, token: Token }).parse(i))
+  .handler(async ({ data }) => call(`/admin/dispute/${data.disputeId}/messages`, { token: data.token }));
+
+export const adminSendDisputeMessage = createServerFn({ method: "POST" })
+  .inputValidator((i: unknown) =>
+    z.object({
+      disputeId: DisputeId,
+      room_party_id: z.string().min(1).max(120),
+      message_text: z.string().min(1).max(4000),
+      attachment_url: z.string().url().max(2048).optional(),
+      token: Token,
+    }).parse(i),
+  )
+  .handler(async ({ data }) =>
+    call(`/admin/dispute/${data.disputeId}/messages`, {
+      method: "POST",
+      body: {
+        message_text: data.message_text,
+        room_party_id: data.room_party_id,
+        attachment_url: data.attachment_url ?? null,
+      },
+      token: data.token,
+    }),
+  );
+
+export const adminTaskThreads = createServerFn({ method: "POST" })
+  .inputValidator((i: unknown) => z.object({ taskId: TaskId, token: Token }).parse(i))
+  .handler(async ({ data }) => call(`/admin/task/${data.taskId}/messages`, { token: data.token }));

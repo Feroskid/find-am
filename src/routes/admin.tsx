@@ -1,6 +1,6 @@
 import { createFileRoute, Link, Outlet, useLocation, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
-import { Shield, AlertTriangle, Users, ScrollText, Ban, LifeBuoy, Loader2, ShieldAlert } from "lucide-react";
+import { Shield, AlertTriangle, Users, ScrollText, Ban, LifeBuoy, Loader2, ShieldAlert, Flag, Radar, SpellCheck2, Banknote } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useAdminGate } from "@/lib/admin-gate";
 
@@ -12,11 +12,16 @@ export const Route = createFileRoute("/admin")({
 const TABS: Array<{ to: string; label: string; icon: any; exact?: boolean }> = [
   { to: "/admin", label: "Overview", icon: Shield, exact: true },
   { to: "/admin/disputes", label: "Disputes", icon: AlertTriangle },
+  { to: "/admin/reports", label: "Reports", icon: Flag },
+  { to: "/admin/monitoring", label: "Monitoring", icon: Radar },
   { to: "/admin/support", label: "Support", icon: LifeBuoy },
   { to: "/admin/users", label: "Users", icon: Users },
+  { to: "/admin/funds", label: "Escrow funds", icon: Banknote },
+  { to: "/admin/keywords", label: "Keywords", icon: SpellCheck2 },
   { to: "/admin/blacklist", label: "BVN Blacklist", icon: Ban },
   { to: "/admin/audit", label: "Audit Log", icon: ScrollText },
 ];
+
 
 function AdminLayout() {
   const { token, ready } = useAuth();

@@ -64,6 +64,9 @@
   --color-surface-warm: var(--surface-warm);
   --color-success: var(--success);
   --color-island-active: var(--island-active);
+  --color-footer: var(--footer);
+  --color-footer-foreground: var(--footer-foreground);
+
   --font-display: "Archivo Black", "Inter", sans-serif;
   --font-sans: "Inter", system-ui, sans-serif;
 }
@@ -108,6 +111,9 @@
   --surface-warm: oklch(0.965 0.035 165);
   --success: oklch(0.62 0.18 150);
   --island-active: oklch(0.52 0.24 295);
+  --footer: oklch(0.18 0.05 270);
+  --footer-foreground: oklch(0.96 0.01 285);
+
 }
 
 .dark {
@@ -145,6 +151,9 @@
   --sidebar-ring: oklch(0.551 0.027 264.364);
   --ink: oklch(0.97 0.01 285);
   --surface-soft: oklch(0.22 0.02 240);
+  --footer: oklch(0.14 0.03 270);
+  --footer-foreground: oklch(0.9 0.01 285);
+
   --surface-warm: oklch(0.25 0.04 165);
   --success: oklch(0.72 0.18 150);
   --island-active: oklch(0.62 0.22 295);
