@@ -30,6 +30,7 @@ export function LiveTasksMap({ tasks }: { tasks: Task[] }) {
   // dyn-import leaflet (browser only)
   useEffect(() => {
     let cancelled = false;
+    let ro: ResizeObserver | null = null;
     (async () => {
       const L = (await import("leaflet")).default;
       await import("leaflet/dist/leaflet.css");
@@ -46,13 +47,28 @@ export function LiveTasksMap({ tasks }: { tasks: Task[] }) {
       layerRef.current = L.layerGroup().addTo(map);
       mapRef.current = map;
       setReady(true);
+      // The container is often still 0-height on first paint, which makes tiles
+      // never request and the map look "timed out" until a manual reload.
+      const kick = () => mapRef.current?.invalidateSize?.();
+      requestAnimationFrame(kick);
+      setTimeout(kick, 250);
+      setTimeout(kick, 800);
+      if (typeof ResizeObserver !== "undefined" && containerRef.current) {
+        ro = new ResizeObserver(kick);
+        ro.observe(containerRef.current);
+      }
+      window.addEventListener("resize", kick);
+      cleanupRef.current = () => window.removeEventListener("resize", kick);
     })();
     return () => {
       cancelled = true;
+      ro?.disconnect();
+      cleanupRef.current?.();
       mapRef.current?.remove?.();
       mapRef.current = null;
     };
   }, []);
+
 
   const pinned = useMemo(
     () =>
