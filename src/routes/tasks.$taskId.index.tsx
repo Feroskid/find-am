@@ -155,6 +155,53 @@ function TaskDetail() {
   const [startDate, setStartDate] = useState("");
   const [question, setQuestion] = useState("");
   const [moreOpen, setMoreOpen] = useState(false);
+  const [showReport, setShowReport] = useState(false);
+  const [reportReason, setReportReason] = useState("");
+  const [reportDetails, setReportDetails] = useState("");
+  const reportFn = useServerFn(reportTask);
+  const reportM = useMutation({
+    mutationFn: () =>
+      reportFn({
+        data: {
+          taskId,
+          reason: reportReason.trim(),
+          description: reportDetails.trim() || undefined,
+          token: token!,
+        },
+      }),
+    onSuccess: (r: any) => {
+      if (r?.ok) {
+        toast.success("Thanks — our moderation team will review this task.");
+        setShowReport(false);
+        setReportReason("");
+        setReportDetails("");
+      } else toast.error(r?.error ?? "Could not send your report.");
+    },
+    onError: () => toast.error("Could not send your report. Please try again."),
+  });
+
+  const taskUrl = typeof window !== "undefined" ? window.location.href : "";
+  const onCopyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(taskUrl);
+      toast.success("Task link copied");
+    } catch {
+      toast.error("Could not copy the link");
+    }
+  };
+  const onShare = async () => {
+    const nav: any = typeof navigator !== "undefined" ? navigator : null;
+    if (nav?.share) {
+      try {
+        await nav.share({ title: "Find-am task", text: "Check out this task on Find-am", url: taskUrl });
+        return;
+      } catch {
+        return;
+      }
+    }
+    onCopyLink();
+  };
+
 
   // Message thread
   const qaQ = useQuery({
