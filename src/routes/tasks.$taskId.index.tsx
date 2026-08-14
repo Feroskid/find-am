@@ -706,13 +706,17 @@ function TaskDetail() {
               </button>
               {moreOpen && (
                 <div className="rounded-2xl border border-border bg-card p-4 text-sm space-y-2">
-                  <button className="w-full text-left hover:text-primary">Share this task</button>
-                  <button className="w-full text-left hover:text-primary">Copy task link</button>
+                  <button onClick={onShare} className="w-full text-left hover:text-primary">Share this task</button>
+                  <button onClick={onCopyLink} className="w-full text-left hover:text-primary">Copy task link</button>
                 </div>
               )}
-              <button className="w-full inline-flex items-center justify-center gap-1.5 text-xs text-muted-foreground hover:text-destructive">
+              <button
+                onClick={() => setShowReport(true)}
+                className="w-full inline-flex items-center justify-center gap-1.5 text-xs text-muted-foreground hover:text-destructive"
+              >
                 <Flag className="h-3.5 w-3.5" /> Report this task
               </button>
+
             </aside>
           </div>
         )}
