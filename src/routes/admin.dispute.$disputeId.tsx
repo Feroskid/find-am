@@ -5,7 +5,7 @@ import { useState } from "react";
 import { Loader2, ArrowLeft, Send, ShieldCheck, FileText, Users } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth";
-import { adminDisputeRooms, adminSendDisputeMessage, adminTaskThreads } from "@/lib/findtask.functions";
+import { adminDisputeRooms, adminSendDisputeMessage, adminTaskThreads, adminUserContext } from "@/lib/findtask.functions";
 
 export const Route = createFileRoute("/admin/dispute/$disputeId")({
   head: () => ({ meta: [{ title: "Dispute rooms — Admin" }, { name: "robots", content: "noindex" }] }),
