@@ -131,7 +131,9 @@ function RootComponent() {
           <AuthProvider>
             <SessionGuard />
             <Outlet />
+            <Toaster />
           </AuthProvider>
+
         </I18nProvider>
       </ThemeProvider>
     </QueryClientProvider>
