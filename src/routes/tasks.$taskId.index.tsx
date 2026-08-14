@@ -11,7 +11,7 @@ import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 import {
-  getTask, applyToTask, acceptApplicant, declineApplicant, sendMessage, listMessages, listTaskApplications, cancelTask, getMyApplications, walletBalance,
+  getTask, applyToTask, acceptApplicant, declineApplicant, sendMessage, listMessages, listTaskApplications, cancelTask, getMyApplications, walletBalance, reportTask,
 } from "@/lib/findtask.functions";
 
 import { useAuth } from "@/lib/auth";
