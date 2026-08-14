@@ -797,6 +797,51 @@ function TaskDetail() {
         </div>
       )}
 
+      {/* Report task modal */}
+      <Dialog open={showReport} onOpenChange={setShowReport}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="font-display text-xl text-ink">Report this task</DialogTitle>
+            <DialogDescription>Tell us what's wrong. Our moderation team reviews every report.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <select
+              value={reportReason}
+              onChange={(e) => setReportReason(e.target.value)}
+              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
+            >
+              <option value="">Choose a reason…</option>
+              <option value="scam">Looks like a scam</option>
+              <option value="illegal">Illegal or unsafe request</option>
+              <option value="offensive">Offensive or abusive content</option>
+              <option value="spam">Spam or duplicate</option>
+              <option value="off_platform">Asking to pay outside Find-am</option>
+              <option value="other">Something else</option>
+            </select>
+            <textarea
+              value={reportDetails}
+              onChange={(e) => setReportDetails(e.target.value)}
+              rows={3}
+              placeholder="Add any details (optional)"
+              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
+            />
+          </div>
+          <DialogFooter className="gap-2 sm:gap-2">
+            <button onClick={() => setShowReport(false)} className="rounded-full border border-border px-4 py-2 text-sm font-semibold">
+              Cancel
+            </button>
+            <button
+              disabled={!reportReason || !token || reportM.isPending}
+              onClick={() => reportM.mutate()}
+              className="inline-flex items-center gap-1.5 rounded-full bg-destructive px-4 py-2 text-sm font-semibold text-destructive-foreground disabled:opacity-50"
+            >
+              {reportM.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Flag className="h-4 w-4" />} Send report
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+
       {/* Make an offer modal */}
       <Dialog open={showApply} onOpenChange={setShowApply}>
         <DialogContent className="sm:max-w-md">
