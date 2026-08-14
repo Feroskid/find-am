@@ -11,7 +11,7 @@ import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 import {
-  getTask, applyToTask, acceptApplicant, declineApplicant, sendMessage, listMessages, listTaskApplications, cancelTask, getMyApplications, walletBalance,
+  getTask, applyToTask, acceptApplicant, declineApplicant, sendMessage, listMessages, listTaskApplications, cancelTask, getMyApplications, walletBalance, reportTask,
 } from "@/lib/findtask.functions";
 
 import { useAuth } from "@/lib/auth";
@@ -155,6 +155,53 @@ function TaskDetail() {
   const [startDate, setStartDate] = useState("");
   const [question, setQuestion] = useState("");
   const [moreOpen, setMoreOpen] = useState(false);
+  const [showReport, setShowReport] = useState(false);
+  const [reportReason, setReportReason] = useState("");
+  const [reportDetails, setReportDetails] = useState("");
+  const reportFn = useServerFn(reportTask);
+  const reportM = useMutation({
+    mutationFn: () =>
+      reportFn({
+        data: {
+          taskId,
+          reason: reportReason.trim(),
+          description: reportDetails.trim() || undefined,
+          token: token!,
+        },
+      }),
+    onSuccess: (r: any) => {
+      if (r?.ok) {
+        toast.success("Thanks — our moderation team will review this task.");
+        setShowReport(false);
+        setReportReason("");
+        setReportDetails("");
+      } else toast.error(r?.error ?? "Could not send your report.");
+    },
+    onError: () => toast.error("Could not send your report. Please try again."),
+  });
+
+  const taskUrl = typeof window !== "undefined" ? window.location.href : "";
+  const onCopyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(taskUrl);
+      toast.success("Task link copied");
+    } catch {
+      toast.error("Could not copy the link");
+    }
+  };
+  const onShare = async () => {
+    const nav: any = typeof navigator !== "undefined" ? navigator : null;
+    if (nav?.share) {
+      try {
+        await nav.share({ title: "Find-am task", text: "Check out this task on Find-am", url: taskUrl });
+        return;
+      } catch {
+        return;
+      }
+    }
+    onCopyLink();
+  };
+
 
   // Message thread
   const qaQ = useQuery({
@@ -706,13 +753,17 @@ function TaskDetail() {
               </button>
               {moreOpen && (
                 <div className="rounded-2xl border border-border bg-card p-4 text-sm space-y-2">
-                  <button className="w-full text-left hover:text-primary">Share this task</button>
-                  <button className="w-full text-left hover:text-primary">Copy task link</button>
+                  <button onClick={onShare} className="w-full text-left hover:text-primary">Share this task</button>
+                  <button onClick={onCopyLink} className="w-full text-left hover:text-primary">Copy task link</button>
                 </div>
               )}
-              <button className="w-full inline-flex items-center justify-center gap-1.5 text-xs text-muted-foreground hover:text-destructive">
+              <button
+                onClick={() => setShowReport(true)}
+                className="w-full inline-flex items-center justify-center gap-1.5 text-xs text-muted-foreground hover:text-destructive"
+              >
                 <Flag className="h-3.5 w-3.5" /> Report this task
               </button>
+
             </aside>
           </div>
         )}
@@ -745,6 +796,51 @@ function TaskDetail() {
             conversationCTA("block w-full text-center rounded-full border border-primary text-primary py-3 text-sm font-bold")}
         </div>
       )}
+
+      {/* Report task modal */}
+      <Dialog open={showReport} onOpenChange={setShowReport}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="font-display text-xl text-ink">Report this task</DialogTitle>
+            <DialogDescription>Tell us what's wrong. Our moderation team reviews every report.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <select
+              value={reportReason}
+              onChange={(e) => setReportReason(e.target.value)}
+              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
+            >
+              <option value="">Choose a reason…</option>
+              <option value="scam">Looks like a scam</option>
+              <option value="illegal">Illegal or unsafe request</option>
+              <option value="offensive">Offensive or abusive content</option>
+              <option value="spam">Spam or duplicate</option>
+              <option value="off_platform">Asking to pay outside Find-am</option>
+              <option value="other">Something else</option>
+            </select>
+            <textarea
+              value={reportDetails}
+              onChange={(e) => setReportDetails(e.target.value)}
+              rows={3}
+              placeholder="Add any details (optional)"
+              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
+            />
+          </div>
+          <DialogFooter className="gap-2 sm:gap-2">
+            <button onClick={() => setShowReport(false)} className="rounded-full border border-border px-4 py-2 text-sm font-semibold">
+              Cancel
+            </button>
+            <button
+              disabled={!reportReason || !token || reportM.isPending}
+              onClick={() => reportM.mutate()}
+              className="inline-flex items-center gap-1.5 rounded-full bg-destructive px-4 py-2 text-sm font-semibold text-destructive-foreground disabled:opacity-50"
+            >
+              {reportM.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Flag className="h-4 w-4" />} Send report
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
 
       {/* Make an offer modal */}
       <Dialog open={showApply} onOpenChange={setShowApply}>

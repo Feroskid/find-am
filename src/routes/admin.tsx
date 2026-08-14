@@ -16,7 +16,7 @@ const TABS: Array<{ to: string; label: string; icon: any; exact?: boolean }> = [
   { to: "/admin/monitoring", label: "Monitoring", icon: Radar },
   { to: "/admin/support", label: "Support", icon: LifeBuoy },
   { to: "/admin/users", label: "Users", icon: Users },
-  { to: "/admin/funds", label: "Escrow funds", icon: Banknote },
+  { to: "/admin/funds", label: "Held funds", icon: Banknote },
   { to: "/admin/keywords", label: "Keywords", icon: SpellCheck2 },
   { to: "/admin/blacklist", label: "BVN Blacklist", icon: Ban },
   { to: "/admin/audit", label: "Audit Log", icon: ScrollText },

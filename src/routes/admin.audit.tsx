@@ -21,7 +21,7 @@ function AdminAuditPage() {
     queryFn: () => fn({ data: { token: token!, target_id: applied || undefined } }),
   });
 
-  const rows: any[] = q.data?.ok ? ((q.data.data as any)?.logs ?? (q.data.data as any)?.results ?? (Array.isArray(q.data.data) ? q.data.data : [])) : [];
+  const rows: any[] = q.data?.ok ? ((q.data.data as any)?.entries ?? (q.data.data as any)?.logs ?? (q.data.data as any)?.results ?? (Array.isArray(q.data.data) ? q.data.data : [])) : [];
   const err = q.data && !q.data.ok ? q.data.error : null;
 
   return (

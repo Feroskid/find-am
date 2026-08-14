@@ -8,7 +8,7 @@ import { useAuth } from "@/lib/auth";
 import { adminFreezeTaskFunds, adminUnfreezeTaskFunds } from "@/lib/findtask.functions";
 
 export const Route = createFileRoute("/admin/funds")({
-  head: () => ({ meta: [{ title: "Escrow funds — Admin" }, { name: "robots", content: "noindex" }] }),
+  head: () => ({ meta: [{ title: "Held funds — Admin" }, { name: "robots", content: "noindex" }] }),
   component: AdminFundsPage,
 });
 
@@ -37,7 +37,7 @@ function AdminFundsPage() {
   return (
     <div className="space-y-4 max-w-2xl">
       <div>
-        <h2 className="font-display text-xl text-ink inline-flex items-center gap-2"><Banknote className="h-5 w-5 text-primary" /> Escrow funds</h2>
+        <h2 className="font-display text-xl text-ink inline-flex items-center gap-2"><Banknote className="h-5 w-5 text-primary" /> Held funds</h2>
         <p className="text-sm text-muted-foreground">Hold or release a task's wallet credit outside a dispute. Every action is audited.</p>
       </div>
 

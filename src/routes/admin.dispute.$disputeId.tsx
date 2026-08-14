@@ -5,7 +5,7 @@ import { useState } from "react";
 import { Loader2, ArrowLeft, Send, ShieldCheck, FileText, Users } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth";
-import { adminDisputeRooms, adminSendDisputeMessage, adminTaskThreads } from "@/lib/findtask.functions";
+import { adminDisputeRooms, adminSendDisputeMessage, adminTaskThreads, adminUserContext } from "@/lib/findtask.functions";
 
 export const Route = createFileRoute("/admin/dispute/$disputeId")({
   head: () => ({ meta: [{ title: "Dispute rooms — Admin" }, { name: "robots", content: "noindex" }] }),
@@ -93,6 +93,47 @@ function Pane({
   );
 }
 
+function UserContext({ label, userId, token }: { label: string; userId?: string | null; token?: string | null }) {
+  const fn = useServerFn(adminUserContext);
+  const q = useQuery({
+    queryKey: ["admin", "user-context", userId, token],
+    enabled: !!token && !!userId,
+    queryFn: () => fn({ data: { userId: String(userId), token: token! } }),
+  });
+  const c: any = q.data?.ok ? ((q.data.data as any)?.user ?? q.data.data) : null;
+  if (!userId) return null;
+  return (
+    <div className="rounded-xl border border-border bg-card p-3 text-xs">
+      <div className="font-semibold text-ink">{label} history</div>
+      {q.isPending ? (
+        <div className="mt-1 inline-flex items-center gap-1.5 text-muted-foreground"><Loader2 className="h-3.5 w-3.5 animate-spin" /> Loading…</div>
+      ) : !c ? (
+        <div className="mt-1 text-muted-foreground">{(q.data as any)?.error ?? "No history available."}</div>
+      ) : (
+        <dl className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
+          {[
+            ["Tasks posted", c.tasks_posted ?? c.posted_count],
+            ["Tasks done", c.tasks_completed ?? c.completed_count],
+            ["Rating", c.rating ?? c.average_rating],
+            ["Past disputes", c.dispute_count ?? c.disputes],
+            ["Reports", c.report_count ?? c.reports],
+            ["Account status", c.status ?? c.account_status],
+            ["Joined", c.created_at ? new Date(c.created_at).toLocaleDateString() : undefined],
+            ["Wallet", c.wallet_balance != null ? `₦${Number(c.wallet_balance).toLocaleString()}` : undefined],
+          ]
+            .filter(([, v]) => v !== undefined && v !== null)
+            .map(([k, v]) => (
+              <div key={String(k)}>
+                <dt className="text-muted-foreground">{String(k)}</dt>
+                <dd className="font-semibold text-ink">{String(v)}</dd>
+              </div>
+            ))}
+        </dl>
+      )}
+    </div>
+  );
+}
+
 function AdminDisputeRoomsPage() {
   const { disputeId } = Route.useParams();
   const { token } = useAuth();
@@ -100,6 +141,7 @@ function AdminDisputeRoomsPage() {
   const sendFn = useServerFn(adminSendDisputeMessage);
   const threadsFn = useServerFn(adminTaskThreads);
   const [showEvidence, setShowEvidence] = useState(false);
+
 
   const roomsQ = useQuery({
     queryKey: ["admin", "dispute-rooms", disputeId, token],
@@ -160,23 +202,30 @@ function AdminDisputeRoomsPage() {
         </div>
       ) : (
         <div className="grid gap-4 lg:grid-cols-2">
-          <Pane
-            title="Poster"
-            partyId={rooms?.poster_room?.party_id}
-            messages={rooms?.poster_room?.messages ?? []}
-            closed={!!rooms?.closed}
-            sending={sendM.isPending}
-            onSend={(partyId, text) => sendM.mutate({ partyId, text })}
-          />
-          <Pane
-            title="Tasker"
-            partyId={rooms?.tasker_room?.party_id}
-            messages={rooms?.tasker_room?.messages ?? []}
-            closed={!!rooms?.closed}
-            sending={sendM.isPending}
-            onSend={(partyId, text) => sendM.mutate({ partyId, text })}
-          />
+          <div className="space-y-3">
+            <Pane
+              title="Poster"
+              partyId={rooms?.poster_room?.party_id}
+              messages={rooms?.poster_room?.messages ?? []}
+              closed={!!rooms?.closed}
+              sending={sendM.isPending}
+              onSend={(partyId, text) => sendM.mutate({ partyId, text })}
+            />
+            <UserContext label="Poster" userId={rooms?.poster_room?.party_id} token={token} />
+          </div>
+          <div className="space-y-3">
+            <Pane
+              title="Tasker"
+              partyId={rooms?.tasker_room?.party_id}
+              messages={rooms?.tasker_room?.messages ?? []}
+              closed={!!rooms?.closed}
+              sending={sendM.isPending}
+              onSend={(partyId, text) => sendM.mutate({ partyId, text })}
+            />
+            <UserContext label="Tasker" userId={rooms?.tasker_room?.party_id} token={token} />
+          </div>
         </div>
+
       )}
 
       {showEvidence && (

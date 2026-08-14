@@ -13,6 +13,8 @@ import { I18nProvider } from "@/lib/i18n";
 import { ThemeProvider } from "@/lib/theme";
 import { AuthProvider } from "@/lib/auth";
 import { SessionGuard } from "@/components/SessionGuard";
+import { Toaster } from "@/components/ui/sonner";
+
 
 function NotFoundComponent() {
   return (
@@ -131,7 +133,9 @@ function RootComponent() {
           <AuthProvider>
             <SessionGuard />
             <Outlet />
+            <Toaster />
           </AuthProvider>
+
         </I18nProvider>
       </ThemeProvider>
     </QueryClientProvider>
