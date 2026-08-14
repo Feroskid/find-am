@@ -202,23 +202,30 @@ function AdminDisputeRoomsPage() {
         </div>
       ) : (
         <div className="grid gap-4 lg:grid-cols-2">
-          <Pane
-            title="Poster"
-            partyId={rooms?.poster_room?.party_id}
-            messages={rooms?.poster_room?.messages ?? []}
-            closed={!!rooms?.closed}
-            sending={sendM.isPending}
-            onSend={(partyId, text) => sendM.mutate({ partyId, text })}
-          />
-          <Pane
-            title="Tasker"
-            partyId={rooms?.tasker_room?.party_id}
-            messages={rooms?.tasker_room?.messages ?? []}
-            closed={!!rooms?.closed}
-            sending={sendM.isPending}
-            onSend={(partyId, text) => sendM.mutate({ partyId, text })}
-          />
+          <div className="space-y-3">
+            <Pane
+              title="Poster"
+              partyId={rooms?.poster_room?.party_id}
+              messages={rooms?.poster_room?.messages ?? []}
+              closed={!!rooms?.closed}
+              sending={sendM.isPending}
+              onSend={(partyId, text) => sendM.mutate({ partyId, text })}
+            />
+            <UserContext label="Poster" userId={rooms?.poster_room?.party_id} token={token} />
+          </div>
+          <div className="space-y-3">
+            <Pane
+              title="Tasker"
+              partyId={rooms?.tasker_room?.party_id}
+              messages={rooms?.tasker_room?.messages ?? []}
+              closed={!!rooms?.closed}
+              sending={sendM.isPending}
+              onSend={(partyId, text) => sendM.mutate({ partyId, text })}
+            />
+            <UserContext label="Tasker" userId={rooms?.tasker_room?.party_id} token={token} />
+          </div>
         </div>
+
       )}
 
       {showEvidence && (
