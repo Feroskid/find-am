@@ -36,6 +36,7 @@ function Dashboard() {
   const wallet = useServerFn(walletBalance);
   const txs = useServerFn(walletTransactions);
   const userTasks = useServerFn(getUserTasks);
+  const me = useServerFn(authMe);
 
   const myId = (user as any)?.user_id ?? (user as any)?.id;
   const isPoster = mode === "poster";
