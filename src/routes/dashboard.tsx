@@ -97,7 +97,9 @@ function Dashboard() {
   const stat = (status: string) =>
     myTasks.filter((t) => String(t.status ?? "").toLowerCase() === status).length;
 
-  const rating = (user as any)?.rating ?? (user as any)?.average_rating ?? "—";
+  const rating = meQ.data?.ok
+    ? ((meQ.data.data as any)?.rating ?? "—")
+    : "—";
 
   const posterKpis = [
     { icon: Briefcase, label: "Posted", value: myTasks.length, money: false, sub: "all-time" },
