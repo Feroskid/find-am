@@ -1,44 +1,52 @@
-## 1. Workspace chat: system messages as neutral pills
+# Dashboard, admin console and location-picker updates
 
-In `src/routes/tasks.$taskId.workspace.tsx`, replace the message-rendering block (lines 159–172) with your version: messages where `is_system` is `1`/`true` render as a centered grey pill with no sender attribution; all other messages keep the current left/right bubble treatment with timestamp.
+## 1. Dashboard (`src/routes/dashboard.tsx`)
+- Add a `getMe` server function for the backend `/auth/me` endpoint (it does not exist in the API layer today) and wire it as `const me = useServerFn(authMe)`.
+- Add the `meQ` query (`["dashboard","me",token]`, enabled when signed in) alongside the existing queries, keeping hook order stable.
+- Earnings filter: only count credit transactions whose `status` is `available` (pending credits stop inflating the 30-day figure and the tier progress).
+- Rating now comes from `meQ` instead of the cached auth user, falling back to `—`.
 
-## 2. Remove the WhatsApp-style chat page
+## 2. Report a task (`src/routes/tasks.$taskId.index.tsx`)
+The backend accepts `{ reason, description? }` as free text, so the 422 you see is a value mismatch, not a shape mismatch — the exact accepted reason list is not published in the API docs. First step is a live probe of the report endpoint with the current option values to read the validation message back, then align the dropdown to the values the backend accepts and pass the free-text detail as `description`. Errors from the endpoint will be surfaced verbatim in the toast instead of a generic message.
 
-Verified: `src/routes/messages.$taskId.tsx` is a full dark WhatsApp clone (hardcoded `#0b141a` / `#005c4b` colours, bubble tails, "Switch to task" button).
+## 3. "I've arrived" too far away
+The arrival endpoint checks the ping against the task location. The current handler swallows the backend wording into a guessy fallback. Fix: show the backend's own message, and when it is a distance rejection, present a clear panel — how far off the pin the tasker is, plus a "re-check my location" retry — rather than a bare toast. Also block the tap when the fix is stale/low accuracy with an explanatory message.
 
-- Delete `src/routes/messages.$taskId.tsx`.
-- Update every link that pointed at it so nobody hits a dead route:
-  - Assigned task participants → `/tasks/$taskId/workspace`.
-  - Unassigned taskers who made an offer, and posters browsing offers → the task detail page `/tasks/$taskId`, Messages tab (where the offer thread already lives).
-- Remove the defensive redirect in the workspace that currently bounces non-assigned viewers to `/messages/$taskId`; it will send them to `/tasks/$taskId` instead.
-- Check `src/routes/messages.index.tsx`, `notifications.tsx`, `tasks.$taskId.index.tsx`, and `TaskCard` for links to the removed route and repoint them.
+## 4. Re-dispute of a resolved dispute
+Verify the flow and make sure the backend's rejection message ("already resolved") is shown as a readable notice on the dispute form, with the dispute button disabled for tasks whose dispute is already resolved.
 
-## 3. Wallet balance showing ₦0
+## 5. Remove "View task chat history" from disputed tasks
+Drop that action from the disputed-task view (line ~1232 of the task detail route).
 
-Confirmed root cause: the dashboard reads `withdrawable_balance` from `/wallet/balance`, but `src/routes/wallet.tsx` reads `balance` / `available_balance`, which the backend doesn't return — so it always renders 0.
+## 6. Admin: disputes
+- Show the disputed task's budget on each dispute card and inside the dispute room header, falling back to the amount field when budget is absent, so refund/split decisions have the money in view.
 
-- Read the balance with the same key order the dashboard uses (`withdrawable_balance` first, then the other aliases as fallback).
-- Do the same for the escrow/pending figure, and show a proper loading state instead of a hard `₦0` while the query is in flight.
+## 7. Admin: ban / freeze with reason
+- Both endpoints accept an optional `reason`. Add it to the server functions and prompt the admin for a reason before ban/freeze (required, short free text).
+- Surface that reason in the audit log rows so past actions are explainable.
 
-## 4 & 5. BVN verification and "Add bank" not saving
+## 8. Admin: user context and search
+- Map the user-context endpoint into Users management: searching a user and selecting them opens a context panel (tasks, disputes, wallet/ledger summary, flags) inline under the row.
+- Reuse the same admin user-search control in Users management and in Held funds (so an admin can find a user/task without typing raw IDs).
 
-Checked against the live backend spec (`https://api.find-am.com/openapi.json`):
+## 9. Admin: remove BVN blacklist
+Delete the blacklist page and its nav entry (the server functions stay unused/removed with it).
 
-- `POST /wallet/verify-kyc` expects `{ bvn, bank_code, account_number }` — our payload matches.
-- `POST /auth/register-bank` expects `{ bank_code, account_number, account_name }` — our payload matches.
+## 10. Admin: ledger filter + download
+The ledger endpoint supports `date_from`, `date_to` and `limit`. Add those as filter inputs to the ledger view, and a "Download CSV" button that exports the currently filtered rows client-side.
 
-So the request shapes are correct; what's broken on the frontend is the **feedback and state** around them:
+## 11. Admin: monitoring — reviewed checkbox
+There is no backend endpoint to mark a flagged message reviewed (only a `status` filter on read). Add a per-message "Reviewed" checkbox whose state is stored locally per admin browser, with reviewed rows dimmed and a "hide reviewed" toggle. If you'd rather have this shared across admins, it needs a backend field first — say the word and I'll flag it as an API request instead.
 
-- The wallet page decides "Verified" / "bank on file" from `bal?.kyc_verified` and `bal?.bank`, keys the balance response does not necessarily return — so even a successful save still shows "Required" / "No bank account on file", making it look like nothing saved.
-  Fix: source verification and bank state from the user profile (`/auth/me`) as well as the balance payload, and refetch both after a successful submit.
-- Errors are only shown as small text inside the dialog and can be an empty string when the backend returns a `detail` object. Fix: surface the backend's real message (including 422 validation detail) in a toast plus inline, so a genuine backend rejection is visible rather than looking like a silent no-op.
-- Bank list: if `/banks` returns a bare array rather than `{ banks: [...] }`, the select is empty and no code can be picked — handle both shapes.
+## 12. Location picker (`src/components/LocationPicker.tsx`)
+Apply the address autocomplete exactly as specified:
+- `searchAddress` helper using Photon, biased to the current pin or Lagos.
+- New state: `suggestions`, `showSuggestions`, `searching`, `pickingRef`.
+- Debounced (300ms) search effect that skips the round-trip right after a suggestion is picked.
+- `pickSuggestion` sets the pin and address together.
+- Address input wrapped in a relative container with the suggestion dropdown, and the label spinner showing "Finding address…" vs "Searching…".
 
-Once these are in, if the backend still rejects a real BVN/bank submission, the exact server message will be visible on screen and we'll know whether the remaining problem is backend-side.
-
-## Verification note
-
-The saved test account no longer authenticates (`/auth/login` returns "Invalid email or password"), and no password was supplied, so I can't log in to confirm the live wallet payload end to end. I'll implement against the published API spec and the working dashboard behaviour; send a valid password when you have one and I'll re-run a live check on the wallet, BVN and bank flows.
-
-### Files touched
-`src/routes/tasks.$taskId.workspace.tsx`, `src/routes/messages.$taskId.tsx` (deleted), `src/routes/messages.index.tsx`, `src/routes/wallet.tsx`, plus any route linking to the removed chat page.
+## Technical notes
+- New/updated server functions in `src/lib/findtask.functions.ts`: `getMe` (`GET /auth/me`), `adminBanUser`/`adminFreezeUser` gain an optional `reason` body, `adminViewLedger` gains `date_from`/`date_to`/`limit`.
+- Files touched: `dashboard.tsx`, `tasks.$taskId.index.tsx`, `tasks.$taskId.workspace.tsx`, `admin.tsx`, `admin.users.tsx`, `admin.funds.tsx`, `admin.disputes.tsx`, `admin.dispute.$disputeId.tsx`, `admin.audit.tsx`, `admin.monitoring.tsx`, `LocationPicker.tsx`; `admin.blacklist.tsx` removed.
+- No database or schema changes.
