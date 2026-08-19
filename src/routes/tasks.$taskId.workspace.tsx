@@ -493,6 +493,17 @@ function WorkspacePage() {
   );
 }
 
+/** Metres between two lat/lng points (haversine). */
+function metresBetween(a: { lat: number; lng: number }, b: { lat: number; lng: number }) {
+  const R = 6371000;
+  const dLat = ((b.lat - a.lat) * Math.PI) / 180;
+  const dLng = ((b.lng - a.lng) * Math.PI) / 180;
+  const la1 = (a.lat * Math.PI) / 180;
+  const la2 = (b.lat * Math.PI) / 180;
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(la1) * Math.cos(la2) * Math.sin(dLng / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(h));
+}
+
 function LiveLocationPanel({ taskId, token, isPoster, taskLat, taskLng, arrivedAt, onRefetchTask }: { taskId: string; token: string; isPoster: boolean; taskLat?: number | null; taskLng?: number | null; arrivedAt?: string | null; onRefetchTask?: () => void }) {
   const getLoc = useServerFn(getTaskLocation);
   const toggle = useServerFn(toggleTaskLocation);
@@ -509,6 +520,19 @@ function LiveLocationPanel({ taskId, token, isPoster, taskLat, taskLng, arrivedA
   const [pos, setPos] = useState<{ lat: number; lng: number } | null>(null);
   const watchRef = useRef<number | null>(null);
   const [liveTrail, setLiveTrail] = useState<[number, number][]>([]);
+  const [arriveError, setArriveError] = useState<string | null>(null);
+  const [arriving, setArriving] = useState(false);
+
+  /** One-shot high-accuracy fix, used by "I've arrived" when we have no live watch. */
+  const getFix = () =>
+    new Promise<{ lat: number; lng: number } | null>((resolve) => {
+      if (!navigator.geolocation) return resolve(null);
+      navigator.geolocation.getCurrentPosition(
+        (p) => resolve({ lat: p.coords.latitude, lng: p.coords.longitude }),
+        () => resolve(null),
+        { enableHighAccuracy: true, maximumAge: 0, timeout: 15_000 },
+      );
+    });
 
   // Start/stop browser geolocation watch when sharing is on.
   useEffect(() => {
@@ -562,20 +586,36 @@ function LiveLocationPanel({ taskId, token, isPoster, taskLat, taskLng, arrivedA
   };
 
   const onArrived = async () => {
-    if (!pos) {
-      toast.error("We couldn't get your location. Enable location and try again.");
+    setArriveError(null);
+    setArriving(true);
+    const fix = pos ?? (await getFix());
+    if (!fix) {
+      setArriving(false);
+      setArriveError("We couldn't read your location. Turn on location access for this site, then tap “Re-check my location”.");
       return;
     }
+    setPos(fix);
+    const away = taskLat != null && taskLng != null ? metresBetween(fix, { lat: Number(taskLat), lng: Number(taskLng) }) : null;
     try {
-      const r: any = await arrive({ data: { taskId, token, latitude: pos.lat, longitude: pos.lng } });
+      const r: any = await arrive({ data: { taskId, token, latitude: fix.lat, longitude: fix.lng } });
+      setArriving(false);
       if (r?.ok) {
-        toast.success("Marked arrived");
+        toast.success("Marked arrived — the poster has been notified.");
         onRefetchTask?.();
-      } else {
-        toast.error(r?.error ?? "Couldn't mark arrival. You may be too far from the task location.");
+        return;
       }
+      const msg = String(r?.error ?? "Couldn't mark arrival.");
+      if (/far|distance|away|not at|location/i.test(msg) && away != null) {
+        setArriveError(
+          `You're about ${away >= 1000 ? `${(away / 1000).toFixed(1)} km` : `${Math.round(away)} m`} from the task location, so arrival can't be confirmed yet. Get closer to the pin and tap “Re-check my location”.`,
+        );
+      } else {
+        setArriveError(msg);
+      }
+      toast.error(msg);
     } catch (e: any) {
-      toast.error(e?.message ?? "Couldn't mark arrival. Please try again.");
+      setArriving(false);
+      setArriveError(e?.message ?? "Couldn't mark arrival. Please try again.");
     }
   };
 
@@ -609,12 +649,28 @@ function LiveLocationPanel({ taskId, token, isPoster, taskLat, taskLng, arrivedA
       />
 
       {!isPoster && !arrivedAt && (
-        <button
-          onClick={onArrived}
-          className="w-full inline-flex items-center justify-center gap-1.5 rounded-full border border-border px-4 py-2 text-sm font-semibold hover:bg-muted"
-        >
-          <Flag className="h-4 w-4" /> I've arrived
-        </button>
+        <div className="space-y-2">
+          <button
+            onClick={onArrived}
+            disabled={arriving}
+            className="w-full inline-flex items-center justify-center gap-1.5 rounded-full border border-border px-4 py-2 text-sm font-semibold hover:bg-muted disabled:opacity-50"
+          >
+            {arriving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Flag className="h-4 w-4" />}
+            {arriving ? "Checking your location…" : "I've arrived"}
+          </button>
+          {arriveError && (
+            <div className="rounded-xl border border-amber-500/40 bg-amber-500/10 p-3 space-y-2">
+              <p className="text-xs text-amber-700 dark:text-amber-400">{arriveError}</p>
+              <button
+                onClick={onArrived}
+                disabled={arriving}
+                className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/50 px-3 py-1.5 text-xs font-semibold text-amber-700 dark:text-amber-400 disabled:opacity-50"
+              >
+                <Navigation className="h-3.5 w-3.5" /> Re-check my location
+              </button>
+            </div>
+          )}
+        </div>
       )}
     </div>
   );
