@@ -674,6 +674,11 @@ export const verifyPayment = createServerFn({ method: "POST" })
     };
   });
 
+// ---- Current user ------------------------------------------------------
+export const authMe = createServerFn({ method: "POST" })
+  .inputValidator((i: unknown) => z.object({ token: Token }).parse(i))
+  .handler(async ({ data }) => call(`/auth/me`, { token: data.token }));
+
 // ============ ADMIN ENDPOINTS ============
 export const adminFreezeUser = createServerFn({ method: "POST" })
   .inputValidator((i: unknown) => z.object({ userId: UserId, reason: z.string().min(3).max(500).optional(), token: Token }).parse(i))
