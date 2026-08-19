@@ -14,7 +14,7 @@ import { TierProgress } from "@/components/TierProgress";
 import { useAuth } from "@/lib/auth";
 import { useCountUp } from "@/lib/useCountUp";
 import {
-  listTasks, unreadCount, walletBalance, walletTransactions, getUserTasks,
+  listTasks, unreadCount, walletBalance, walletTransactions, getUserTasks, authMe,
 } from "@/lib/findtask.functions";
 
 export const Route = createFileRoute("/dashboard")({
