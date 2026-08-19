@@ -21,6 +21,17 @@ function toList(d: any, ...keys: string[]): any[] {
 function AdminMonitoringPage() {
   const { token } = useAuth();
   const [tab, setTab] = useState<"accounts" | "messages">("accounts");
+  const [reviewedIds, setReviewedIds] = useState<string[]>(() => {
+    if (typeof window === "undefined") return [];
+    try { return JSON.parse(window.localStorage.getItem("admin-reviewed-flags") ?? "[]"); } catch { return []; }
+  });
+  const toggleReviewed = (id: string) =>
+    setReviewedIds((prev) => {
+      const next = prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id];
+      try { window.localStorage.setItem("admin-reviewed-flags", JSON.stringify(next)); } catch { /* ignore */ }
+      return next;
+    });
+
   const [msgStatus, setMsgStatus] = useState("open");
   const accFn = useServerFn(adminFlaggedAccounts);
   const msgFn = useServerFn(adminFlaggedMessages);
@@ -87,8 +98,11 @@ function AdminMonitoringPage() {
             <div className="rounded-2xl border border-border bg-card p-8 text-center text-sm text-muted-foreground">Nothing flagged right now.</div>
           ) : (
             <ul className="space-y-2">
-              {messages.map((m: any, i: number) => (
-                <li key={String(m.message_id ?? m.id ?? i)} className="rounded-xl border border-border bg-card p-4">
+              {messages.map((m: any, i: number) => {
+                const flagId = String(m.message_id ?? m.id ?? i);
+                const isReviewed = reviewedIds.includes(flagId);
+                return (
+                <li key={flagId} className={"rounded-xl border bg-card p-4 " + (isReviewed ? "border-emerald-500/40 opacity-70" : "border-border")}>
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <div className="text-xs text-muted-foreground inline-flex items-center gap-1.5">
                       <MessageSquareWarning className="h-3.5 w-3.5 text-amber-500" />
@@ -98,13 +112,25 @@ function AdminMonitoringPage() {
                     {m.keyword && <span className="rounded bg-amber-500/15 px-2 py-0.5 text-[11px] font-semibold text-amber-700 dark:text-amber-300">{m.keyword}</span>}
                   </div>
                   <p className="mt-2 text-sm whitespace-pre-wrap">{m.message_text ?? m.body}</p>
-                  {m.task_id != null && (
-                    <Link to="/tasks/$taskId" params={{ taskId: String(m.task_id) }} className="mt-2 inline-block text-xs text-primary underline">
-                      View task
-                    </Link>
-                  )}
+                  <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
+                    {m.task_id != null ? (
+                      <Link to="/tasks/$taskId" params={{ taskId: String(m.task_id) }} className="text-xs text-primary underline">
+                        View task
+                      </Link>
+                    ) : <span />}
+                    <label className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={isReviewed}
+                        onChange={() => toggleReviewed(flagId)}
+                        className="h-3.5 w-3.5 accent-emerald-600"
+                      />
+                      {isReviewed ? "Reviewed" : "Mark as reviewed"}
+                    </label>
+                  </div>
                 </li>
-              ))}
+                );
+              })}
             </ul>
           )}
         </div>
