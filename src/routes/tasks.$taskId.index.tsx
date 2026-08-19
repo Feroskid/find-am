@@ -811,11 +811,9 @@ function TaskDetail() {
               className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
             >
               <option value="">Choose a reason…</option>
-              <option value="scam">Looks like a scam</option>
-              <option value="illegal">Illegal or unsafe request</option>
-              <option value="offensive">Offensive or abusive content</option>
-              <option value="spam">Spam or duplicate</option>
-              <option value="off_platform">Asking to pay outside Find-am</option>
+              <option value="scam_fraud">Scam or fraud</option>
+              <option value="misleading">Misleading or inaccurate task</option>
+              <option value="safety_concern">Safety concern (unsafe or illegal request)</option>
               <option value="other">Something else</option>
             </select>
             <textarea
@@ -1222,15 +1220,6 @@ function DisputedTaskView({ task, taskId, isParticipant }: { task: any; taskId: 
                   <ShieldAlert className="h-4 w-4" /> Go to my messages
                 </Link>
               )}
-              <Link
-                to="/tasks/$taskId/workspace"
-                params={{ taskId }}
-                search={{} as any}
-
-                className="inline-flex items-center gap-2 rounded-full border border-border px-5 py-2.5 text-sm font-semibold"
-              >
-                View task chat history
-              </Link>
             </div>
           </div>
         ) : (
