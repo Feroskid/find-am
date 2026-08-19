@@ -86,6 +86,7 @@ function WorkspacePage() {
   const [rating, setRating] = useState(5);
   const [review, setReview] = useState("");
   const [disputeReason, setDisputeReason] = useState("");
+  const [disputeError, setDisputeError] = useState<string | null>(null);
   const [showDispute, setShowDispute] = useState(false);
   const [showRate, setShowRate] = useState(false);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
@@ -193,9 +194,23 @@ function WorkspacePage() {
       }
       return r;
     },
-    onSuccess: (r) => r.ok
-      ? (toast.success("Dispute filed. Our team has been notified and will review the chat."), setShowDispute(false), setDisputeReason(""), taskQ.refetch())
-      : toast.error(r.error),
+    onSuccess: (r) => {
+      if (r.ok) {
+        toast.success("Dispute filed. Our team has been notified and will review the chat.");
+        setShowDispute(false);
+        setDisputeReason("");
+        setDisputeError(null);
+        taskQ.refetch();
+        return;
+      }
+      const msg = String(r.error ?? "Couldn't file this dispute.");
+      setDisputeError(
+        /resolved|already/i.test(msg)
+          ? "This task's dispute has already been reviewed and resolved by Find-am support, so it can't be reopened. If something is still wrong, contact support and reference this task."
+          : msg,
+      );
+      toast.error(msg);
+    },
   });
   const task_forRating: any = taskQ.data?.ok ? ((taskQ.data.data as any)?.task ?? taskQ.data.data) : null;
   const _isCompletedForRating =
@@ -420,9 +435,12 @@ function WorkspacePage() {
                   placeholder="Describe the issue…"
                   className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
                 />
+                {disputeError && (
+                  <p className="rounded-lg border border-destructive/30 bg-destructive/5 p-2.5 text-xs text-destructive">{disputeError}</p>
+                )}
                 <button
-                  onClick={() => disputeReason.trim().length >= 5 && disputeM.mutate()}
-                  disabled={disputeM.isPending || disputeReason.trim().length < 5}
+                  onClick={() => { setDisputeError(null); if (disputeReason.trim().length >= 5) disputeM.mutate(); }}
+                  disabled={disputeM.isPending || disputeReason.trim().length < 5 || !!disputeError}
                   className="w-full rounded-full bg-destructive text-destructive-foreground px-4 py-2 text-sm font-semibold disabled:opacity-50"
                 >
                   Submit dispute
