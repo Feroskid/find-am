@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
-import { AlertTriangle, Users, ScrollText, Ban, ArrowRight, LifeBuoy, Flag, Radar, SpellCheck2, Banknote } from "lucide-react";
+import { AlertTriangle, Users, ScrollText, ArrowRight, LifeBuoy, Flag, Radar, SpellCheck2, Banknote } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { adminListTickets } from "@/lib/support.functions";
 import { adminListDisputes, adminListReports } from "@/lib/findtask.functions";
