@@ -113,7 +113,12 @@ function DisputeRow({ d, onResolve, pending }: { d: any; onResolve: (r: Resoluti
             </Link>
           )}
           <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-yellow-500/20 text-yellow-800 dark:text-yellow-200">{d.status ?? "open"}</span>
-          {d.amount && <span className="text-sm font-semibold">₦{Number(d.amount).toLocaleString()}</span>}
+          {(d.amount ?? d.budget ?? d.task_budget ?? d.task?.budget) != null && (
+            <span className="text-right">
+              <span className="block text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Task budget</span>
+              <span className="text-sm font-semibold">₦{Number(d.amount ?? d.budget ?? d.task_budget ?? d.task?.budget).toLocaleString()}</span>
+            </span>
+          )}
         </div>
       </div>
       {d.status !== "resolved" && (
