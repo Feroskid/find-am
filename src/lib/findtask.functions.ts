@@ -676,29 +676,38 @@ export const verifyPayment = createServerFn({ method: "POST" })
 
 // ============ ADMIN ENDPOINTS ============
 export const adminFreezeUser = createServerFn({ method: "POST" })
-  .inputValidator((i: unknown) => z.object({ userId: UserId, token: Token }).parse(i))
-  .handler(async ({ data }) => call(`/admin/user/${data.userId}/freeze`, { method: "POST", token: data.token }));
+  .inputValidator((i: unknown) => z.object({ userId: UserId, reason: z.string().min(3).max(500).optional(), token: Token }).parse(i))
+  .handler(async ({ data }) =>
+    call(`/admin/user/${data.userId}/freeze`, { method: "POST", body: { reason: data.reason ?? null }, token: data.token }),
+  );
 
 export const adminBanUser = createServerFn({ method: "POST" })
-  .inputValidator((i: unknown) => z.object({ userId: UserId, token: Token }).parse(i))
-  .handler(async ({ data }) => call(`/admin/user/${data.userId}/ban`, { method: "POST", token: data.token }));
+  .inputValidator((i: unknown) => z.object({ userId: UserId, reason: z.string().min(3).max(500).optional(), token: Token }).parse(i))
+  .handler(async ({ data }) =>
+    call(`/admin/user/${data.userId}/ban`, { method: "POST", body: { reason: data.reason ?? null }, token: data.token }),
+  );
 
 export const adminReactivateUser = createServerFn({ method: "POST" })
-  .inputValidator((i: unknown) => z.object({ userId: UserId, token: Token }).parse(i))
+  .inputValidator((i: unknown) => z.object({ userId: UserId, reason: z.string().min(3).max(500).optional(), token: Token }).parse(i))
   .handler(async ({ data }) => call(`/admin/user/${data.userId}/reactivate`, { method: "POST", token: data.token }));
 
 export const adminViewLedger = createServerFn({ method: "POST" })
-  .inputValidator((i: unknown) => z.object({ userId: UserId, token: Token }).parse(i))
-  .handler(async ({ data }) => call(`/admin/user/${data.userId}/ledger`, { token: data.token }));
-
-export const adminBlacklistBvn = createServerFn({ method: "POST" })
-  .inputValidator((i: unknown) => z.object({ bvn_hash: z.string().min(4).max(200), reason: z.string().min(3).max(500), token: Token }).parse(i))
-  .handler(async ({ data }) => call(`/admin/blacklist/bvn`, { method: "POST", body: { bvn_hash: data.bvn_hash, reason: data.reason }, token: data.token }));
-
-export const adminUnblacklistBvn = createServerFn({ method: "POST" })
-  .inputValidator((i: unknown) => z.object({ bvn_hash: z.string().min(4).max(200), token: Token }).parse(i))
-  .handler(async ({ data }) => call(`/admin/blacklist/bvn`, { method: "DELETE", body: { bvn_hash: data.bvn_hash }, token: data.token }));
-
+  .inputValidator((i: unknown) =>
+    z.object({
+      userId: UserId,
+      date_from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+      date_to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+      limit: z.number().int().min(1).max(1000).optional(),
+      token: Token,
+    }).parse(i),
+  )
+  .handler(async ({ data }) => {
+    const qs = new URLSearchParams();
+    if (data.date_from) qs.set("date_from", data.date_from);
+    if (data.date_to) qs.set("date_to", data.date_to);
+    qs.set("limit", String(data.limit ?? 200));
+    return call(`/admin/user/${data.userId}/ledger?${qs.toString()}`, { token: data.token });
+  });
 
 export const adminAuditLog = createServerFn({ method: "POST" })
   .inputValidator((i: unknown) => z.object({ target_id: z.string().max(120).optional(), token: Token }).parse(i))
