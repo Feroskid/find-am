@@ -106,7 +106,6 @@ function AdminOverview() {
         <Card to="/admin/users" title="User management" desc="Freeze, ban, reactivate users and inspect ledgers." icon={Users} />
         <Card to="/admin/funds" title="Held funds" desc="Freeze or unfreeze a task's wallet credit outside a dispute." icon={Banknote} />
         <Card to="/admin/keywords" title="Banned keywords" desc="Add or remove keywords that flag messages for review." icon={SpellCheck2} />
-        <Card to="/admin/blacklist" title="BVN blacklist" desc="Permanently blacklist BVN hashes for repeat offenders." icon={Ban} />
         <Card to="/admin/audit" title="Audit log" desc="Trace every admin action across the platform." icon={ScrollText} />
       </div>
 
