@@ -14,7 +14,7 @@ import { TierProgress } from "@/components/TierProgress";
 import { useAuth } from "@/lib/auth";
 import { useCountUp } from "@/lib/useCountUp";
 import {
-  listTasks, unreadCount, walletBalance, walletTransactions, getUserTasks,
+  listTasks, unreadCount, walletBalance, walletTransactions, getUserTasks, authMe,
 } from "@/lib/findtask.functions";
 
 export const Route = createFileRoute("/dashboard")({
@@ -36,6 +36,7 @@ function Dashboard() {
   const wallet = useServerFn(walletBalance);
   const txs = useServerFn(walletTransactions);
   const userTasks = useServerFn(getUserTasks);
+  const me = useServerFn(authMe);
 
   const myId = (user as any)?.user_id ?? (user as any)?.id;
   const isPoster = mode === "poster";
@@ -61,6 +62,11 @@ function Dashboard() {
     enabled: !!token && !!myId,
     queryFn: () => userTasks({ data: { userId: String(myId), token, role: isPoster ? "poster" : "tasker" } }),
   });
+  const meQ = useQuery({
+    queryKey: ["dashboard", "me", token],
+    enabled: !!token,
+    queryFn: () => me({ data: { token: token! } }),
+  });
 
   const earnings30d = useMemo(() => {
     const list: any[] = extractList(txQ.data?.ok ? txQ.data.data : null);
@@ -69,7 +75,8 @@ function Dashboard() {
       .filter((t) => {
         const ts = new Date(t.created_at ?? t.date ?? 0).getTime();
         const type = String(t.type ?? "").toLowerCase();
-        return ts >= cutoff && type === "credit";
+        const status = String(t.status ?? "").toLowerCase();
+        return ts >= cutoff && type === "credit" && status === "available";
       })
       .reduce((s, t) => s + Number(t.amount ?? 0), 0);
   }, [txQ.data]);
@@ -90,7 +97,9 @@ function Dashboard() {
   const stat = (status: string) =>
     myTasks.filter((t) => String(t.status ?? "").toLowerCase() === status).length;
 
-  const rating = (user as any)?.rating ?? (user as any)?.average_rating ?? "—";
+  const rating = meQ.data?.ok
+    ? ((meQ.data.data as any)?.rating ?? "—")
+    : "—";
 
   const posterKpis = [
     { icon: Briefcase, label: "Posted", value: myTasks.length, money: false, sub: "all-time" },

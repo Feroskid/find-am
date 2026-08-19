@@ -6,6 +6,7 @@ import { Loader2, Snowflake, Sun, Banknote } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth";
 import { adminFreezeTaskFunds, adminUnfreezeTaskFunds } from "@/lib/findtask.functions";
+import { AdminUserSearch } from "@/components/admin/AdminUserSearch";
 
 export const Route = createFileRoute("/admin/funds")({
   head: () => ({ meta: [{ title: "Held funds — Admin" }, { name: "robots", content: "noindex" }] }),
@@ -15,6 +16,7 @@ export const Route = createFileRoute("/admin/funds")({
 function AdminFundsPage() {
   const { token } = useAuth();
   const [taskId, setTaskId] = useState("");
+  const [picked, setPicked] = useState<any>(null);
   const freezeFn = useServerFn(adminFreezeTaskFunds);
   const unfreezeFn = useServerFn(adminUnfreezeTaskFunds);
   const [log, setLog] = useState<string[]>([]);
@@ -40,6 +42,16 @@ function AdminFundsPage() {
         <h2 className="font-display text-xl text-ink inline-flex items-center gap-2"><Banknote className="h-5 w-5 text-primary" /> Held funds</h2>
         <p className="text-sm text-muted-foreground">Hold or release a task's wallet credit outside a dispute. Every action is audited.</p>
       </div>
+
+      <AdminUserSearch onPick={setPicked} label="Look up the user first (optional)" />
+      {picked && (
+        <div className="rounded-2xl border border-border bg-card p-4 text-sm">
+          <div className="font-semibold text-ink">{picked.name ?? picked.full_name ?? "Selected user"}</div>
+          <div className="text-xs text-muted-foreground">
+            {[picked.email, picked.phone, picked.user_id ?? picked.id].filter(Boolean).join(" · ")}
+          </div>
+        </div>
+      )}
 
       <div className="rounded-2xl border border-border bg-card p-4 space-y-3">
         <label className="block">

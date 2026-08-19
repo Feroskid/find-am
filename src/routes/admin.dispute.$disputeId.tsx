@@ -181,6 +181,9 @@ function AdminDisputeRoomsPage() {
           </h2>
           <p className="text-sm text-muted-foreground">
             {rooms?.task_title ? `Task #${rooms.task_id} · ${rooms.task_title}` : "Private rooms with each party"}
+            {(rooms?.task_budget ?? rooms?.budget ?? rooms?.amount) != null
+              ? ` · budget ₦${Number(rooms.task_budget ?? rooms.budget ?? rooms.amount).toLocaleString()}`
+              : ""}
             {rooms?.closed ? " · resolved" : ""}
           </p>
         </div>

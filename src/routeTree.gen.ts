@@ -30,7 +30,6 @@ import { Route as VerifyEmailRouteImport } from './routes/verify-email'
 import { Route as WalletRouteImport } from './routes/wallet'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as AdminAuditRouteImport } from './routes/admin.audit'
-import { Route as AdminBlacklistRouteImport } from './routes/admin.blacklist'
 import { Route as AdminDisputesRouteImport } from './routes/admin.disputes'
 import { Route as AdminFundsRouteImport } from './routes/admin.funds'
 import { Route as AdminKeywordsRouteImport } from './routes/admin.keywords'
@@ -168,11 +167,6 @@ const AdminIndexRoute = AdminIndexRouteImport.update({
 const AdminAuditRoute = AdminAuditRouteImport.update({
   id: '/audit',
   path: '/audit',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminBlacklistRoute = AdminBlacklistRouteImport.update({
-  id: '/blacklist',
-  path: '/blacklist',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminDisputesRoute = AdminDisputesRouteImport.update({
@@ -362,7 +356,6 @@ export interface FileRoutesByFullPath {
   '/verify-email': typeof VerifyEmailRoute
   '/wallet': typeof WalletRoute
   '/admin/audit': typeof AdminAuditRoute
-  '/admin/blacklist': typeof AdminBlacklistRoute
   '/admin/disputes': typeof AdminDisputesRoute
   '/admin/funds': typeof AdminFundsRoute
   '/admin/keywords': typeof AdminKeywordsRoute
@@ -417,7 +410,6 @@ export interface FileRoutesByTo {
   '/verify-email': typeof VerifyEmailRoute
   '/wallet': typeof WalletRoute
   '/admin/audit': typeof AdminAuditRoute
-  '/admin/blacklist': typeof AdminBlacklistRoute
   '/admin/disputes': typeof AdminDisputesRoute
   '/admin/funds': typeof AdminFundsRoute
   '/admin/keywords': typeof AdminKeywordsRoute
@@ -475,7 +467,6 @@ export interface FileRoutesById {
   '/verify-email': typeof VerifyEmailRoute
   '/wallet': typeof WalletRoute
   '/admin/audit': typeof AdminAuditRoute
-  '/admin/blacklist': typeof AdminBlacklistRoute
   '/admin/disputes': typeof AdminDisputesRoute
   '/admin/funds': typeof AdminFundsRoute
   '/admin/keywords': typeof AdminKeywordsRoute
@@ -534,7 +525,6 @@ export interface FileRouteTypes {
     | '/verify-email'
     | '/wallet'
     | '/admin/audit'
-    | '/admin/blacklist'
     | '/admin/disputes'
     | '/admin/funds'
     | '/admin/keywords'
@@ -589,7 +579,6 @@ export interface FileRouteTypes {
     | '/verify-email'
     | '/wallet'
     | '/admin/audit'
-    | '/admin/blacklist'
     | '/admin/disputes'
     | '/admin/funds'
     | '/admin/keywords'
@@ -646,7 +635,6 @@ export interface FileRouteTypes {
     | '/verify-email'
     | '/wallet'
     | '/admin/audit'
-    | '/admin/blacklist'
     | '/admin/disputes'
     | '/admin/funds'
     | '/admin/keywords'
@@ -868,13 +856,6 @@ declare module '@tanstack/react-router' {
       path: '/audit'
       fullPath: '/admin/audit'
       preLoaderRoute: typeof AdminAuditRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/blacklist': {
-      id: '/admin/blacklist'
-      path: '/blacklist'
-      fullPath: '/admin/blacklist'
-      preLoaderRoute: typeof AdminBlacklistRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/disputes': {
@@ -1113,7 +1094,6 @@ declare module '@tanstack/react-router' {
 
 interface AdminRouteChildren {
   AdminAuditRoute: typeof AdminAuditRoute
-  AdminBlacklistRoute: typeof AdminBlacklistRoute
   AdminDisputesRoute: typeof AdminDisputesRoute
   AdminFundsRoute: typeof AdminFundsRoute
   AdminKeywordsRoute: typeof AdminKeywordsRoute
@@ -1128,7 +1108,6 @@ interface AdminRouteChildren {
 
 const AdminRouteChildren: AdminRouteChildren = {
   AdminAuditRoute: AdminAuditRoute,
-  AdminBlacklistRoute: AdminBlacklistRoute,
   AdminDisputesRoute: AdminDisputesRoute,
   AdminFundsRoute: AdminFundsRoute,
   AdminKeywordsRoute: AdminKeywordsRoute,

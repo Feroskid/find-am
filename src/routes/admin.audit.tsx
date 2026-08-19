@@ -49,6 +49,7 @@ function AdminAuditPage() {
                 <th className="text-left px-3 py-2">Admin</th>
                 <th className="text-left px-3 py-2">Action</th>
                 <th className="text-left px-3 py-2">Target</th>
+                <th className="text-left px-3 py-2">Reason</th>
                 <th className="text-left px-3 py-2">When</th>
               </tr>
             </thead>
@@ -59,6 +60,9 @@ function AdminAuditPage() {
                   <td className="px-3 py-2">{r.admin_name ?? r.admin_id}</td>
                   <td className="px-3 py-2 font-medium">{r.action}</td>
                   <td className="px-3 py-2 text-xs">{r.target_type} #{r.target_id}</td>
+                  <td className="px-3 py-2 text-xs text-muted-foreground max-w-xs">
+                    {r.reason ?? r.note ?? r.details?.reason ?? r.metadata?.reason ?? "—"}
+                  </td>
                   <td className="px-3 py-2 text-xs text-muted-foreground">{r.created_at ? new Date(r.created_at).toLocaleString() : ""}</td>
                 </tr>
               ))}
