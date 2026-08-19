@@ -62,6 +62,11 @@ function Dashboard() {
     enabled: !!token && !!myId,
     queryFn: () => userTasks({ data: { userId: String(myId), token, role: isPoster ? "poster" : "tasker" } }),
   });
+  const meQ = useQuery({
+    queryKey: ["dashboard", "me", token],
+    enabled: !!token,
+    queryFn: () => me({ data: { token: token! } }),
+  });
 
   const earnings30d = useMemo(() => {
     const list: any[] = extractList(txQ.data?.ok ? txQ.data.data : null);
@@ -70,7 +75,8 @@ function Dashboard() {
       .filter((t) => {
         const ts = new Date(t.created_at ?? t.date ?? 0).getTime();
         const type = String(t.type ?? "").toLowerCase();
-        return ts >= cutoff && type === "credit";
+        const status = String(t.status ?? "").toLowerCase();
+        return ts >= cutoff && type === "credit" && status === "available";
       })
       .reduce((s, t) => s + Number(t.amount ?? 0), 0);
   }, [txQ.data]);
