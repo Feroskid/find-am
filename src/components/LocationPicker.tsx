@@ -32,6 +32,28 @@ async function reverseGeocode(lat: number, lng: number): Promise<string | null> 
   }
 }
 
+// Forward geocode via Photon (OSM data, free, built for autocomplete).
+async function searchAddress(q: string, near?: LatLng | null) {
+  if (!q || q.trim().length < 3) return [];
+  try {
+    const bias = near
+      ? `&lat=${near.lat}&lon=${near.lng}`
+      : `&lat=${DEFAULT_CENTER[0]}&lon=${DEFAULT_CENTER[1]}`;
+    const url = `https://photon.komoot.io/api/?q=${encodeURIComponent(q)}&limit=5${bias}`;
+    const res = await fetch(url, { headers: { Accept: "application/json" } });
+    if (!res.ok) return [];
+    const data = await res.json();
+    return (data.features ?? []).map((f: any) => ({
+      label: [f.properties.name, f.properties.street, f.properties.district, f.properties.city, f.properties.state]
+        .filter(Boolean).join(", "),
+      lat: f.geometry.coordinates[1],
+      lng: f.geometry.coordinates[0],
+    }));
+  } catch {
+    return [];
+  }
+}
+
 function Recenter({ coords }: { coords: LatLng | null }) {
   const map = useMap();
   useEffect(() => {
@@ -64,7 +86,31 @@ export function LocationPicker({
   const [geoError, setGeoError] = useState<string | null>(null);
   const [geocoding, setGeocoding] = useState(false);
   const [addressTouched, setAddressTouched] = useState(false);
+  const [suggestions, setSuggestions] = useState<{ label: string; lat: number; lng: number }[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [searching, setSearching] = useState(false);
+  const pickingRef = useRef(false);
   const markerRef = useRef<L.Marker | null>(null);
+
+  // Debounced address search — waits 300ms after typing stops
+  useEffect(() => {
+    if (pickingRef.current) {
+      pickingRef.current = false;
+      return;
+    }
+    if (!addressTouched || !address || address.trim().length < 3) {
+      setSuggestions([]);
+      return;
+    }
+    const t = setTimeout(async () => {
+      setSearching(true);
+      const results = await searchAddress(address, value);
+      setSearching(false);
+      setSuggestions(results);
+      setShowSuggestions(results.length > 0);
+    }, 300);
+    return () => clearTimeout(t);
+  }, [address, addressTouched, value]);
 
   // When a pin is set/moved, auto-fill the address (unless the user edited it manually).
   const setPin = async (c: LatLng) => {
@@ -74,6 +120,14 @@ export function LocationPicker({
     const name = await reverseGeocode(c.lat, c.lng);
     setGeocoding(false);
     if (name) onAddressChange(name);
+  };
+
+  const pickSuggestion = (s: { label: string; lat: number; lng: number }) => {
+    pickingRef.current = true;
+    onChange({ lat: s.lat, lng: s.lng });
+    onAddressChange(s.label);
+    setSuggestions([]);
+    setShowSuggestions(false);
   };
 
   const useMyLocation = () => {
@@ -168,18 +222,40 @@ export function LocationPicker({
           <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
             Address / area
           </label>
-          {geocoding && (
+          {(geocoding || searching) && (
             <span className="text-[11px] text-muted-foreground inline-flex items-center gap-1">
-              <Loader2 className="h-3 w-3 animate-spin" /> Finding address…
+              <Loader2 className="h-3 w-3 animate-spin" />
+              {geocoding ? "Finding address…" : "Searching…"}
             </span>
           )}
         </div>
-        <input
-          value={address}
-          onChange={(e) => { setAddressTouched(true); onAddressChange(e.target.value); }}
-          placeholder="Auto-fills from the pin — or type it yourself"
-          className="w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none"
-        />
+        <div className="relative">
+          <input
+            value={address}
+            onChange={(e) => { setAddressTouched(true); onAddressChange(e.target.value); }}
+            onFocus={() => { if (suggestions.length) setShowSuggestions(true); }}
+            onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
+            placeholder="Start typing an address, or drop a pin on the map"
+            className="w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none"
+          />
+          {showSuggestions && suggestions.length > 0 && (
+            <ul className="absolute z-[1000] mt-1 w-full overflow-hidden rounded-lg border border-border bg-card shadow-lg">
+              {suggestions.map((s, i) => (
+                <li key={i}>
+                  <button
+                    type="button"
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => pickSuggestion(s)}
+                    className="flex w-full items-start gap-2 px-3 py-2.5 text-left text-sm hover:bg-muted"
+                  >
+                    <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
+                    <span className="min-w-0">{s.label}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
         <p className="mt-1 text-[11px] text-muted-foreground">
           You can edit this if the auto-filled address isn't precise.
         </p>
