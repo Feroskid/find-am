@@ -12,12 +12,11 @@ export const Route = createFileRoute("/admin/support")({
   component: AdminSupport,
 });
 
-const STATUSES = ["open", "answered", "closed", "all"] as const;
+const STATUSES = ["open", "closed", "all"] as const;
 
 function StatusBadge({ status }: { status: string }) {
   const map: Record<string, string> = {
     open: "bg-amber-500/15 text-amber-700 dark:text-amber-300",
-    answered: "bg-primary/10 text-primary",
     closed: "bg-muted text-muted-foreground",
   };
   return <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold capitalize ${map[status] ?? "bg-muted text-muted-foreground"}`}>{status}</span>;
@@ -55,7 +54,7 @@ function AdminSupport() {
   });
 
   const updateM = useMutation({
-    mutationFn: (vars: { status?: "open" | "answered" | "closed"; priority?: "low" | "normal" | "high" | "urgent" }) =>
+    mutationFn: (vars: { status?: "open" | "closed"; priority?: "low" | "normal" | "high" | "urgent" }) =>
       updateFn({ data: { token: token!, ticketId: openId!, ...vars } }),
     onSuccess: (r: any) => {
       if (r?.ok) { toast.success("Ticket updated"); threadQ.refetch(); listQ.refetch(); }
@@ -79,7 +78,7 @@ function AdminSupport() {
         {counts && (
           <div className="flex gap-2 text-xs">
             <span className="rounded-full bg-amber-500/15 px-3 py-1 font-semibold text-amber-700 dark:text-amber-300 inline-flex items-center gap-1"><Clock className="h-3 w-3" /> {counts.open} open</span>
-            <span className="rounded-full bg-primary/10 px-3 py-1 font-semibold text-primary inline-flex items-center gap-1"><CheckCircle2 className="h-3 w-3" /> {counts.answered} answered</span>
+            <span className="rounded-full bg-emerald-500/15 px-3 py-1 font-semibold text-emerald-700 dark:text-emerald-300 inline-flex items-center gap-1"><CheckCircle2 className="h-3 w-3" /> {counts.closed} closed</span>
             <span className="rounded-full bg-muted px-3 py-1 font-semibold text-muted-foreground inline-flex items-center gap-1"><Inbox className="h-3 w-3" /> {counts.total} total</span>
           </div>
         )}

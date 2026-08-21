@@ -93,7 +93,7 @@ function AdminOverview() {
         <Stat label="Resolved disputes" value={resolvedQ.isPending ? "…" : resolvedDisputes.length} tone="good" />
         <Stat label="Open reports" value={reportsQ.isPending ? "…" : reports.length} tone={reports.length ? "warn" : "good"} />
         <Stat label="Open tickets" value={ticketsQ.isPending ? "…" : (counts?.open ?? 0)} tone={counts?.open ? "warn" : "good"} />
-        <Stat label="Answered tickets" value={ticketsQ.isPending ? "…" : (counts?.answered ?? 0)} />
+        
         <Stat label="Closed tickets" value={ticketsQ.isPending ? "…" : (counts?.closed ?? 0)} tone="good" />
         <Stat label="All tickets" value={ticketsQ.isPending ? "…" : (counts?.total ?? 0)} />
       </div>

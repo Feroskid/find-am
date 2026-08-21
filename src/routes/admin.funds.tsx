@@ -17,17 +17,23 @@ function AdminFundsPage() {
   const { token } = useAuth();
   const [taskId, setTaskId] = useState("");
   const [picked, setPicked] = useState<any>(null);
+  const [reason, setReason] = useState("");
   const freezeFn = useServerFn(adminFreezeTaskFunds);
   const unfreezeFn = useServerFn(adminUnfreezeTaskFunds);
   const [log, setLog] = useState<string[]>([]);
 
   const run = (fn: any, label: string) =>
     useMutation({
-      mutationFn: () => fn({ data: { taskId, token: token! } }),
+      mutationFn: () => fn({ data: { taskId, reason: reason.trim() || undefined, token: token! } }),
       onSuccess: (r: any) => {
         if (r?.ok) {
+          const why = reason.trim();
           toast.success(`${label} succeeded for task #${taskId}`);
-          setLog((l) => [`${new Date().toLocaleTimeString()} — ${label} · task #${taskId}`, ...l]);
+          setLog((l) => [
+            `${new Date().toLocaleTimeString()} — ${label} · task #${taskId}${why ? ` · ${why}` : ""}`,
+            ...l,
+          ]);
+          setReason("");
         } else toast.error(r?.error ?? `${label} failed`);
       },
     });
@@ -60,6 +66,15 @@ function AdminFundsPage() {
             value={taskId}
             onChange={(e) => setTaskId(e.target.value.replace(/[^\d]/g, ""))}
             placeholder="e.g. 48"
+            className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
+          />
+        </label>
+        <label className="block">
+          <span className="text-xs font-semibold uppercase text-muted-foreground">Reason for action (optional)</span>
+          <input
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            placeholder="e.g. Investigating a payment complaint"
             className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
           />
         </label>
