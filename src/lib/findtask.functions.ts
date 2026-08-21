@@ -752,15 +752,23 @@ export const adminResolveDispute = createServerFn({ method: "POST" })
 
 // ---- Admin: task funds -------------------------------------------------
 export const adminFreezeTaskFunds = createServerFn({ method: "POST" })
-  .inputValidator((i: unknown) => z.object({ taskId: TaskId, token: Token }).parse(i))
+  .inputValidator((i: unknown) => z.object({ taskId: TaskId, reason: z.string().max(500).optional(), token: Token }).parse(i))
   .handler(async ({ data }) =>
-    call(`/admin/task/${data.taskId}/freeze-funds`, { method: "POST", token: data.token }),
+    call(`/admin/task/${data.taskId}/freeze-funds`, {
+      method: "POST",
+      body: data.reason ? { reason: data.reason } : undefined,
+      token: data.token,
+    }),
   );
 
 export const adminUnfreezeTaskFunds = createServerFn({ method: "POST" })
-  .inputValidator((i: unknown) => z.object({ taskId: TaskId, token: Token }).parse(i))
+  .inputValidator((i: unknown) => z.object({ taskId: TaskId, reason: z.string().max(500).optional(), token: Token }).parse(i))
   .handler(async ({ data }) =>
-    call(`/admin/task/${data.taskId}/unfreeze-funds`, { method: "POST", token: data.token }),
+    call(`/admin/task/${data.taskId}/unfreeze-funds`, {
+      method: "POST",
+      body: data.reason ? { reason: data.reason } : undefined,
+      token: data.token,
+    }),
   );
 
 // ---- Admin: monitoring queues ------------------------------------------
