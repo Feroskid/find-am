@@ -54,7 +54,7 @@ function AdminSupport() {
   });
 
   const updateM = useMutation({
-    mutationFn: (vars: { status?: "open" | "answered" | "closed"; priority?: "low" | "normal" | "high" | "urgent" }) =>
+    mutationFn: (vars: { status?: "open" | "closed"; priority?: "low" | "normal" | "high" | "urgent" }) =>
       updateFn({ data: { token: token!, ticketId: openId!, ...vars } }),
     onSuccess: (r: any) => {
       if (r?.ok) { toast.success("Ticket updated"); threadQ.refetch(); listQ.refetch(); }
