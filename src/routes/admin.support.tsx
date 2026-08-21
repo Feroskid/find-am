@@ -78,7 +78,7 @@ function AdminSupport() {
         {counts && (
           <div className="flex gap-2 text-xs">
             <span className="rounded-full bg-amber-500/15 px-3 py-1 font-semibold text-amber-700 dark:text-amber-300 inline-flex items-center gap-1"><Clock className="h-3 w-3" /> {counts.open} open</span>
-            <span className="rounded-full bg-primary/10 px-3 py-1 font-semibold text-primary inline-flex items-center gap-1"><CheckCircle2 className="h-3 w-3" /> {counts.answered} answered</span>
+            <span className="rounded-full bg-emerald-500/15 px-3 py-1 font-semibold text-emerald-700 dark:text-emerald-300 inline-flex items-center gap-1"><CheckCircle2 className="h-3 w-3" /> {counts.closed} closed</span>
             <span className="rounded-full bg-muted px-3 py-1 font-semibold text-muted-foreground inline-flex items-center gap-1"><Inbox className="h-3 w-3" /> {counts.total} total</span>
           </div>
         )}
