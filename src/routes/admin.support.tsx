@@ -12,12 +12,11 @@ export const Route = createFileRoute("/admin/support")({
   component: AdminSupport,
 });
 
-const STATUSES = ["open", "answered", "closed", "all"] as const;
+const STATUSES = ["open", "closed", "all"] as const;
 
 function StatusBadge({ status }: { status: string }) {
   const map: Record<string, string> = {
     open: "bg-amber-500/15 text-amber-700 dark:text-amber-300",
-    answered: "bg-primary/10 text-primary",
     closed: "bg-muted text-muted-foreground",
   };
   return <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold capitalize ${map[status] ?? "bg-muted text-muted-foreground"}`}>{status}</span>;

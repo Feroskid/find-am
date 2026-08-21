@@ -17,17 +17,23 @@ function AdminFundsPage() {
   const { token } = useAuth();
   const [taskId, setTaskId] = useState("");
   const [picked, setPicked] = useState<any>(null);
+  const [reason, setReason] = useState("");
   const freezeFn = useServerFn(adminFreezeTaskFunds);
   const unfreezeFn = useServerFn(adminUnfreezeTaskFunds);
   const [log, setLog] = useState<string[]>([]);
 
   const run = (fn: any, label: string) =>
     useMutation({
-      mutationFn: () => fn({ data: { taskId, token: token! } }),
+      mutationFn: () => fn({ data: { taskId, reason: reason.trim() || undefined, token: token! } }),
       onSuccess: (r: any) => {
         if (r?.ok) {
+          const why = reason.trim();
           toast.success(`${label} succeeded for task #${taskId}`);
-          setLog((l) => [`${new Date().toLocaleTimeString()} — ${label} · task #${taskId}`, ...l]);
+          setLog((l) => [
+            `${new Date().toLocaleTimeString()} — ${label} · task #${taskId}${why ? ` · ${why}` : ""}`,
+            ...l,
+          ]);
+          setReason("");
         } else toast.error(r?.error ?? `${label} failed`);
       },
     });
