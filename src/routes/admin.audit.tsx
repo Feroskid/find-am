@@ -61,7 +61,12 @@ function AdminAuditPage() {
                   <td className="px-3 py-2 font-medium">{r.action}</td>
                   <td className="px-3 py-2 text-xs">{r.target_type} #{r.target_id}</td>
                   <td className="px-3 py-2 text-xs text-muted-foreground max-w-xs">
-                    {r.reason ?? r.note ?? r.details?.reason ?? r.metadata?.reason ?? "—"}
+                    {(typeof r.details === "string" && r.details) ||
+                      r.reason ||
+                      r.note ||
+                      (typeof r.details === "object" ? r.details?.reason : null) ||
+                      r.metadata?.reason ||
+                      "—"}
                   </td>
                   <td className="px-3 py-2 text-xs text-muted-foreground">{r.created_at ? new Date(r.created_at).toLocaleString() : ""}</td>
                 </tr>

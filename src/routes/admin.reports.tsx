@@ -24,10 +24,23 @@ function AdminReportsPage() {
   const listFn = useServerFn(adminListReports);
   const resolveFn = useServerFn(adminResolveReport);
 
+  // The backend filters on the literal status value — there is no "all" status,
+  // so "All" fetches each real status and merges the results.
   const q = useQuery({
     queryKey: ["admin", "reports", status, token],
     enabled: !!token,
-    queryFn: () => listFn({ data: { token: token!, status } }),
+    queryFn: async () => {
+      if (status !== "all") return listFn({ data: { token: token!, status } });
+      const parts = await Promise.all(
+        ["open", "reviewed", "dismissed"].map((s) => listFn({ data: { token: token!, status: s } })),
+      );
+      const bad = parts.find((p: any) => !p?.ok);
+      if (bad) return bad;
+      const merged = parts
+        .flatMap((p: any) => list(p.data))
+        .sort((a: any, b: any) => new Date(b.created_at ?? 0).getTime() - new Date(a.created_at ?? 0).getTime());
+      return { ok: true as const, data: { reports: merged } };
+    },
   });
 
   const resolveM = useMutation({
