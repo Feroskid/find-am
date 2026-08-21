@@ -190,32 +190,108 @@ function AdminUsersPage() {
   );
 }
 
+const money = (v: any) => (v == null || v === "" ? "—" : `₦${Number(v).toLocaleString()}`);
+const when = (v: any) => (v ? new Date(v).toLocaleString() : "—");
+
+function TaskList({ title, rows }: { title: string; rows: any[] }) {
+  return (
+    <div className="rounded-lg border border-border bg-background p-3">
+      <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">{title} ({rows.length})</div>
+      {rows.length === 0 ? (
+        <p className="mt-1 text-xs text-muted-foreground">None.</p>
+      ) : (
+        <ul className="mt-2 space-y-1.5">
+          {rows.map((t: any) => (
+            <li key={t.task_id} className="flex items-center justify-between gap-2 text-xs">
+              <Link to="/tasks/$taskId" params={{ taskId: String(t.task_id) }} className="min-w-0 truncate text-primary underline">
+                #{t.task_id} {t.title ?? "Untitled task"}
+              </Link>
+              <span className="shrink-0 text-muted-foreground">
+                {String(t.status ?? "—").replace(/_/g, " ")} · {money(t.budget)}
+                {t.payment_released ? " · paid out" : ""}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
 function UserContextPanel({ ctx, userId }: { ctx: any; userId: string }) {
-  const u = ctx?.user ?? ctx?.profile ?? ctx ?? {};
+  const u = ctx?.user ?? ctx?.profile ?? {};
+  const posted: any[] = ctx?.posted_tasks ?? [];
+  const working: any[] = ctx?.working_tasks ?? [];
+  const disputes: any[] = ctx?.open_disputes ?? [];
+  const warnings: string[] = ctx?.warnings ?? [];
+  const frozen = u.is_frozen || !!u.frozen_until;
+
   const stats: Array<[string, any]> = [
-    ["Status", u.user_status ?? u.status ?? "—"],
-    ["Rating", u.rating ?? "—"],
-    ["Tasks posted", ctx?.tasks_posted ?? ctx?.stats?.tasks_posted ?? "—"],
-    ["Tasks done", ctx?.tasks_completed ?? ctx?.stats?.tasks_completed ?? "—"],
-    ["Disputes", ctx?.disputes ?? ctx?.dispute_count ?? ctx?.stats?.disputes ?? "—"],
-    ["Reports", ctx?.reports ?? ctx?.report_count ?? ctx?.stats?.reports ?? "—"],
-    ["Wallet", ctx?.wallet?.withdrawable_balance ?? ctx?.wallet_balance ?? "—"],
-    ["KYC", (u.kyc_verified ?? ctx?.kyc_verified) ? "Verified" : "Not verified"],
+    ["Status", frozen ? "Frozen" : String(u.user_status ?? "—")],
+    ["KYC", u.kyc_verified ? "Verified" : "Not verified"],
+    ["Trust score", u.trust_score ?? "—"],
+    ["Tasks posted", posted.length],
+    ["Tasks working", working.length],
+    ["Open disputes", disputes.length],
+    ["Wallet balance", money(ctx?.wallet?.balance)],
+    ["Frozen amount", money(ctx?.wallet?.frozen_amount ?? 0)],
   ];
+
   return (
     <div className="rounded-xl border border-border bg-card p-4 space-y-3">
-      <div>
-        <h3 className="font-semibold text-ink">{u.name ?? u.full_name ?? `User ${userId}`}</h3>
-        <p className="text-xs text-muted-foreground">{[u.email, u.phone, u.user_id ?? userId].filter(Boolean).join(" · ")}</p>
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <div className="min-w-0">
+          <h3 className="font-semibold text-ink">{u.name ?? `User ${userId}`}</h3>
+          <p className="text-xs text-muted-foreground">{[u.email, u.phone, u.user_id ?? userId].filter(Boolean).join(" · ")}</p>
+          <p className="mt-0.5 text-[11px] text-muted-foreground">Joined {when(u.created_at)} · Last login {when(u.last_login)}</p>
+        </div>
+        <div className="flex flex-wrap gap-1.5 text-[10px] font-bold uppercase tracking-wider">
+          <span className={`rounded-full px-2 py-0.5 ${frozen ? "bg-sky-500/15 text-sky-700 dark:text-sky-300" : "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300"}`}>
+            {frozen ? `Frozen${u.frozen_until ? ` until ${new Date(u.frozen_until).toLocaleDateString()}` : ""}` : String(u.user_status ?? "active")}
+          </span>
+          {u.is_admin ? <span className="rounded-full bg-primary/10 px-2 py-0.5 text-primary">Admin</span> : null}
+          <span className={`rounded-full px-2 py-0.5 ${u.kyc_verified ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300" : "bg-muted text-muted-foreground"}`}>
+            {u.kyc_verified ? "KYC verified" : "KYC pending"}
+          </span>
+        </div>
       </div>
-      <div className="grid gap-2 sm:grid-cols-4">
+
+      {warnings.length > 0 && (
+        <ul className="rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 text-xs text-amber-800 dark:text-amber-200 space-y-1">
+          {warnings.map((w, i) => <li key={i}>• {w}</li>)}
+        </ul>
+      )}
+
+      <div className="grid gap-2 grid-cols-2 sm:grid-cols-4">
         {stats.map(([label, v]) => (
           <div key={label} className="rounded-lg border border-border bg-background p-2.5">
             <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">{label}</div>
-            <div className="text-sm font-semibold text-ink truncate">{typeof v === "number" && label === "Wallet" ? `₦${v.toLocaleString()}` : String(v)}</div>
+            <div className="text-sm font-semibold text-ink truncate capitalize">{String(v)}</div>
           </div>
         ))}
       </div>
+
+      <div className="grid gap-2 sm:grid-cols-2">
+        <TaskList title="Posted tasks" rows={posted} />
+        <TaskList title="Tasks being worked" rows={working} />
+      </div>
+
+      {disputes.length > 0 && (
+        <div className="rounded-lg border border-border bg-background p-3">
+          <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Open disputes ({disputes.length})</div>
+          <ul className="mt-2 space-y-1.5 text-xs">
+            {disputes.map((d: any, i: number) => (
+              <li key={d.dispute_id ?? i} className="flex items-center justify-between gap-2">
+                <Link to="/admin/dispute/$disputeId" params={{ disputeId: String(d.dispute_id ?? d.id) }} className="text-primary underline">
+                  Dispute #{d.dispute_id ?? d.id}{d.task_id ? ` · task #${d.task_id}` : ""}
+                </Link>
+                <span className="text-muted-foreground">{String(d.status ?? "open")}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       <details className="text-xs">
         <summary className="cursor-pointer text-muted-foreground">Raw context</summary>
         <pre className="mt-2 max-h-72 overflow-auto whitespace-pre-wrap rounded-lg bg-muted/50 p-3">{JSON.stringify(ctx, null, 2)}</pre>
