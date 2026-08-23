@@ -11,6 +11,7 @@ const TrackInputSchema = z.object({
   search_query: z.string().max(200).optional(),
   time_spent: z.number().int().optional(),
   device_type: z.enum(["desktop", "mobile", "tablet"]).optional(),
+  visit_id: z.string().max(200).nullable().optional(),
 });
 
 export type TrackInput = z.input<typeof TrackInputSchema>;
