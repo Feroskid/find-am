@@ -98,7 +98,7 @@ function TasksHome() {
             <Link to="/post-task" className="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-full bg-primary px-7 py-3.5 text-sm font-bold text-primary-foreground shadow-lg hover:opacity-90">
               Post your task for free <ArrowRight className="h-4 w-4" />
             </Link>
-            <Link to="/register" className="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-full border-2 border-ink/80 px-7 py-3.5 text-sm font-bold text-ink hover:bg-ink hover:text-background">
+            <Link to="/coming-soon" className="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-full border-2 border-ink/80 px-7 py-3.5 text-sm font-bold text-ink hover:bg-ink hover:text-background">
               Earn money as a Tasker
             </Link>
           </div>
@@ -273,7 +273,7 @@ function TasksHome() {
                 </li>
               ))}
             </ul>
-            <Link to="/register" className="mt-7 inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-bold text-primary-foreground hover:opacity-90">
+            <Link to="/coming-soon" className="mt-7 inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-bold text-primary-foreground hover:opacity-90">
               Earn money as a Tasker
             </Link>
           </div>
