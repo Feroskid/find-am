@@ -9,7 +9,7 @@ const COLS: { title: string; links: { to: string; label: string }[] }[] = [
       { to: "/tasks/categories", label: "Categories" },
       { to: "/map", label: "Live task map" },
       { to: "/community", label: "Community" },
-      { to: "/register", label: "Earn money" },
+      { to: "/coming-soon", label: "Earn money" },
     ],
   },
   {

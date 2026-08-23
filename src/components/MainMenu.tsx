@@ -41,7 +41,7 @@ export function MainMenu() {
         { to: "/tasks/categories", label: "Discover", chevron: true },
         { to: "/community", label: "Help topics", chevron: true },
         { to: "/login", label: "Log in" },
-        { to: "/register", label: "Sign up" },
+        { to: "/coming-soon", label: "Sign up" },
       ];
 
   return (

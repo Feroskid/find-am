@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminRouteImport } from './routes/admin'
+import { Route as ComingSoonRouteImport } from './routes/coming-soon'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as ExploreRouteImport } from './routes/explore'
@@ -72,6 +73,11 @@ const IndexRoute = IndexRouteImport.update({
 const AdminRoute = AdminRouteImport.update({
   id: '/admin',
   path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ComingSoonRoute = ComingSoonRouteImport.update({
+  id: '/coming-soon',
+  path: '/coming-soon',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ContactRoute = ContactRouteImport.update({
@@ -338,6 +344,7 @@ const TasksTaskIdWorkspaceRoute = TasksTaskIdWorkspaceRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
+  '/coming-soon': typeof ComingSoonRoute
   '/contact': typeof ContactRoute
   '/dashboard': typeof DashboardRoute
   '/explore': typeof ExploreRoute
@@ -393,6 +400,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/coming-soon': typeof ComingSoonRoute
   '/contact': typeof ContactRoute
   '/dashboard': typeof DashboardRoute
   '/explore': typeof ExploreRoute
@@ -449,6 +457,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
+  '/coming-soon': typeof ComingSoonRoute
   '/contact': typeof ContactRoute
   '/dashboard': typeof DashboardRoute
   '/explore': typeof ExploreRoute
@@ -507,6 +516,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/admin'
+    | '/coming-soon'
     | '/contact'
     | '/dashboard'
     | '/explore'
@@ -562,6 +572,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/coming-soon'
     | '/contact'
     | '/dashboard'
     | '/explore'
@@ -617,6 +628,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/admin'
+    | '/coming-soon'
     | '/contact'
     | '/dashboard'
     | '/explore'
@@ -674,6 +686,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRouteWithChildren
+  ComingSoonRoute: typeof ComingSoonRoute
   ContactRoute: typeof ContactRoute
   DashboardRoute: typeof DashboardRoute
   ExploreRoute: typeof ExploreRoute
@@ -723,6 +736,13 @@ declare module '@tanstack/react-router' {
       path: '/admin'
       fullPath: '/admin'
       preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/coming-soon': {
+      id: '/coming-soon'
+      path: '/coming-soon'
+      fullPath: '/coming-soon'
+      preLoaderRoute: typeof ComingSoonRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/contact': {
@@ -1149,6 +1169,7 @@ const TasksRouteWithChildren = TasksRoute._addFileChildren(TasksRouteChildren)
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRouteWithChildren,
+  ComingSoonRoute: ComingSoonRoute,
   ContactRoute: ContactRoute,
   DashboardRoute: DashboardRoute,
   ExploreRoute: ExploreRoute,

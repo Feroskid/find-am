@@ -109,7 +109,7 @@ function LoginPage() {
 
             <p className="mt-6 text-center text-sm text-muted-foreground">
               New to Find-task?{" "}
-              <Link to="/register" className="font-medium text-primary hover:underline">Create an account</Link>
+              <Link to="/coming-soon" className="font-medium text-primary hover:underline">Create an account</Link>
             </p>
           </div>
         </div>

@@ -11,7 +11,7 @@ import { useAuth } from "@/lib/auth";
  * preserving the current URL as ?next=… so they land back where they were.
  */
 const PUBLIC_PATHS = [
-  "/", "/login", "/register", "/reset-password", "/verify-email",
+  "/", "/login", "/register", "/coming-soon", "/reset-password", "/verify-email",
   "/auth/verify-email", "/privacy", "/terms", "/refund", "/contact",
 ];
 
