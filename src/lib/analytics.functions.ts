@@ -49,6 +49,7 @@ export const trackEventServer = createServerFn({ method: "POST" })
           search_query: data.search_query ?? "",
           time_spent: data.time_spent ?? 0,
           device_type: data.device_type ?? "desktop",
+          visit_id: visitId,
         }),
       });
       return { ok: res.ok, status: res.status };
