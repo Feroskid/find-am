@@ -42,6 +42,14 @@ export const trackEventServer = createServerFn({ method: "POST" })
           accept: "application/json",
           "x-forwarded-for": ip,
           "user-agent": ua || "Find-Am/1.0",
+          // Forward the caller's session so analytics can attribute the event
+          // to a logged-in user. Falls back to the incoming Authorization header.
+          ...(() => {
+            const bearer = data.token
+              ? `Bearer ${data.token.replace(/^Bearer\s+/i, "")}`
+              : getRequestHeader("authorization") || "";
+            return bearer ? { authorization: bearer } : {};
+          })(),
         },
         body: JSON.stringify({
           action_type: data.action_type,
