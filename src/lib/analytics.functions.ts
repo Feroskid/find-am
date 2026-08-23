@@ -26,6 +26,12 @@ export const trackEventServer = createServerFn({ method: "POST" })
       getRequestHeader("x-real-ip") ||
       "";
     const ua = getRequestHeader("user-agent") || "";
+    // Prefer the visit id the browser read from the session-id cookie; fall back
+    // to the same cookie as seen on the server request.
+    const visitId =
+      data.visit_id ||
+      getRequestHeader("cookie")?.match(/(?:^|;\s*)session-id=([^;]+)/)?.[1] ||
+      null;
 
     try {
       const res = await fetch(ANALYTICS_URL, {
