@@ -241,7 +241,17 @@ function UserContextPanel({ ctx, userId }: { ctx: any; userId: string }) {
     <div className="rounded-xl border border-border bg-card p-4 space-y-3">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div className="min-w-0">
-          <h3 className="font-semibold text-ink">{u.name ?? `User ${userId}`}</h3>
+          <div className="flex flex-wrap items-center gap-2">
+            <h3 className="font-semibold text-ink">{u.name ?? `User ${userId}`}</h3>
+            <Link
+              to="/u/$userId"
+              params={{ userId: String(u.user_id ?? userId) }}
+              target="_blank"
+              className="inline-flex items-center gap-1 rounded-full border border-border px-2 py-0.5 text-[11px] font-semibold text-primary hover:bg-muted"
+            >
+              View profile
+            </Link>
+          </div>
           <p className="text-xs text-muted-foreground">{[u.email, u.phone, u.user_id ?? userId].filter(Boolean).join(" · ")}</p>
           <p className="mt-0.5 text-[11px] text-muted-foreground">Joined {when(u.created_at)} · Last login {when(u.last_login)}</p>
         </div>
