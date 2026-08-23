@@ -8,10 +8,16 @@ function detectDevice(): "desktop" | "mobile" | "tablet" {
   return "desktop";
 }
 
+function readVisitId(): string | null {
+  if (typeof document === "undefined") return null;
+  return document.cookie.match(/(?:^|;\s*)session-id=([^;]+)/)?.[1] ?? null;
+}
+
 /** Fire-and-forget analytics tracker. Never throws. */
 export function track(input: Omit<TrackInput, "device_type"> & { device_type?: TrackInput["device_type"] }) {
   const payload: TrackInput = {
     device_type: detectDevice(),
+    visit_id: readVisitId(),
     ...input,
   };
   // Don't await — never block UI.

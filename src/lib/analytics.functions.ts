@@ -11,6 +11,7 @@ const TrackInputSchema = z.object({
   search_query: z.string().max(200).optional(),
   time_spent: z.number().int().optional(),
   device_type: z.enum(["desktop", "mobile", "tablet"]).optional(),
+  visit_id: z.string().max(200).nullable().optional(),
 });
 
 export type TrackInput = z.input<typeof TrackInputSchema>;
@@ -25,6 +26,12 @@ export const trackEventServer = createServerFn({ method: "POST" })
       getRequestHeader("x-real-ip") ||
       "";
     const ua = getRequestHeader("user-agent") || "";
+    // Prefer the visit id the browser read from the session-id cookie; fall back
+    // to the same cookie as seen on the server request.
+    const visitId =
+      data.visit_id ||
+      getRequestHeader("cookie")?.match(/(?:^|;\s*)session-id=([^;]+)/)?.[1] ||
+      null;
 
     try {
       const res = await fetch(ANALYTICS_URL, {
@@ -42,6 +49,7 @@ export const trackEventServer = createServerFn({ method: "POST" })
           search_query: data.search_query ?? "",
           time_spent: data.time_spent ?? 0,
           device_type: data.device_type ?? "desktop",
+          visit_id: visitId,
         }),
       });
       return { ok: res.ok, status: res.status };

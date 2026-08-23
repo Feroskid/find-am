@@ -110,21 +110,6 @@ function TasksHome() {
         </div>
       </section>
 
-      {/* MEMBERSHIP BAND */}
-      <section className="bg-surface-warm">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 py-14 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-          <div>
-            <div className="text-xs font-bold uppercase tracking-widest text-primary">Find-task Membership</div>
-            <h2 className="mt-1 font-display text-3xl sm:text-5xl text-ink leading-tight max-w-xl">
-              Unlock ₦0 connection fees all year round.
-            </h2>
-          </div>
-          <Link to="/register" className="inline-flex items-center gap-2 rounded-full bg-ink px-6 py-3 text-sm font-bold text-background hover:opacity-90">
-            Join now <ArrowRight className="h-4 w-4" />
-          </Link>
-        </div>
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 pb-4 text-xs text-muted-foreground">Membership ₦12,000/yr. T&Cs apply.</div>
-      </section>
 
       {/* HOW IT WORKS */}
       <section className="mx-auto w-full max-w-7xl px-4 sm:px-6 py-16">
@@ -298,7 +283,7 @@ function TasksHome() {
       {/* FEATURED TASKERS */}
       <section className="bg-surface-soft py-16">
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
-          <h2 className="font-display text-3xl sm:text-4xl text-ink text-center">160,000+ Taskers earning income on Find-task</h2>
+          <h2 className="font-display text-3xl sm:text-4xl text-ink text-center">Verified Taskers earning income on Find-am</h2>
           <div className="mt-10 grid md:grid-cols-2 gap-6">
             {[
               { name: "Hassan O.", rating: "5.0", ratings: 73, completion: "97%", speciality: "24/7 emergency plumbing, gas fitting, renovations", quote: "A+++ for Hassan! Highly professional, punctual and he did it all with a friendly smile.", by: "Nic K." },
