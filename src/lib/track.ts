@@ -13,11 +13,22 @@ function readVisitId(): string | null {
   return document.cookie.match(/(?:^|;\s*)session-id=([^;]+)/)?.[1] ?? null;
 }
 
+function readToken(): string | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem("findam:auth");
+    return raw ? (JSON.parse(raw)?.token ?? null) : null;
+  } catch {
+    return null;
+  }
+}
+
 /** Fire-and-forget analytics tracker. Never throws. */
 export function track(input: Omit<TrackInput, "device_type"> & { device_type?: TrackInput["device_type"] }) {
   const payload: TrackInput = {
     device_type: detectDevice(),
     visit_id: readVisitId(),
+    token: readToken(),
     ...input,
   };
   // Don't await — never block UI.
