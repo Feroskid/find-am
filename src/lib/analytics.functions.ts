@@ -12,6 +12,7 @@ const TrackInputSchema = z.object({
   time_spent: z.number().int().optional(),
   device_type: z.enum(["desktop", "mobile", "tablet"]).optional(),
   visit_id: z.string().max(200).nullable().optional(),
+  token: z.string().max(4000).nullable().optional(),
 });
 
 export type TrackInput = z.input<typeof TrackInputSchema>;
@@ -33,15 +34,24 @@ export const trackEventServer = createServerFn({ method: "POST" })
       getRequestHeader("cookie")?.match(/(?:^|;\s*)session-id=([^;]+)/)?.[1] ||
       null;
 
+    // Forward the caller's session so analytics can attribute the event to a
+    // logged-in user. Falls back to the incoming Authorization header.
+    const bearer = data.token
+      ? `Bearer ${data.token.replace(/^Bearer\s+/i, "")}`
+      : getRequestHeader("authorization") || "";
+
+    const headers: Record<string, string> = {
+      "content-type": "application/json",
+      accept: "application/json",
+      "x-forwarded-for": ip,
+      "user-agent": ua || "Find-Am/1.0",
+    };
+    if (bearer) headers["authorization"] = bearer;
+
     try {
       const res = await fetch(ANALYTICS_URL, {
         method: "POST",
-        headers: {
-          "content-type": "application/json",
-          accept: "application/json",
-          "x-forwarded-for": ip,
-          "user-agent": ua || "Find-Am/1.0",
-        },
+        headers,
         body: JSON.stringify({
           action_type: data.action_type,
           listing_id: data.listing_id ?? null,

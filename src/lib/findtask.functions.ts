@@ -507,7 +507,16 @@ export const updateProfile = createServerFn({ method: "POST" })
 // ratings come embedded in that response.
 export const getPublicUser = createServerFn({ method: "POST" })
   .inputValidator((i: unknown) => z.object({ userId: UserId, token: Token.optional() }).parse(i))
-  .handler(async ({ data }) => call(`/user/${data.userId}/profile`, { token: data.token }));
+  .handler(async ({ data }) => {
+    const r = await call(`/user/${data.userId}/profile`, { token: data.token });
+    // Public profiles must stay viewable even when the caller's token is
+    // rejected (e.g. admin-scoped token) — retry anonymously instead of
+    // bubbling a 401 that would sign the viewer out.
+    if (!r.ok && (r.status === 401 || r.status === 403) && data.token) {
+      return call(`/user/${data.userId}/profile`);
+    }
+    return r;
+  });
 
 
 // Legacy aliases kept so existing UI keeps compiling. Both now return
