@@ -55,7 +55,7 @@ function PublicProfilePage() {
     <div className="min-h-screen flex flex-col bg-background">
       <TaskHeader />
       <main className="mx-auto w-full max-w-5xl px-4 sm:px-6 py-8 flex-1">
-        {uQ.isFetching && !u ? (
+        {(!ready || uQ.isFetching) && !u ? (
           <div className="text-muted-foreground inline-flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" /> Loading…</div>
         ) : !uQ.data?.ok ? (
           <div className="rounded-xl border border-destructive/40 bg-destructive/10 p-4 text-sm text-destructive">{uQ.data?.error ?? "User not found."}</div>
