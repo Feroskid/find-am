@@ -14,13 +14,17 @@ export const Route = createFileRoute("/u/$userId")({
 
 function PublicProfilePage() {
   const { userId } = Route.useParams();
-  const { token } = useAuth();
+  const { token, ready } = useAuth();
   const uFn = useServerFn(getPublicUser);
 
   const uQ = useQuery({
     queryKey: ["pu", userId, token ? "auth" : "anon"],
+    // Wait for auth hydration: firing anonymously would 401 and bounce the
+    // viewer (e.g. an admin opening this in a new tab) to /login.
+    enabled: ready,
     queryFn: () => uFn({ data: { userId, token: token ?? undefined } }),
   });
+
 
 
   const raw: any = uQ.data?.ok ? uQ.data.data : null;
