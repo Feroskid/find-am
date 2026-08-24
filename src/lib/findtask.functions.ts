@@ -509,14 +509,20 @@ export const getPublicUser = createServerFn({ method: "POST" })
   .inputValidator((i: unknown) => z.object({ userId: UserId, token: Token.optional() }).parse(i))
   .handler(async ({ data }) => {
     const r = await call(`/user/${data.userId}/profile`, { token: data.token });
-    // Public profiles must stay viewable even when the caller's token is
-    // rejected (e.g. admin-scoped token) — retry anonymously instead of
-    // bubbling a 401 that would sign the viewer out.
-    if (!r.ok && (r.status === 401 || r.status === 403) && data.token) {
-      return call(`/user/${data.userId}/profile`);
+    if (r.ok) return r;
+    // Public profiles must never sign the viewer out: retry anonymously and,
+    // if that also fails, return a soft error instead of a 401 payload that
+    // SessionGuard would treat as an expired session.
+    if (r.status === 401 || r.status === 403) {
+      if (data.token) {
+        const anon = await call(`/user/${data.userId}/profile`);
+        if (anon.ok) return anon;
+      }
+      return { ok: false as const, status: 200, error: "This profile is not available." };
     }
     return r;
   });
+
 
 
 // Legacy aliases kept so existing UI keeps compiling. Both now return
