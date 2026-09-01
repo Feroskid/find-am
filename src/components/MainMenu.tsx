@@ -33,6 +33,7 @@ export function MainMenu() {
         { to: "/profile", label: "Settings", chevron: true },
         { to: "/tasks/categories", label: "Discover", chevron: true },
         { to: "/community", label: "Help topics", chevron: true },
+        { to: "/faq", label: "FAQ" },
         ...(isAdmin ? [{ to: "/admin", label: "Admin Console", chevron: true }] : []),
       ]
     : [
@@ -40,6 +41,7 @@ export function MainMenu() {
         { to: "/explore", label: "Browse tasks" },
         { to: "/tasks/categories", label: "Discover", chevron: true },
         { to: "/community", label: "Help topics", chevron: true },
+        { to: "/faq", label: "FAQ" },
         { to: "/login", label: "Log in" },
         { to: "/coming-soon", label: "Sign up" },
       ];

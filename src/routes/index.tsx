@@ -209,6 +209,7 @@ function Home() {
         <footer className="relative z-10 mt-auto bg-primary-soft/60 px-6 py-4 flex flex-wrap justify-between text-sm text-muted-foreground">
           <div className="flex flex-wrap gap-6">
             <Link to="/contact" className="hover:text-foreground hover:underline">Contact Us</Link>
+            <Link to="/faq" className="hover:text-foreground hover:underline">FAQ</Link>
             <Link to="/community" className="hover:text-foreground hover:underline">{t.advertising}</Link>
             <Link to="/community" className="hover:text-foreground hover:underline">{t.business}</Link>
             <Link to="/community" className="hover:text-foreground hover:underline">Community</Link>
@@ -219,6 +220,7 @@ function Home() {
             <Link to="/refund" className="hover:text-foreground hover:underline">Refund Policy</Link>
             <Link to="/profile" className="hover:text-foreground hover:underline">{t.settings}</Link>
           </div>
+          <div className="mt-3 w-full text-xs text-muted-foreground">Integer Tech Ltd · RC Number: 9598372 · Nigeria</div>
         </footer>
       </div>
     </div>
