@@ -8,6 +8,7 @@ const COLS: { title: string; links: { to: string; label: string }[] }[] = [
       { to: "/explore", label: "Browse tasks" },
       { to: "/tasks/categories", label: "Categories" },
       { to: "/map", label: "Live task map" },
+        { to: "/faq", label: "FAQ" },
       { to: "/community", label: "Community" },
       { to: "/coming-soon", label: "Earn money" },
     ],
@@ -87,7 +88,7 @@ export function Footer() {
 
         <div className="mt-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between text-xs text-footer-foreground/60">
           <div>
-            Integer Tech Ltd © {new Date().getFullYear()}. All rights reserved. Find-task is operated by Integer Tech Ltd · 🇳🇬 Nigeria
+            Integer Tech Ltd © {new Date().getFullYear()}. All rights reserved. Find-task is operated by Integer Tech Ltd · RC Number: 9598372 · 🇳🇬 Nigeria
           </div>
           <nav className="flex flex-wrap items-center gap-x-5 gap-y-2 font-semibold text-footer-foreground/85">
             <Link to="/terms" className="hover:text-footer-foreground hover:underline">Terms &amp; Conditions</Link>
