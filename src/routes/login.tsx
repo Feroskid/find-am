@@ -10,6 +10,7 @@ import { useAuth, pickToken, pickUser } from "@/lib/auth";
 export const Route = createFileRoute("/login")({
   head: () => ({
     meta: [
+      { name: "robots", content: "noindex, nofollow" },
       { title: "Log in — Find-task" },
       { name: "description", content: "Log in to your Find-task account to post tasks and manage your work." },
     ],

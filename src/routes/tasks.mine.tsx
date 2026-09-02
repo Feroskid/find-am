@@ -9,7 +9,8 @@ import { getUserTasks } from "@/lib/findtask.functions";
 import { useAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/tasks/mine")({
-  head: () => ({ meta: [{ title: "My tasks — Find-task" }] }),
+  head: () => ({ meta: [
+      { name: "robots", content: "noindex, nofollow" },{ title: "My tasks — Find-task" }] }),
   component: MyTasksPage,
 });
 

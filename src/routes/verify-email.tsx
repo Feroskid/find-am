@@ -17,7 +17,8 @@ export const Route = createFileRoute("/verify-email")({
       email_verification_token: z.string().optional(),
       code: z.string().optional(),
     }).parse(s),
-  head: () => ({ meta: [{ title: "Verify your email — Find-task" }] }),
+  head: () => ({ meta: [
+      { name: "robots", content: "noindex, nofollow" },{ title: "Verify your email — Find-task" }] }),
   component: VerifyEmail,
 });
 

@@ -8,7 +8,8 @@ import { CommunityShell } from "@/components/community/CommunityShell";
 import { listReportsByStatus, resolveReport, moderateThread, getReportTarget } from "@/lib/community.functions";
 
 export const Route = createFileRoute("/community/moderation")({
-  head: () => ({ meta: [{ title: "Moderation — Find-Task Community" }] }),
+  head: () => ({ meta: [
+      { name: "robots", content: "noindex, nofollow" },{ title: "Moderation — Find-Task Community" }] }),
   component: ModPage,
 });
 

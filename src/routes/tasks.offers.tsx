@@ -10,6 +10,7 @@ import { getMyApplications } from "@/lib/findtask.functions";
 export const Route = createFileRoute("/tasks/offers")({
   head: () => ({
     meta: [
+      { name: "robots", content: "noindex, nofollow" },
       { title: "My offers — Find-task" },
       { name: "description", content: "Every offer you've made on Find-task — pending, accepted and declined — in one place." },
     ],

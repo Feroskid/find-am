@@ -12,7 +12,8 @@ const Search = z.object({ category: z.string().optional() });
 
 export const Route = createFileRoute("/community/new")({
   validateSearch: (s) => Search.parse(s),
-  head: () => ({ meta: [{ title: "New thread — Find-Task Community" }] }),
+  head: () => ({ meta: [
+      { name: "robots", content: "noindex, nofollow" },{ title: "New thread — Find-Task Community" }] }),
   component: NewThreadPage,
 });
 

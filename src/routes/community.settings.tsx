@@ -8,7 +8,8 @@ import { getMyCommunityProfile, updateCommunityProfile } from "@/lib/community.f
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/community/settings")({
-  head: () => ({ meta: [{ title: "Settings — Find-Task Community" }] }),
+  head: () => ({ meta: [
+      { name: "robots", content: "noindex, nofollow" },{ title: "Settings — Find-Task Community" }] }),
   component: SettingsPage,
 });
 

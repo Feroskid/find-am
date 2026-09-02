@@ -18,7 +18,8 @@ import {
 } from "@/lib/findtask.functions";
 
 export const Route = createFileRoute("/dashboard")({
-  head: () => ({ meta: [{ title: "Dashboard — Find-task" }] }),
+  head: () => ({ meta: [
+      { name: "robots", content: "noindex, nofollow" },{ title: "Dashboard — Find-task" }] }),
   component: Dashboard,
 });
 

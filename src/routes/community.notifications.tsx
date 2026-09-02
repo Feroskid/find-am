@@ -7,7 +7,8 @@ import { CommunityShell } from "@/components/community/CommunityShell";
 import { listMyNotifications, markCommunityNotifRead } from "@/lib/community.functions";
 
 export const Route = createFileRoute("/community/notifications")({
-  head: () => ({ meta: [{ title: "Notifications — Find-Task Community" }] }),
+  head: () => ({ meta: [
+      { name: "robots", content: "noindex, nofollow" },{ title: "Notifications — Find-Task Community" }] }),
   component: NotificationsPage,
 });
 

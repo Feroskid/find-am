@@ -5,7 +5,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { CommunityShell } from "@/components/community/CommunityShell";
 
 export const Route = createFileRoute("/community/auth")({
-  head: () => ({ meta: [{ title: "Sign in — Find-Task Community" }] }),
+  head: () => ({ meta: [
+      { name: "robots", content: "noindex, nofollow" },{ title: "Sign in — Find-Task Community" }] }),
   component: AuthPage,
 });
 

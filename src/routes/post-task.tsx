@@ -14,7 +14,8 @@ import { getCategories, createTask } from "@/lib/findtask.functions";
 import { computeFees, formatNaira } from "@/lib/fees";
 
 export const Route = createFileRoute("/post-task")({
-  head: () => ({ meta: [{ title: "Post a task — Find-task" }] }),
+  head: () => ({ meta: [
+      { name: "robots", content: "noindex, nofollow" },{ title: "Post a task — Find-task" }] }),
   component: PostTaskPage,
 });
 

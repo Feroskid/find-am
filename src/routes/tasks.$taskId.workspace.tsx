@@ -23,7 +23,8 @@ export const Route = createFileRoute("/tasks/$taskId/workspace")({
     dispute:
       s.dispute === 1 || s.dispute === "1" || s.dispute === true ? 1 : (undefined as 1 | undefined),
   }),
-  head: () => ({ meta: [{ title: "Task workspace — Find-task" }] }),
+  head: () => ({ meta: [
+      { name: "robots", content: "noindex, nofollow" },{ title: "Task workspace — Find-task" }] }),
   component: WorkspacePage,
 });
 
