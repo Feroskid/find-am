@@ -8,7 +8,8 @@ import { CommunityShell } from "@/components/community/CommunityShell";
 import { searchCommunity } from "@/lib/community.functions";
 
 export const Route = createFileRoute("/community/search")({
-  head: () => ({ meta: [{ title: "Search — Find-Task Community" }] }),
+  head: () => ({ meta: [
+      { name: "robots", content: "noindex, nofollow" },{ title: "Search — Find-Task Community" }] }),
   validateSearch: (s) => z.object({ q: z.string().optional().default("") }).parse(s),
   component: SearchPage,
 });

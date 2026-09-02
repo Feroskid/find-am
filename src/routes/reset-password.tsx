@@ -11,7 +11,8 @@ import { z } from "zod";
 
 export const Route = createFileRoute("/reset-password")({
   validateSearch: (s) => z.object({ token: z.string().optional() }).parse(s),
-  head: () => ({ meta: [{ title: "Reset password — Find-task" }] }),
+  head: () => ({ meta: [
+      { name: "robots", content: "noindex, nofollow" },{ title: "Reset password — Find-task" }] }),
   component: ResetPassword,
 });
 

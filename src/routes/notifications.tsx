@@ -15,7 +15,8 @@ import {
 } from "@/lib/findtask.functions";
 
 export const Route = createFileRoute("/notifications")({
-  head: () => ({ meta: [{ title: "Notifications — Find-task" }] }),
+  head: () => ({ meta: [
+      { name: "robots", content: "noindex, nofollow" },{ title: "Notifications — Find-task" }] }),
   component: NotificationsPage,
 });
 

@@ -8,7 +8,8 @@ import { getMyConversations } from "@/lib/findtask.functions";
 import { useAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/messages/")({
-  head: () => ({ meta: [{ title: "Messages — Find-task" }] }),
+  head: () => ({ meta: [
+      { name: "robots", content: "noindex, nofollow" },{ title: "Messages — Find-task" }] }),
   component: MessagesInbox,
 });
 

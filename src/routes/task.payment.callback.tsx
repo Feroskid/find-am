@@ -18,7 +18,8 @@ const Search = z.object({
 
 export const Route = createFileRoute("/task/payment/callback")({
   validateSearch: (s) => Search.parse(s),
-  head: () => ({ meta: [{ title: "Confirming payment — Find-task" }] }),
+  head: () => ({ meta: [
+      { name: "robots", content: "noindex, nofollow" },{ title: "Confirming payment — Find-task" }] }),
   component: PaymentCallbackPage,
 });
 

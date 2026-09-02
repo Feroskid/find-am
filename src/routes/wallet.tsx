@@ -23,7 +23,8 @@ function errText(e: any, fallback = "Something went wrong. Please try again."): 
 }
 
 export const Route = createFileRoute("/wallet")({
-  head: () => ({ meta: [{ title: "Wallet — Find-task" }] }),
+  head: () => ({ meta: [
+      { name: "robots", content: "noindex, nofollow" },{ title: "Wallet — Find-task" }] }),
   component: WalletPage,
 });
 

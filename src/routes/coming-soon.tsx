@@ -6,6 +6,7 @@ import { Clock, ArrowLeft } from "lucide-react";
 export const Route = createFileRoute("/coming-soon")({
   head: () => ({
     meta: [
+      { name: "robots", content: "noindex, nofollow" },
       { title: "Coming soon — Find-task" },
       { name: "description", content: "This feature is coming soon to Find-task." },
     ],

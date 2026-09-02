@@ -14,7 +14,8 @@ import { useAuth } from "@/lib/auth";
 import { getMe, updateProfile, getCategories, getPublicUser } from "@/lib/findtask.functions";
 
 export const Route = createFileRoute("/profile")({
-  head: () => ({ meta: [{ title: "Your profile — Find-task" }] }),
+  head: () => ({ meta: [
+      { name: "robots", content: "noindex, nofollow" },{ title: "Your profile — Find-task" }] }),
   component: ProfilePage,
 });
 
