@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { TaskHeader } from "@/components/TaskHeader";
 import { Footer } from "@/components/Footer";
-import { Clock, ArrowLeft } from "lucide-react";
+import { Clock, ArrowLeft, ExternalLink } from "lucide-react";
 
 export const Route = createFileRoute("/coming-soon")({
   head: () => ({
@@ -27,10 +27,20 @@ function ComingSoonPage() {
           <p className="mt-3 text-sm text-muted-foreground">
             We&apos;re building something great. Check back shortly — this page will be live very soon.
           </p>
-          <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
+          <p className="mt-6 text-sm font-semibold text-ink">Be first to know — join the waitlist</p>
+          <a
+            href="http://waitlist.find-am.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-3 inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-bold text-primary-foreground hover:opacity-90"
+          >
+            Join the waitlist <ExternalLink className="h-4 w-4" />
+          </a>
+
+          <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
             <Link
               to="/"
-              className="inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-bold text-primary-foreground hover:opacity-90"
+              className="inline-flex items-center gap-2 rounded-full border border-border px-6 py-3 text-sm font-bold text-ink hover:bg-accent"
             >
               <ArrowLeft className="h-4 w-4" /> Go home
             </Link>
