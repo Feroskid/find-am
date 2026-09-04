@@ -191,5 +191,14 @@
   html, body {
     background-color: var(--color-background);
     color: var(--color-foreground);
+    /* Phones must never be able to drag the page sideways. `clip` keeps
+       sticky headers working, unlike `hidden`. */
+    max-width: 100%;
+    overflow-x: clip;
+  }
+
+  /* Media and embeds can't push the layout wider than the screen. */
+  img, svg, video, canvas, iframe, table {
+    max-width: 100%;
   }
 }
