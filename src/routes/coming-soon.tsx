@@ -40,7 +40,7 @@ function ComingSoonPage() {
           <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
             <Link
               to="/"
-              className="inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-bold text-primary-foreground hover:opacity-90"
+              className="inline-flex items-center gap-2 rounded-full border border-border px-6 py-3 text-sm font-bold text-ink hover:bg-accent"
             >
               <ArrowLeft className="h-4 w-4" /> Go home
             </Link>
