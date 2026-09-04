@@ -10,7 +10,7 @@ const CONTACT_PHONE = "+2348115880524";
 const CONTACT_PHONE_DISPLAY = "+234 811 588 0524";
 const CONTACT_ADDRESS = "4, Itakogun, Ilesa, Osun State, Nigeria";
 
-const CONTACT_EMAIL = "integerpj@gmail.com";
+const CONTACT_EMAIL = "Contact@find-am.com";
 
 export const Route = createFileRoute("/contact")({
   head: () => ({
