@@ -1,47 +1,42 @@
-# Community control room (full edit access)
+# Sitemap rebuild to match the audit
 
-## What you get
+## What the audit asked for vs what the site has now
 
-There is no separate website address for the community — it lives inside your own app, on the same backend as everything else. So instead of an outside link, you get a **Community** tab inside your existing admin area (`/admin/community`) where you can edit anything in the community, plus direct data access from your Cloud backend view.
+The audit was taken on 24 August, before the sitemap work. Two of its points are already done: `/sitemap.xml` now exists and answers, and `robots.txt` already carries the `Sitemap:` line.
 
-Access: your admin account, and anyone you mark as a community moderator.
+What is still missing is the **size and shape** of the list. The audit expects about 110 addresses; the current one has 12 fixed pages plus the community categories — roughly 18. All the landing pages that would actually bring search traffic are absent.
 
-## Sections in the new tab
+## What gets added
 
-**Categories**
-- Create, rename, re-describe, change icon, reorder
-- Hide or delete a category (threads inside are moved or removed with a confirmation)
+Keeping the 12 core pages already listed (home, Find-task home, explore, browse, categories, live map, community, contact, privacy, terms, refund, FAQ), the list grows with:
 
-**Discussions**
-- Search and filter all threads (newest, most replies, reported, hidden)
-- Edit a thread's title and body, move it to another category
-- Pin / unpin, lock / unlock, hide / restore, delete permanently
+- **Task category pages** — one browse address per task category (Automotive, Home Services, Digital & Tech, Cleaning, and the rest).
+- **City pages** — one browse address per major Nigerian city (Lagos, Abuja, Port Harcourt, Ibadan, Kano, Benin City, Enugu), plus a remote-only page.
+- **Job search landing pages** — one per popular job title (Software Developer, Accountant, Driver, Teacher, Electrician, and about twenty more).
+- **Job title by city pages** — the strongest of those titles combined with the biggest cities, roughly fifty addresses.
+- **Community category pages** — kept as they are, read live from the community data.
 
-**Replies**
-- Open any thread and edit or delete individual replies
-- Restore replies that were removed
+Anything private stays out, exactly as the audit says: sign-in, register, password reset, profile, dashboard, wallet, my tasks, post a task, coming soon, community sign-in/new/search, messages, admin, and individual task pages (they expire and would turn into dead links at scale).
 
-**Members**
-- Search community members, open a profile
-- Edit display name, username, bio, signature
-- Grant or remove moderator status
-- Adjust points / rank, and suspend a member from posting
+## The three side notes in the audit
 
-**Reports**
-- The existing moderation queue stays; it gets a link into this new tab so a report opens the exact item for editing
+Those are separate from the sitemap, so I'm listing them rather than folding them in:
 
-## Direct data access
+1. Address tags (canonical) are missing on most pages.
+2. The share title on every page still reads the old "FindAm" wording.
+3. There is no job listing structured data for Google Jobs.
 
-The community tables (categories, threads, replies, votes, members, reports, notifications) are already in your Cloud backend, viewable and editable from the backend panel in Lovable. I'll confirm the tables are all listed there and point you at them after the console is in place.
+Say the word and I'll do them next; this plan only covers the sitemap.
 
 ## Technical notes
 
-- New route `src/routes/admin.community.tsx` (plus `admin.community.$section` sub-views if needed), added to the `TABS` list in `src/routes/admin.tsx`, so it inherits the existing `useAdminGate` protection and `noindex`.
-- New server functions in `src/lib/community-admin.functions.ts`, each with `.middleware([requireSupabaseAuth])` and a guard that requires either platform admin (same check as `admin-gate`) or `is_community_mod`. No client-side role checks.
-- Writes go through the authenticated user client so RLS still applies; a migration adds admin/mod-scoped policies (and GRANTs) where current policies only allow authors — e.g. moderator UPDATE/DELETE on `community_threads`, `community_posts`, `community_categories`, `community_profiles`.
-- Adds `is_hidden`/soft-delete handling consistently, and a `community_moderation_log` table recording who changed what, with GRANTs and read-only-to-mods policy.
-- Reuses `CommunityShell`-free plain admin styling to match the rest of `/admin`.
+- Keep the existing server route `src/routes/sitemap[.]xml.ts` (do not move to a static `public/sitemap.xml` — a static file cannot stay in sync with the community data).
+- Add local constant lists in that file: `TASK_CATEGORY_SLUGS` sourced from `src/lib/findtask-categories.ts`, `CITIES`, `JOB_TITLES`, and a `TITLE_CITY` pairing set.
+- Facet URLs follow the routes' real search params: `/tasks/browse?category=<slug>`, `/tasks/browse?location=<city>`, `/tasks/browse?is_remote=1`, and `/search?q=<title>` / `/search?q=<title>%20<city>` (matching `validateSearch` in `tasks.browse.tsx` and `search.tsx`).
+- Deduplicate by path, XML-escape every `loc` (ampersands in facet URLs must become `&amp;`), keep `Cache-Control: public, max-age=3600`, no `lastmod` (no page-specific timestamp exists).
+- Community categories continue through the anonymous publishable-key client with the `apikey` header.
+- Verify by requesting `/sitemap.xml` locally and counting entries before publishing.
 
-## Out of scope
+## After the build
 
-- No public URL for editing, and no database password or service key exposure — editing stays behind admin sign-in.
+I'll paste the full sitemap file contents into chat so you have the code, then publish so the live address serves the new list.
