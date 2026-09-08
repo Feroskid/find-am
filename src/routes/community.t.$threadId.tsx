@@ -6,6 +6,7 @@ import { ArrowUp, ArrowDown, Loader2, Lock, Bookmark, CheckCircle2, Flag, Pin } 
 import { toast } from "sonner";
 import { CommunityShell, RankBadge } from "@/components/community/CommunityShell";
 import { getThread, replyToThread, voteOn, toggleBookmark, isBookmarked, acceptAnswer, reportContent } from "@/lib/community.functions";
+import { memberAvatar } from "@/lib/community-avatars";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/community/t/$threadId")({
@@ -70,13 +71,12 @@ function ThreadPage() {
         {accepted && <div className="px-4 py-1 bg-emerald-50 text-emerald-700 text-[11px] font-bold uppercase inline-flex items-center gap-1"><CheckCircle2 className="h-3 w-3" /> Accepted answer</div>}
         <div className="flex">
           <div className="w-32 shrink-0 bg-black/[0.02] border-r border-black/5 p-3 text-center">
-            {p?.avatar_url ? (
-              <img src={p.avatar_url} alt="" className="mx-auto h-12 w-12 rounded-full object-cover" />
-            ) : (
-              <div className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-gradient-to-br from-[#E5A54B] to-[#c88a2f] text-white font-bold">
-                {(p?.display_name ?? p?.username ?? "?")[0]?.toUpperCase()}
-              </div>
-            )}
+            <img
+              src={memberAvatar(p?.avatar_url, authorId)}
+              alt={p?.display_name ?? p?.username ?? "member"}
+              className="mx-auto h-12 w-12 rounded-full object-cover bg-black/5"
+            />
+
             <Link to="/community/u/$username" params={{ username: p?.username ?? "unknown" }} className="mt-2 font-semibold text-xs truncate block hover:text-[#E5A54B]">
               {p?.display_name ?? p?.username ?? "user"}
             </Link>

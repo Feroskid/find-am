@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { CommunityShell } from "@/components/community/CommunityShell";
 import { getMyCommunityProfile, updateCommunityProfile } from "@/lib/community.functions";
+import { ALL_AVATARS, memberAvatar } from "@/lib/community-avatars";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/community/settings")({
@@ -64,7 +65,22 @@ function SettingsPage() {
       <div className="rounded-2xl bg-white border border-black/10 p-6 space-y-4 max-w-xl">
         <Field label="Display name" k="display_name" />
         <Field label="Username" k="username" />
-        <Field label="Avatar URL" k="avatar_url" />
+        <div>
+          <span className="text-xs font-semibold text-black/70 uppercase tracking-wider">Profile picture</span>
+          <div className="mt-2 flex items-center gap-3">
+            <img src={memberAvatar(form.avatar_url, q.data?.ok ? (q.data.data as any)?.id : null)} alt="" className="h-14 w-14 rounded-full object-cover bg-black/5" />
+            <p className="text-xs text-black/60">Pick one of the pictures below, or leave it as the one assigned to you.</p>
+          </div>
+          <div className="mt-3 grid grid-cols-8 gap-2">
+            {ALL_AVATARS.map((src) => (
+              <button key={src} type="button" onClick={() => setForm({ ...form, avatar_url: src })}
+                className={`rounded-full overflow-hidden border-2 ${form.avatar_url === src ? "border-[#E5A54B]" : "border-transparent"}`}>
+                <img src={src} alt="" className="h-9 w-9 object-cover" />
+              </button>
+            ))}
+          </div>
+        </div>
+
         <Field label="Bio" k="bio" area />
         <Field label="Signature" k="signature" area />
         <button disabled={save.isPending} onClick={() => save.mutate()} className="rounded-lg bg-[#E5A54B] text-white px-5 py-2 font-bold text-sm disabled:opacity-50">

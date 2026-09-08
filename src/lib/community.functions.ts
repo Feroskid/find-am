@@ -189,7 +189,7 @@ export const updateCommunityProfile = createServerFn({ method: "POST" })
     username: z.string().regex(/^[a-z0-9_]{3,30}$/).optional(),
     bio: z.string().max(500).optional(),
     signature: z.string().max(200).optional(),
-    avatar_url: z.string().url().max(500).optional(),
+    avatar_url: z.union([z.string().url().max(500), z.string().regex(/^\/avatars\/av-\d{2}\.png$/)]).optional(),
   }).parse(i))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
