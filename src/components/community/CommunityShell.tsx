@@ -2,6 +2,7 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState, type ReactNode } from "react";
 import { MessageSquare, Search, Bell, User, LogOut, LogIn, Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { memberAvatar } from "@/lib/community-avatars";
 
 export function CommunityShell({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<any>(null);
@@ -16,7 +17,7 @@ export function CommunityShell({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!session?.user) { setProfile(null); return; }
-    (supabase.from as any)("community_profiles").select("username, display_name, rank, points").eq("id", session.user.id).maybeSingle()
+    (supabase.from as any)("community_profiles").select("id, username, display_name, avatar_url, rank, points").eq("id", session.user.id).maybeSingle()
       .then(({ data }: any) => setProfile(data));
   }, [session?.user?.id]);
 
@@ -41,6 +42,8 @@ export function CommunityShell({ children }: { children: ReactNode }) {
               <Link to="/community/notifications" className="p-2 rounded-lg hover:bg-black/5"><Bell className="h-4 w-4" /></Link>
               <Link to="/community/new" className="hidden sm:inline-flex items-center gap-1 rounded-lg bg-[#1a1a1a] text-white px-3 py-1.5 text-sm font-semibold hover:opacity-90"><Plus className="h-4 w-4" /> New thread</Link>
               <div className="flex items-center gap-2 text-sm">
+                <img src={memberAvatar(profile?.avatar_url, session.user.id)} alt="" className="h-8 w-8 rounded-full object-cover bg-black/5" />
+
                 <div className="hidden sm:flex flex-col items-end leading-tight">
                   <span className="font-semibold">{profile?.display_name ?? profile?.username ?? "You"}</span>
                   <span className="text-[10px] text-[#E5A54B] font-bold uppercase">{profile?.rank ?? "Newbie"} · {profile?.points ?? 0}pts</span>

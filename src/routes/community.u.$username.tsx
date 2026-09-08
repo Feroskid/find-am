@@ -35,7 +35,7 @@ function ProfilePage() {
   if (!q.data?.ok) return <CommunityShell><p className="text-sm text-red-600">Profile not found.</p></CommunityShell>;
   const { profile, threads } = q.data.data;
 
-  const initial = (profile.display_name ?? profile.username)[0]?.toUpperCase();
+  
 
   return (
     <CommunityShell>
