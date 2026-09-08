@@ -1,4 +1,0 @@
-User-agent: *
-Allow: /
-
-Sitemap: https://find-am.com/sitemap.xml
