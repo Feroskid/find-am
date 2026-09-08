@@ -6,6 +6,7 @@ import { ArrowUp, ArrowDown, Loader2, Lock, Bookmark, CheckCircle2, Flag, Pin } 
 import { toast } from "sonner";
 import { CommunityShell, RankBadge } from "@/components/community/CommunityShell";
 import { getThread, replyToThread, voteOn, toggleBookmark, isBookmarked, acceptAnswer, reportContent } from "@/lib/community.functions";
+import { memberAvatar } from "@/lib/community-avatars";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/community/t/$threadId")({

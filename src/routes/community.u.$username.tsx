@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { Pencil, Bookmark, MessageSquare } from "lucide-react";
 import { CommunityShell, RankBadge } from "@/components/community/CommunityShell";
 import { getProfileByUsername, listMyBookmarks } from "@/lib/community.functions";
+import { memberAvatar } from "@/lib/community-avatars";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/community/u/$username")({
