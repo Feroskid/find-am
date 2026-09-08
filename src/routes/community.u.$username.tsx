@@ -39,13 +39,12 @@ function ProfilePage() {
   return (
     <CommunityShell>
       <div className="rounded-2xl bg-white border border-black/10 p-6 flex items-center gap-4">
-        {profile.avatar_url ? (
-          <img src={profile.avatar_url} alt="" className="h-20 w-20 rounded-full object-cover" />
-        ) : (
-          <div className="grid h-20 w-20 rounded-full bg-gradient-to-br from-[#E5A54B] to-[#c88a2f] text-white place-items-center text-2xl font-bold">
-            {initial}
-          </div>
-        )}
+        <img
+          src={memberAvatar(profile.avatar_url, profile.id)}
+          alt={profile.display_name ?? profile.username}
+          className="h-20 w-20 rounded-full object-cover bg-black/5"
+        />
+
         <div className="flex-1">
           <div className="flex items-center gap-2 flex-wrap">
             <h1 className="font-bold text-2xl">{profile.display_name ?? profile.username}</h1>
