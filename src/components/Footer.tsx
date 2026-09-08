@@ -1,4 +1,24 @@
 import { Link } from "@tanstack/react-router";
+import { Instagram, Youtube } from "lucide-react";
+
+const XIcon = () => (
+  <svg viewBox="0 0 24 24" aria-hidden="true" className="h-4 w-4" fill="currentColor">
+    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24h-6.65l-5.21-6.817-5.957 6.817H1.7l7.73-8.84L1.254 2.25h6.82l4.71 6.23 5.46-6.23Zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77Z" />
+  </svg>
+);
+
+const TikTokIcon = () => (
+  <svg viewBox="0 0 24 24" aria-hidden="true" className="h-4 w-4" fill="currentColor">
+    <path d="M16.6 5.82A4.28 4.28 0 0 0 15.54 3h-3.1v12.4a2.6 2.6 0 1 1-1.86-2.5V9.7a5.72 5.72 0 1 0 4.96 5.66V8.9a7.1 7.1 0 0 0 4.06 1.28V7.08a4.28 4.28 0 0 1-2.99-1.26Z" />
+  </svg>
+);
+
+const SOCIALS = [
+  { label: "Find-am on X", href: "https://x.com/Find_am_1", icon: <XIcon /> },
+  { label: "Find-am on Instagram", href: "https://www.instagram.com/find_am_1", icon: <Instagram className="h-4 w-4" /> },
+  { label: "Find-am on YouTube", href: "https://www.youtube.com/@Find_Am_Tasks", icon: <Youtube className="h-4 w-4" /> },
+  { label: "Find-am on TikTok", href: "https://www.tiktok.com/@find_am", icon: <TikTokIcon /> },
+];
 
 const COLS: { title: string; links: { to: string; label: string }[] }[] = [
   {
@@ -82,9 +102,25 @@ export function Footer() {
           ))}
         </div>
 
-        <div className="mt-12 pt-8 border-t border-background/15">
+        <div className="mt-12 pt-8 border-t border-background/15 flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
           <div className="font-display text-3xl text-primary">Find-task</div>
+          <div className="flex items-center gap-3">
+            {SOCIALS.map((s) => (
+              <a
+                key={s.label}
+                href={s.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={s.label}
+                title={s.label}
+                className="grid h-10 w-10 place-items-center rounded-full border border-background/20 text-footer-foreground/80 transition hover:border-primary hover:text-primary"
+              >
+                {s.icon}
+              </a>
+            ))}
+          </div>
         </div>
+
 
         <div className="mt-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between text-xs text-footer-foreground/60">
           <div>
