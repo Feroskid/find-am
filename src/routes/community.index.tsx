@@ -68,6 +68,7 @@ function CommunityIndex() {
                     key={cat.id ?? cat.slug}
                     to="/community/c/$slug"
                     params={{ slug: cat.slug }}
+                    search={{ page: 1, sort: "latest" as const }}
                     className="group rounded-xl border border-black/10 bg-white p-4 hover:border-[#E5A54B] transition-colors"
                   >
                     <div className="flex items-start gap-3">
@@ -98,6 +99,7 @@ function CommunityIndex() {
                 <Link
                   to="/community/t/$threadId"
                   params={{ threadId: String(t.id) }}
+                  search={{ page: 1 }}
                   className="block rounded-lg border border-black/10 bg-white p-3 hover:border-[#E5A54B]"
                 >
                   <div className="font-semibold text-sm line-clamp-2">{t.title}</div>

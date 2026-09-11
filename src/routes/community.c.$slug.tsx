@@ -89,6 +89,7 @@ function CategoryPage() {
                 <Link
                   to="/community/t/$threadId"
                   params={{ threadId: String(t.id) }}
+                  search={{ page: 1 }}
                   className="font-semibold text-sm truncate hover:text-[#E5A54B]"
                 >
                   {t.title}
