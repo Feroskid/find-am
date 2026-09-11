@@ -51,6 +51,7 @@ import { Route as CommunityNewRouteImport } from './routes/community.new'
 import { Route as CommunityNotificationsRouteImport } from './routes/community.notifications'
 import { Route as CommunitySearchRouteImport } from './routes/community.search'
 import { Route as CommunitySettingsRouteImport } from './routes/community.settings'
+import { Route as CommunityUsernameRouteImport } from './routes/community.username'
 import { Route as DisputesDisputeIdRouteImport } from './routes/disputes.$disputeId'
 import { Route as MessagesIndexRouteImport } from './routes/messages.index'
 import { Route as TasksIndexRouteImport } from './routes/tasks.index'
@@ -279,6 +280,11 @@ const CommunitySettingsRoute = CommunitySettingsRouteImport.update({
   path: '/community/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CommunityUsernameRoute = CommunityUsernameRouteImport.update({
+  id: '/community/username',
+  path: '/community/username',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DisputesDisputeIdRoute = DisputesDisputeIdRouteImport.update({
   id: '/disputes/$disputeId',
   path: '/disputes/$disputeId',
@@ -406,6 +412,7 @@ export interface FileRoutesByFullPath {
   '/community/notifications': typeof CommunityNotificationsRoute
   '/community/search': typeof CommunitySearchRoute
   '/community/settings': typeof CommunitySettingsRoute
+  '/community/username': typeof CommunityUsernameRoute
   '/disputes/$disputeId': typeof DisputesDisputeIdRoute
   '/tasks/browse': typeof TasksBrowseRoute
   '/tasks/categories': typeof TasksCategoriesRoute
@@ -465,6 +472,7 @@ export interface FileRoutesByTo {
   '/community/notifications': typeof CommunityNotificationsRoute
   '/community/search': typeof CommunitySearchRoute
   '/community/settings': typeof CommunitySettingsRoute
+  '/community/username': typeof CommunityUsernameRoute
   '/disputes/$disputeId': typeof DisputesDisputeIdRoute
   '/tasks/browse': typeof TasksBrowseRoute
   '/tasks/categories': typeof TasksCategoriesRoute
@@ -527,6 +535,7 @@ export interface FileRoutesById {
   '/community/notifications': typeof CommunityNotificationsRoute
   '/community/search': typeof CommunitySearchRoute
   '/community/settings': typeof CommunitySettingsRoute
+  '/community/username': typeof CommunityUsernameRoute
   '/disputes/$disputeId': typeof DisputesDisputeIdRoute
   '/tasks/browse': typeof TasksBrowseRoute
   '/tasks/categories': typeof TasksCategoriesRoute
@@ -590,6 +599,7 @@ export interface FileRouteTypes {
     | '/community/notifications'
     | '/community/search'
     | '/community/settings'
+    | '/community/username'
     | '/disputes/$disputeId'
     | '/tasks/browse'
     | '/tasks/categories'
@@ -649,6 +659,7 @@ export interface FileRouteTypes {
     | '/community/notifications'
     | '/community/search'
     | '/community/settings'
+    | '/community/username'
     | '/disputes/$disputeId'
     | '/tasks/browse'
     | '/tasks/categories'
@@ -710,6 +721,7 @@ export interface FileRouteTypes {
     | '/community/notifications'
     | '/community/search'
     | '/community/settings'
+    | '/community/username'
     | '/disputes/$disputeId'
     | '/tasks/browse'
     | '/tasks/categories'
@@ -763,6 +775,7 @@ export interface RootRouteChildren {
   CommunityNotificationsRoute: typeof CommunityNotificationsRoute
   CommunitySearchRoute: typeof CommunitySearchRoute
   CommunitySettingsRoute: typeof CommunitySettingsRoute
+  CommunityUsernameRoute: typeof CommunityUsernameRoute
   DisputesDisputeIdRoute: typeof DisputesDisputeIdRoute
   UUserIdRoute: typeof UUserIdRoute
   CommunityIndexRoute: typeof CommunityIndexRoute
@@ -1070,6 +1083,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CommunitySettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/community/username': {
+      id: '/community/username'
+      path: '/community/username'
+      fullPath: '/community/username'
+      preLoaderRoute: typeof CommunityUsernameRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/disputes/$disputeId': {
       id: '/disputes/$disputeId'
       path: '/disputes/$disputeId'
@@ -1278,6 +1298,7 @@ const rootRouteChildren: RootRouteChildren = {
   CommunityNotificationsRoute: CommunityNotificationsRoute,
   CommunitySearchRoute: CommunitySearchRoute,
   CommunitySettingsRoute: CommunitySettingsRoute,
+  CommunityUsernameRoute: CommunityUsernameRoute,
   DisputesDisputeIdRoute: DisputesDisputeIdRoute,
   UUserIdRoute: UUserIdRoute,
   CommunityIndexRoute: CommunityIndexRoute,
