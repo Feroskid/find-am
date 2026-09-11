@@ -96,8 +96,8 @@ function CommunityIndex() {
             {latest.map((t) => (
               <li key={t.id}>
                 <Link
-                  to="/community/c/$slug/$threadId"
-                  params={{ slug: t.category_slug ?? "general", threadId: String(t.id) }}
+                  to="/community/t/$threadId"
+                  params={{ threadId: String(t.id) }}
                   className="block rounded-lg border border-black/10 bg-white p-3 hover:border-[#E5A54B]"
                 >
                   <div className="font-semibold text-sm line-clamp-2">{t.title}</div>

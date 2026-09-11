@@ -22,7 +22,7 @@ import { useCommunityMe, communityError, relTime } from "@/lib/community-client"
 
 const SearchSchema = z.object({ page: z.coerce.number().int().min(1).max(500).optional().default(1) });
 
-export const Route = createFileRoute("/community/c_/$slug/$threadId")({
+export const Route = createFileRoute("/community/t/$threadId")({
   validateSearch: (s) => SearchSchema.parse(s),
   head: () => ({
     meta: [
@@ -40,7 +40,7 @@ export const Route = createFileRoute("/community/c_/$slug/$threadId")({
 const PER_PAGE = 20;
 
 function ThreadPage() {
-  const { slug, threadId } = Route.useParams();
+  const { threadId } = Route.useParams();
   const { page } = Route.useSearch();
   const navigate = Route.useNavigate();
   const c = useCommunityMe();
@@ -118,7 +118,7 @@ function ThreadPage() {
     onSuccess: (r) => {
       if (!r.ok) return toast.error(communityError(r));
       toast.success("Thread deleted");
-      navigate({ to: "/community/c/$slug", params: { slug }, search: { page: 1, sort: "latest" } });
+      navigate({ to: "/community/c/$slug", params: { slug: categorySlug }, search: { page: 1, sort: "latest" } });
     },
   });
 
@@ -136,6 +136,7 @@ function ThreadPage() {
 
   const payload: any = q.data.data;
   const thread = payload.thread;
+  const categorySlug: string = payload.category_slug ?? "general";
   const posts: any[] = payload.posts ?? [];
   const total: number = payload.total ?? posts.length;
   const pages = Math.max(1, Math.ceil(total / PER_PAGE));
@@ -235,8 +236,8 @@ function ThreadPage() {
       <div className="text-xs text-black/50 mb-2">
         <Link to="/community" className="hover:underline">Community</Link>
         {" / "}
-        <Link to="/community/c/$slug" params={{ slug }} search={{ page: 1, sort: "latest" }} className="hover:underline">
-          {payload.category_name ?? slug}
+        <Link to="/community/c/$slug" params={{ slug: categorySlug }} search={{ page: 1, sort: "latest" }} className="hover:underline">
+          {payload.category_name ?? categorySlug}
         </Link>
       </div>
 

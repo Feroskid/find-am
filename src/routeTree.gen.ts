@@ -45,7 +45,6 @@ import { Route as AdminSupportRouteImport } from './routes/admin.support'
 import { Route as AdminUsersRouteImport } from './routes/admin.users'
 import { Route as AuthVerifyEmailRouteImport } from './routes/auth.verify-email'
 import { Route as CommunityIndexRouteImport } from './routes/community.index'
-import { Route as CommunityAuthRouteImport } from './routes/community.auth'
 import { Route as CommunityModerationRouteImport } from './routes/community.moderation'
 import { Route as CommunityNewRouteImport } from './routes/community.new'
 import { Route as CommunityNotificationsRouteImport } from './routes/community.notifications'
@@ -69,7 +68,6 @@ import { Route as TaskPaymentCallbackRouteImport } from './routes/task.payment.c
 import { Route as TasksTaskIdIndexRouteImport } from './routes/tasks.$taskId.index'
 import { Route as TasksTaskIdApplicationsRouteImport } from './routes/tasks.$taskId.applications'
 import { Route as TasksTaskIdWorkspaceRouteImport } from './routes/tasks.$taskId.workspace'
-import { Route as CommunityCSlugThreadIdRouteImport } from './routes/community.c_.$slug.$threadId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -251,11 +249,6 @@ const CommunityIndexRoute = CommunityIndexRouteImport.update({
   path: '/community/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const CommunityAuthRoute = CommunityAuthRouteImport.update({
-  id: '/community/auth',
-  path: '/community/auth',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const CommunityModerationRoute = CommunityModerationRouteImport.update({
   id: '/community/moderation',
   path: '/community/moderation',
@@ -371,11 +364,6 @@ const TasksTaskIdWorkspaceRoute = TasksTaskIdWorkspaceRouteImport.update({
   path: '/$taskId/workspace',
   getParentRoute: () => TasksRoute,
 } as any)
-const CommunityCSlugThreadIdRoute = CommunityCSlugThreadIdRouteImport.update({
-  id: '/community/c_/$slug/$threadId',
-  path: '/community/c/$slug/$threadId',
-  getParentRoute: () => rootRouteImport,
-} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -412,7 +400,6 @@ export interface FileRoutesByFullPath {
   '/admin/support': typeof AdminSupportRoute
   '/admin/users': typeof AdminUsersRoute
   '/auth/verify-email': typeof AuthVerifyEmailRoute
-  '/community/auth': typeof CommunityAuthRoute
   '/community/moderation': typeof CommunityModerationRoute
   '/community/new': typeof CommunityNewRoute
   '/community/notifications': typeof CommunityNotificationsRoute
@@ -438,7 +425,6 @@ export interface FileRoutesByFullPath {
   '/tasks/$taskId/applications': typeof TasksTaskIdApplicationsRoute
   '/tasks/$taskId/workspace': typeof TasksTaskIdWorkspaceRoute
   '/tasks/$taskId/': typeof TasksTaskIdIndexRoute
-  '/community/c/$slug/$threadId': typeof CommunityCSlugThreadIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -473,7 +459,6 @@ export interface FileRoutesByTo {
   '/admin/support': typeof AdminSupportRoute
   '/admin/users': typeof AdminUsersRoute
   '/auth/verify-email': typeof AuthVerifyEmailRoute
-  '/community/auth': typeof CommunityAuthRoute
   '/community/moderation': typeof CommunityModerationRoute
   '/community/new': typeof CommunityNewRoute
   '/community/notifications': typeof CommunityNotificationsRoute
@@ -499,7 +484,6 @@ export interface FileRoutesByTo {
   '/tasks/$taskId/applications': typeof TasksTaskIdApplicationsRoute
   '/tasks/$taskId/workspace': typeof TasksTaskIdWorkspaceRoute
   '/tasks/$taskId': typeof TasksTaskIdIndexRoute
-  '/community/c/$slug/$threadId': typeof CommunityCSlugThreadIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -537,7 +521,6 @@ export interface FileRoutesById {
   '/admin/support': typeof AdminSupportRoute
   '/admin/users': typeof AdminUsersRoute
   '/auth/verify-email': typeof AuthVerifyEmailRoute
-  '/community/auth': typeof CommunityAuthRoute
   '/community/moderation': typeof CommunityModerationRoute
   '/community/new': typeof CommunityNewRoute
   '/community/notifications': typeof CommunityNotificationsRoute
@@ -563,7 +546,6 @@ export interface FileRoutesById {
   '/tasks/$taskId/applications': typeof TasksTaskIdApplicationsRoute
   '/tasks/$taskId/workspace': typeof TasksTaskIdWorkspaceRoute
   '/tasks/$taskId/': typeof TasksTaskIdIndexRoute
-  '/community/c_/$slug/$threadId': typeof CommunityCSlugThreadIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -602,7 +584,6 @@ export interface FileRouteTypes {
     | '/admin/support'
     | '/admin/users'
     | '/auth/verify-email'
-    | '/community/auth'
     | '/community/moderation'
     | '/community/new'
     | '/community/notifications'
@@ -628,7 +609,6 @@ export interface FileRouteTypes {
     | '/tasks/$taskId/applications'
     | '/tasks/$taskId/workspace'
     | '/tasks/$taskId/'
-    | '/community/c/$slug/$threadId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -663,7 +643,6 @@ export interface FileRouteTypes {
     | '/admin/support'
     | '/admin/users'
     | '/auth/verify-email'
-    | '/community/auth'
     | '/community/moderation'
     | '/community/new'
     | '/community/notifications'
@@ -689,7 +668,6 @@ export interface FileRouteTypes {
     | '/tasks/$taskId/applications'
     | '/tasks/$taskId/workspace'
     | '/tasks/$taskId'
-    | '/community/c/$slug/$threadId'
   id:
     | '__root__'
     | '/'
@@ -726,7 +704,6 @@ export interface FileRouteTypes {
     | '/admin/support'
     | '/admin/users'
     | '/auth/verify-email'
-    | '/community/auth'
     | '/community/moderation'
     | '/community/new'
     | '/community/notifications'
@@ -752,7 +729,6 @@ export interface FileRouteTypes {
     | '/tasks/$taskId/applications'
     | '/tasks/$taskId/workspace'
     | '/tasks/$taskId/'
-    | '/community/c_/$slug/$threadId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -781,7 +757,6 @@ export interface RootRouteChildren {
   VerifyEmailRoute: typeof VerifyEmailRoute
   WalletRoute: typeof WalletRoute
   AuthVerifyEmailRoute: typeof AuthVerifyEmailRoute
-  CommunityAuthRoute: typeof CommunityAuthRoute
   CommunityModerationRoute: typeof CommunityModerationRoute
   CommunityNewRoute: typeof CommunityNewRoute
   CommunityNotificationsRoute: typeof CommunityNotificationsRoute
@@ -797,7 +772,6 @@ export interface RootRouteChildren {
   CommunityTThreadIdRoute: typeof CommunityTThreadIdRoute
   CommunityUUsernameRoute: typeof CommunityUUsernameRoute
   TaskPaymentCallbackRoute: typeof TaskPaymentCallbackRoute
-  CommunityCSlugThreadIdRoute: typeof CommunityCSlugThreadIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -1054,13 +1028,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CommunityIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/community/auth': {
-      id: '/community/auth'
-      path: '/community/auth'
-      fullPath: '/community/auth'
-      preLoaderRoute: typeof CommunityAuthRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/community/moderation': {
       id: '/community/moderation'
       path: '/community/moderation'
@@ -1222,13 +1189,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TasksTaskIdWorkspaceRouteImport
       parentRoute: typeof TasksRoute
     }
-    '/community/c_/$slug/$threadId': {
-      id: '/community/c_/$slug/$threadId'
-      path: '/community/c/$slug/$threadId'
-      fullPath: '/community/c/$slug/$threadId'
-      preLoaderRoute: typeof CommunityCSlugThreadIdRouteImport
-      parentRoute: typeof rootRouteImport
-    }
   }
 }
 
@@ -1312,7 +1272,6 @@ const rootRouteChildren: RootRouteChildren = {
   VerifyEmailRoute: VerifyEmailRoute,
   WalletRoute: WalletRoute,
   AuthVerifyEmailRoute: AuthVerifyEmailRoute,
-  CommunityAuthRoute: CommunityAuthRoute,
   CommunityModerationRoute: CommunityModerationRoute,
   CommunityNewRoute: CommunityNewRoute,
   CommunityNotificationsRoute: CommunityNotificationsRoute,
@@ -1328,7 +1287,6 @@ const rootRouteChildren: RootRouteChildren = {
   CommunityTThreadIdRoute: CommunityTThreadIdRoute,
   CommunityUUsernameRoute: CommunityUUsernameRoute,
   TaskPaymentCallbackRoute: TaskPaymentCallbackRoute,
-  CommunityCSlugThreadIdRoute: CommunityCSlugThreadIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
