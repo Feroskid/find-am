@@ -87,8 +87,8 @@ function CategoryPage() {
                 {t.is_locked && <Lock className="h-3.5 w-3.5 text-black/40 shrink-0" />}
                 {t.accepted_post_id && <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 shrink-0" />}
                 <Link
-                  to="/community/c/$slug/$threadId"
-                  params={{ slug, threadId: String(t.id) }}
+                  to="/community/t/$threadId"
+                  params={{ threadId: String(t.id) }}
                   className="font-semibold text-sm truncate hover:text-[#E5A54B]"
                 >
                   {t.title}
