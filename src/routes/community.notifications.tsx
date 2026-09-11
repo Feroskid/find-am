@@ -1,14 +1,20 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { useState, useMemo } from "react";
-import { Bell, Check, MessageSquare, AtSign, ThumbsUp, CheckCircle2, Shield, Loader2 } from "lucide-react";
-import { CommunityShell } from "@/components/community/CommunityShell";
-import { listMyNotifications, markCommunityNotifRead } from "@/lib/community.functions";
+import { useEffect, useMemo, useState } from "react";
+import { Bell, MessageSquare, AtSign, CheckCircle2, Loader2 } from "lucide-react";
+import { CommunityShell, AuthorChip } from "@/components/community/CommunityShell";
+import { listNotifications, markNotificationsRead } from "@/lib/community.functions";
+import { useCommunityMe, relTime } from "@/lib/community-client";
 
 export const Route = createFileRoute("/community/notifications")({
-  head: () => ({ meta: [
-      { name: "robots", content: "noindex, nofollow" },{ title: "Notifications — Find-Task Community" }] }),
+  head: () => ({
+    meta: [
+      { name: "robots", content: "noindex, nofollow" },
+      { title: "Notifications — Find-Task Community" },
+      { name: "description", content: "Replies, mentions and accepted answers from the Find-Task community." },
+    ],
+  }),
   component: NotificationsPage,
 });
 
@@ -23,48 +29,54 @@ function iconFor(type: string) {
   switch (type) {
     case "reply": return <MessageSquare className="h-4 w-4 text-sky-600" />;
     case "mention": return <AtSign className="h-4 w-4 text-violet-600" />;
-    case "vote": return <ThumbsUp className="h-4 w-4 text-emerald-600" />;
     case "accepted": return <CheckCircle2 className="h-4 w-4 text-emerald-600" />;
-    case "mod": return <Shield className="h-4 w-4 text-orange-600" />;
     default: return <Bell className="h-4 w-4 text-black/50" />;
   }
 }
 
-function relTime(iso: string) {
-  const diff = Date.now() - new Date(iso).getTime();
-  const m = Math.floor(diff / 60000);
-  if (m < 1) return "just now";
-  if (m < 60) return `${m}m ago`;
-  const h = Math.floor(m / 60);
-  if (h < 24) return `${h}h ago`;
-  return new Date(iso).toLocaleDateString();
-}
-
 function NotificationsPage() {
-  const listFn = useServerFn(listMyNotifications);
-  const markFn = useServerFn(markCommunityNotifRead);
   const navigate = useNavigate();
+  const c = useCommunityMe();
+  const listFn = useServerFn(listNotifications);
+  const markFn = useServerFn(markNotificationsRead);
   const [tab, setTab] = useState<typeof TABS[number]["id"]>("all");
 
-  const q = useQuery({ queryKey: ["community-notifs"], queryFn: () => listFn(), refetchInterval: 30000 });
+  useEffect(() => {
+    if (c.ready && !c.signedIn) navigate({ to: "/login" });
+  }, [c.ready, c.signedIn, navigate]);
+
+  const q = useQuery({
+    queryKey: ["community", "notifs", c.token],
+    enabled: !!c.token,
+    refetchInterval: 60_000,
+    queryFn: () => listFn({ data: { token: c.token!, perPage: 50 } }),
+  });
+
   const mark = useMutation({
-    mutationFn: (id?: string) => markFn({ data: id ? { id } : { all: true } }),
+    mutationFn: (ids?: string[]) => markFn({ data: { token: c.token!, ids } }),
     onSuccess: () => q.refetch(),
   });
 
-  const all: any[] = q.data?.ok ? q.data.data : [];
+  const payload: any = q.data?.ok ? q.data.data : null;
+  const all: any[] = payload?.notifications ?? [];
+  const unreadCount: number = payload?.unread ?? all.filter((n) => !n.is_read).length;
+
+  // Mark everything read once the page has been opened and shows unread items.
+  useEffect(() => {
+    if (unreadCount > 0 && !mark.isPending) mark.mutate(undefined);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [unreadCount > 0]);
+
   const filtered = useMemo(() => {
     if (tab === "all") return all;
     if (tab === "unread") return all.filter((n) => !n.is_read);
     return all.filter((n) => n.type === tab);
   }, [all, tab]);
 
-  const unreadCount = all.filter((n) => !n.is_read).length;
-
-  const openTarget = (n: any) => {
-    if (!n.is_read) mark.mutate(n.id);
+  const open = (n: any) => {
+    if (!n.is_read) mark.mutate([String(n.id)]);
     const tid = n.payload?.thread_id;
-    if (tid) navigate({ to: "/community/t/$threadId", params: { threadId: tid } });
+    if (tid) navigate({ to: "/community/t/$threadId", params: { threadId: String(tid) }, search: { page: 1 } });
   };
 
   return (
@@ -88,9 +100,7 @@ function NotificationsPage() {
           <button
             key={t.id}
             onClick={() => setTab(t.id)}
-            className={`px-3 py-2 text-sm font-semibold whitespace-nowrap border-b-2 -mb-px ${
-              tab === t.id ? "border-[#E5A54B] text-[#E5A54B]" : "border-transparent text-black/60 hover:text-black"
-            }`}
+            className={`px-3 py-2 text-sm font-semibold whitespace-nowrap border-b-2 -mb-px ${tab === t.id ? "border-[#E5A54B] text-[#E5A54B]" : "border-transparent text-black/60 hover:text-black"}`}
           >
             {t.label}
           </button>
@@ -109,24 +119,22 @@ function NotificationsPage() {
           {filtered.map((n) => (
             <li key={n.id}>
               <button
-                onClick={() => openTarget(n)}
-                className={`w-full text-left rounded-xl border p-4 flex items-start gap-3 transition-colors ${
-                  n.is_read ? "bg-white border-black/10 hover:bg-black/[0.02]" : "bg-[#FFF8EC] border-[#E5A54B]/30 hover:bg-[#FFF3D9]"
-                }`}
+                onClick={() => open(n)}
+                className={`w-full text-left rounded-xl border p-4 flex items-start gap-3 transition-colors ${n.is_read ? "bg-white border-black/10 hover:bg-black/[0.02]" : "bg-[#FFF8EC] border-[#E5A54B]/30 hover:bg-[#FFF3D9]"}`}
               >
                 <div className="mt-0.5">{iconFor(n.type)}</div>
                 <div className="flex-1 min-w-0">
                   <div className="text-sm">
                     {n.type === "reply" && <>New reply on <span className="font-semibold">{n.payload?.thread_title ?? "your thread"}</span></>}
-                    {n.type === "mention" && <>You were mentioned</>}
+                    {n.type === "mention" && <>You were mentioned in <span className="font-semibold">{n.payload?.thread_title ?? "a thread"}</span></>}
                     {n.type === "accepted" && <>Your reply was accepted as the answer (+5 pts)</>}
-                    {n.type === "vote" && <>Someone upvoted your post</>}
-                    {n.type === "mod" && <>{n.payload?.message ?? "Moderator action"}</>}
-                    {!["reply","mention","accepted","vote","mod"].includes(n.type) && n.type}
+                    {!["reply", "mention", "accepted"].includes(n.type) && n.type}
                   </div>
-                  <div className="text-[11px] text-black/50 mt-1">{relTime(n.created_at)}</div>
+                  <div className="text-[11px] text-black/50 mt-1 flex items-center gap-2 flex-wrap">
+                    {n.actor && <AuthorChip author={n.actor} size={4} />}
+                    <span>· {relTime(n.created_at)}</span>
+                  </div>
                 </div>
-                {!n.is_read && <span className="mt-1 h-2 w-2 rounded-full bg-[#E5A54B]" />}
               </button>
             </li>
           ))}
