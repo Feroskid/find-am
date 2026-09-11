@@ -1,24 +1,15 @@
-// Static avatar set living in /public/avatars (av-01.png … av-48.png).
-// Each community member is deterministically assigned one from their user id,
-// so the same person always shows the same picture.
+// Static avatar set living in /public/avatars (a01.png … a60.png).
+// The backend stores only the key; the frontend maps it to the file.
 
-export const AVATAR_COUNT = 48;
+export const AVATAR_COUNT = 60;
+export const DEFAULT_AVATAR_KEY = "a01";
 
-export function avatarPath(index: number) {
-  const i = ((index % AVATAR_COUNT) + AVATAR_COUNT) % AVATAR_COUNT;
-  return `/avatars/av-${String(i + 1).padStart(2, "0")}.png`;
+export const ALL_AVATAR_KEYS = Array.from(
+  { length: AVATAR_COUNT },
+  (_, i) => `a${String(i + 1).padStart(2, "0")}`,
+);
+
+export function avatarUrl(key?: string | null) {
+  const k = key && /^a\d{2}$/.test(key) ? key : DEFAULT_AVATAR_KEY;
+  return `/avatars/${k}.png`;
 }
-
-export function avatarForId(id?: string | null) {
-  if (!id) return avatarPath(0);
-  let h = 0;
-  for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) >>> 0;
-  return avatarPath(h);
-}
-
-/** Member's own picture when set, otherwise their assigned static avatar. */
-export function memberAvatar(avatarUrl?: string | null, id?: string | null) {
-  return avatarUrl && avatarUrl.trim() ? avatarUrl : avatarForId(id);
-}
-
-export const ALL_AVATARS = Array.from({ length: AVATAR_COUNT }, (_, i) => avatarPath(i));

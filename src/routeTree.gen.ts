@@ -45,12 +45,12 @@ import { Route as AdminSupportRouteImport } from './routes/admin.support'
 import { Route as AdminUsersRouteImport } from './routes/admin.users'
 import { Route as AuthVerifyEmailRouteImport } from './routes/auth.verify-email'
 import { Route as CommunityIndexRouteImport } from './routes/community.index'
-import { Route as CommunityAuthRouteImport } from './routes/community.auth'
 import { Route as CommunityModerationRouteImport } from './routes/community.moderation'
 import { Route as CommunityNewRouteImport } from './routes/community.new'
 import { Route as CommunityNotificationsRouteImport } from './routes/community.notifications'
 import { Route as CommunitySearchRouteImport } from './routes/community.search'
 import { Route as CommunitySettingsRouteImport } from './routes/community.settings'
+import { Route as CommunityUsernameRouteImport } from './routes/community.username'
 import { Route as DisputesDisputeIdRouteImport } from './routes/disputes.$disputeId'
 import { Route as MessagesIndexRouteImport } from './routes/messages.index'
 import { Route as TasksIndexRouteImport } from './routes/tasks.index'
@@ -249,11 +249,6 @@ const CommunityIndexRoute = CommunityIndexRouteImport.update({
   path: '/community/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const CommunityAuthRoute = CommunityAuthRouteImport.update({
-  id: '/community/auth',
-  path: '/community/auth',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const CommunityModerationRoute = CommunityModerationRouteImport.update({
   id: '/community/moderation',
   path: '/community/moderation',
@@ -277,6 +272,11 @@ const CommunitySearchRoute = CommunitySearchRouteImport.update({
 const CommunitySettingsRoute = CommunitySettingsRouteImport.update({
   id: '/community/settings',
   path: '/community/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CommunityUsernameRoute = CommunityUsernameRouteImport.update({
+  id: '/community/username',
+  path: '/community/username',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DisputesDisputeIdRoute = DisputesDisputeIdRouteImport.update({
@@ -400,12 +400,12 @@ export interface FileRoutesByFullPath {
   '/admin/support': typeof AdminSupportRoute
   '/admin/users': typeof AdminUsersRoute
   '/auth/verify-email': typeof AuthVerifyEmailRoute
-  '/community/auth': typeof CommunityAuthRoute
   '/community/moderation': typeof CommunityModerationRoute
   '/community/new': typeof CommunityNewRoute
   '/community/notifications': typeof CommunityNotificationsRoute
   '/community/search': typeof CommunitySearchRoute
   '/community/settings': typeof CommunitySettingsRoute
+  '/community/username': typeof CommunityUsernameRoute
   '/disputes/$disputeId': typeof DisputesDisputeIdRoute
   '/tasks/browse': typeof TasksBrowseRoute
   '/tasks/categories': typeof TasksCategoriesRoute
@@ -459,12 +459,12 @@ export interface FileRoutesByTo {
   '/admin/support': typeof AdminSupportRoute
   '/admin/users': typeof AdminUsersRoute
   '/auth/verify-email': typeof AuthVerifyEmailRoute
-  '/community/auth': typeof CommunityAuthRoute
   '/community/moderation': typeof CommunityModerationRoute
   '/community/new': typeof CommunityNewRoute
   '/community/notifications': typeof CommunityNotificationsRoute
   '/community/search': typeof CommunitySearchRoute
   '/community/settings': typeof CommunitySettingsRoute
+  '/community/username': typeof CommunityUsernameRoute
   '/disputes/$disputeId': typeof DisputesDisputeIdRoute
   '/tasks/browse': typeof TasksBrowseRoute
   '/tasks/categories': typeof TasksCategoriesRoute
@@ -521,12 +521,12 @@ export interface FileRoutesById {
   '/admin/support': typeof AdminSupportRoute
   '/admin/users': typeof AdminUsersRoute
   '/auth/verify-email': typeof AuthVerifyEmailRoute
-  '/community/auth': typeof CommunityAuthRoute
   '/community/moderation': typeof CommunityModerationRoute
   '/community/new': typeof CommunityNewRoute
   '/community/notifications': typeof CommunityNotificationsRoute
   '/community/search': typeof CommunitySearchRoute
   '/community/settings': typeof CommunitySettingsRoute
+  '/community/username': typeof CommunityUsernameRoute
   '/disputes/$disputeId': typeof DisputesDisputeIdRoute
   '/tasks/browse': typeof TasksBrowseRoute
   '/tasks/categories': typeof TasksCategoriesRoute
@@ -584,12 +584,12 @@ export interface FileRouteTypes {
     | '/admin/support'
     | '/admin/users'
     | '/auth/verify-email'
-    | '/community/auth'
     | '/community/moderation'
     | '/community/new'
     | '/community/notifications'
     | '/community/search'
     | '/community/settings'
+    | '/community/username'
     | '/disputes/$disputeId'
     | '/tasks/browse'
     | '/tasks/categories'
@@ -643,12 +643,12 @@ export interface FileRouteTypes {
     | '/admin/support'
     | '/admin/users'
     | '/auth/verify-email'
-    | '/community/auth'
     | '/community/moderation'
     | '/community/new'
     | '/community/notifications'
     | '/community/search'
     | '/community/settings'
+    | '/community/username'
     | '/disputes/$disputeId'
     | '/tasks/browse'
     | '/tasks/categories'
@@ -704,12 +704,12 @@ export interface FileRouteTypes {
     | '/admin/support'
     | '/admin/users'
     | '/auth/verify-email'
-    | '/community/auth'
     | '/community/moderation'
     | '/community/new'
     | '/community/notifications'
     | '/community/search'
     | '/community/settings'
+    | '/community/username'
     | '/disputes/$disputeId'
     | '/tasks/browse'
     | '/tasks/categories'
@@ -757,12 +757,12 @@ export interface RootRouteChildren {
   VerifyEmailRoute: typeof VerifyEmailRoute
   WalletRoute: typeof WalletRoute
   AuthVerifyEmailRoute: typeof AuthVerifyEmailRoute
-  CommunityAuthRoute: typeof CommunityAuthRoute
   CommunityModerationRoute: typeof CommunityModerationRoute
   CommunityNewRoute: typeof CommunityNewRoute
   CommunityNotificationsRoute: typeof CommunityNotificationsRoute
   CommunitySearchRoute: typeof CommunitySearchRoute
   CommunitySettingsRoute: typeof CommunitySettingsRoute
+  CommunityUsernameRoute: typeof CommunityUsernameRoute
   DisputesDisputeIdRoute: typeof DisputesDisputeIdRoute
   UUserIdRoute: typeof UUserIdRoute
   CommunityIndexRoute: typeof CommunityIndexRoute
@@ -1028,13 +1028,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CommunityIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/community/auth': {
-      id: '/community/auth'
-      path: '/community/auth'
-      fullPath: '/community/auth'
-      preLoaderRoute: typeof CommunityAuthRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/community/moderation': {
       id: '/community/moderation'
       path: '/community/moderation'
@@ -1068,6 +1061,13 @@ declare module '@tanstack/react-router' {
       path: '/community/settings'
       fullPath: '/community/settings'
       preLoaderRoute: typeof CommunitySettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/community/username': {
+      id: '/community/username'
+      path: '/community/username'
+      fullPath: '/community/username'
+      preLoaderRoute: typeof CommunityUsernameRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/disputes/$disputeId': {
@@ -1272,12 +1272,12 @@ const rootRouteChildren: RootRouteChildren = {
   VerifyEmailRoute: VerifyEmailRoute,
   WalletRoute: WalletRoute,
   AuthVerifyEmailRoute: AuthVerifyEmailRoute,
-  CommunityAuthRoute: CommunityAuthRoute,
   CommunityModerationRoute: CommunityModerationRoute,
   CommunityNewRoute: CommunityNewRoute,
   CommunityNotificationsRoute: CommunityNotificationsRoute,
   CommunitySearchRoute: CommunitySearchRoute,
   CommunitySettingsRoute: CommunitySettingsRoute,
+  CommunityUsernameRoute: CommunityUsernameRoute,
   DisputesDisputeIdRoute: DisputesDisputeIdRoute,
   UUserIdRoute: UUserIdRoute,
   CommunityIndexRoute: CommunityIndexRoute,
