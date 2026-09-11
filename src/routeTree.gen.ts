@@ -69,6 +69,7 @@ import { Route as TaskPaymentCallbackRouteImport } from './routes/task.payment.c
 import { Route as TasksTaskIdIndexRouteImport } from './routes/tasks.$taskId.index'
 import { Route as TasksTaskIdApplicationsRouteImport } from './routes/tasks.$taskId.applications'
 import { Route as TasksTaskIdWorkspaceRouteImport } from './routes/tasks.$taskId.workspace'
+import { Route as CommunityCSlugThreadIdRouteImport } from './routes/community.c_.$slug.$threadId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -370,6 +371,11 @@ const TasksTaskIdWorkspaceRoute = TasksTaskIdWorkspaceRouteImport.update({
   path: '/$taskId/workspace',
   getParentRoute: () => TasksRoute,
 } as any)
+const CommunityCSlugThreadIdRoute = CommunityCSlugThreadIdRouteImport.update({
+  id: '/community/c_/$slug/$threadId',
+  path: '/community/c/$slug/$threadId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -432,6 +438,7 @@ export interface FileRoutesByFullPath {
   '/tasks/$taskId/applications': typeof TasksTaskIdApplicationsRoute
   '/tasks/$taskId/workspace': typeof TasksTaskIdWorkspaceRoute
   '/tasks/$taskId/': typeof TasksTaskIdIndexRoute
+  '/community/c/$slug/$threadId': typeof CommunityCSlugThreadIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -492,6 +499,7 @@ export interface FileRoutesByTo {
   '/tasks/$taskId/applications': typeof TasksTaskIdApplicationsRoute
   '/tasks/$taskId/workspace': typeof TasksTaskIdWorkspaceRoute
   '/tasks/$taskId': typeof TasksTaskIdIndexRoute
+  '/community/c/$slug/$threadId': typeof CommunityCSlugThreadIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -555,6 +563,7 @@ export interface FileRoutesById {
   '/tasks/$taskId/applications': typeof TasksTaskIdApplicationsRoute
   '/tasks/$taskId/workspace': typeof TasksTaskIdWorkspaceRoute
   '/tasks/$taskId/': typeof TasksTaskIdIndexRoute
+  '/community/c_/$slug/$threadId': typeof CommunityCSlugThreadIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -619,6 +628,7 @@ export interface FileRouteTypes {
     | '/tasks/$taskId/applications'
     | '/tasks/$taskId/workspace'
     | '/tasks/$taskId/'
+    | '/community/c/$slug/$threadId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -679,6 +689,7 @@ export interface FileRouteTypes {
     | '/tasks/$taskId/applications'
     | '/tasks/$taskId/workspace'
     | '/tasks/$taskId'
+    | '/community/c/$slug/$threadId'
   id:
     | '__root__'
     | '/'
@@ -741,6 +752,7 @@ export interface FileRouteTypes {
     | '/tasks/$taskId/applications'
     | '/tasks/$taskId/workspace'
     | '/tasks/$taskId/'
+    | '/community/c_/$slug/$threadId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -785,6 +797,7 @@ export interface RootRouteChildren {
   CommunityTThreadIdRoute: typeof CommunityTThreadIdRoute
   CommunityUUsernameRoute: typeof CommunityUUsernameRoute
   TaskPaymentCallbackRoute: typeof TaskPaymentCallbackRoute
+  CommunityCSlugThreadIdRoute: typeof CommunityCSlugThreadIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -1209,6 +1222,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TasksTaskIdWorkspaceRouteImport
       parentRoute: typeof TasksRoute
     }
+    '/community/c_/$slug/$threadId': {
+      id: '/community/c_/$slug/$threadId'
+      path: '/community/c/$slug/$threadId'
+      fullPath: '/community/c/$slug/$threadId'
+      preLoaderRoute: typeof CommunityCSlugThreadIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -1308,6 +1328,7 @@ const rootRouteChildren: RootRouteChildren = {
   CommunityTThreadIdRoute: CommunityTThreadIdRoute,
   CommunityUUsernameRoute: CommunityUUsernameRoute,
   TaskPaymentCallbackRoute: TaskPaymentCallbackRoute,
+  CommunityCSlugThreadIdRoute: CommunityCSlugThreadIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
