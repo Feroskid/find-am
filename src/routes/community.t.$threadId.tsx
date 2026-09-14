@@ -19,6 +19,7 @@ import {
 } from "@/lib/community.functions";
 import { avatarUrl } from "@/lib/community-avatars";
 import { useCommunityMe, communityError, relTime } from "@/lib/community-client";
+import { Markdown } from "@/components/community/Markdown";
 
 const SearchSchema = z.object({ page: z.coerce.number().int().min(1).max(500).optional().default(1) });
 
@@ -26,10 +27,10 @@ export const Route = createFileRoute("/community/t/$threadId")({
   validateSearch: (s) => SearchSchema.parse(s),
   head: () => ({
     meta: [
-      { title: "Discussion — Find-Task Community" },
-      { name: "description", content: "A discussion in the Find-Task community: questions, answers and tips from Nigerian taskers." },
-      { property: "og:title", content: "Find-Task Community discussion" },
-      { property: "og:description", content: "Read the conversation and join in on Find-Task." },
+      { title: "Discussion — Find-am Community" },
+      { name: "description", content: "A discussion in the Find-am community: questions, answers and tips from Nigerian taskers." },
+      { property: "og:title", content: "Find-am Community discussion" },
+      { property: "og:description", content: "Read the conversation and join in on Find-am." },
       { property: "og:type", content: "article" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -136,7 +137,8 @@ function ThreadPage() {
 
   const payload: any = q.data.data;
   const thread = payload.thread;
-  const categorySlug: string = payload.category_slug ?? "general";
+  const categorySlug: string = payload.category_slug ?? thread?.category_slug ?? "general";
+  const categoryName: string = payload.category_name ?? thread?.category_name ?? categorySlug;
   const posts: any[] = payload.posts ?? [];
   const total: number = payload.total ?? posts.length;
   const pages = Math.max(1, Math.ceil(total / PER_PAGE));
@@ -177,7 +179,7 @@ function ThreadPage() {
           </div>
           <div className="flex-1 p-4 min-w-0">
             {isOp && <div className="text-[10px] font-bold uppercase text-[#E5A54B] mb-1">Original post</div>}
-            <div className="whitespace-pre-wrap break-words text-sm leading-relaxed">{item.body_md}</div>
+            <Markdown>{item.body_md}</Markdown>
             <div className="mt-3 flex items-center gap-3 text-xs text-black/50 flex-wrap">
               <span>{relTime(item.created_at)}</span>
               {item.edited_at && <span>· edited</span>}
@@ -237,7 +239,7 @@ function ThreadPage() {
         <Link to="/community" className="hover:underline">Community</Link>
         {" / "}
         <Link to="/community/c/$slug" params={{ slug: categorySlug }} search={{ page: 1, sort: "latest" }} className="hover:underline">
-          {payload.category_name ?? categorySlug}
+          {categoryName}
         </Link>
       </div>
 

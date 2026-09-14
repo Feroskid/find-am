@@ -12,10 +12,10 @@ import { useCommunityMe, communityError, relTime } from "@/lib/community-client"
 export const Route = createFileRoute("/community/u/$username")({
   head: ({ params }) => ({
     meta: [
-      { title: `@${params.username} — Find-Task Community` },
-      { name: "description", content: `Community profile for @${params.username}: rank, threads and replies on Find-Task.` },
-      { property: "og:title", content: `@${params.username} on Find-Task Community` },
-      { property: "og:description", content: `See @${params.username}'s rank and contributions in the Find-Task community.` },
+      { title: `@${params.username} — Find-am Community` },
+      { name: "description", content: `Community profile for @${params.username}: rank, threads and replies on Find-am.` },
+      { property: "og:title", content: `@${params.username} on Find-am Community` },
+      { property: "og:description", content: `See @${params.username}'s rank and contributions in the Find-am community.` },
       { property: "og:type", content: "profile" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -57,14 +57,25 @@ function ProfilePage() {
     onSuccess: (r) => (r.ok ? (q.refetch(), toast.success("Member updated")) : toast.error(communityError(r))),
   });
 
-  if (q.isLoading) {
+  if (q.isLoading || q.isFetching && !q.data) {
     return <CommunityShell><div className="py-16 text-center"><Loader2 className="h-5 w-5 animate-spin inline text-black/40" /></div></CommunityShell>;
   }
   if (!q.data?.ok) {
-    return <CommunityShell><p className="text-sm text-red-600 text-center py-16">Profile not found.</p></CommunityShell>;
+    const r: any = q.data;
+    return (
+      <CommunityShell>
+        <div className="py-16 text-center space-y-3">
+          <p className="text-sm text-red-600">
+            {r?.status === 404 ? `No member called @${username}.` : communityError(r ?? { status: 0, error: "Could not load this profile." })}
+          </p>
+          <button onClick={() => q.refetch()} className="text-xs font-semibold rounded-lg bg-black/5 px-3 py-1.5 hover:bg-black/10">Try again</button>
+        </div>
+      </CommunityShell>
+    );
   }
 
-  const p: any = (q.data.data as any).profile ?? q.data.data;
+  const raw: any = q.data.data;
+  const p: any = raw?.profile ?? raw?.member ?? raw?.user ?? raw;
   const bookmarks: any[] = bmQ.data?.ok ? ((bmQ.data.data as any).threads ?? []) : [];
 
   return (

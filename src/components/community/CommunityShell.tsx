@@ -6,6 +6,7 @@ import { Bell, LogIn, Plus, Shield, Search } from "lucide-react";
 import { avatarUrl } from "@/lib/community-avatars";
 import { useCommunityMe, type AuthorCard } from "@/lib/community-client";
 import { listNotifications } from "@/lib/community.functions";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 function SocialLinks() {
   return (
@@ -38,27 +39,28 @@ export function CommunityShell({ children }: { children: ReactNode }) {
   const unread: number = notifQ.data?.ok ? ((notifQ.data.data as any).unread ?? 0) : 0;
 
   return (
-    <div className="min-h-screen bg-[#F7F5F0] text-[#1a1a1a] flex flex-col">
+    <div className="community-scope min-h-screen flex flex-col">
       <header className="sticky top-0 z-20 bg-white/90 backdrop-blur border-b border-black/5">
         <div className="mx-auto max-w-6xl px-4 py-3 flex items-center gap-3">
           <Link to="/community" className="flex items-center gap-2 shrink-0">
-            <div className="grid h-8 w-8 place-items-center rounded-lg bg-[#E5A54B] text-white font-bold">FT</div>
-            <span className="font-bold text-lg tracking-tight hidden sm:inline">Find-Task <span className="text-[#E5A54B]">Community</span></span>
+            <div className="grid h-8 w-8 place-items-center rounded-lg bg-[#E5A54B] text-white font-bold">FA</div>
+            <span className="font-bold text-lg tracking-tight hidden sm:inline">Find-am <span className="text-[#E5A54B]">Community</span></span>
           </Link>
           <nav className="hidden md:flex items-center gap-1 text-sm ml-3">
             <Link to="/community" className="px-3 py-1.5 rounded-lg hover:bg-black/5 font-medium">Home</Link>
             <Link to="/community/search" search={{ q: "" } as any} className="px-3 py-1.5 rounded-lg hover:bg-black/5 font-medium">Search</Link>
-            {c.canModerate && (
+            {c.signedIn && !c.needsUsername && (
               <Link to="/community/moderation" className="px-3 py-1.5 rounded-lg hover:bg-black/5 font-medium inline-flex items-center gap-1">
                 <Shield className="h-3.5 w-3.5" /> Moderation
               </Link>
             )}
-            <Link to="/" className="px-3 py-1.5 rounded-lg hover:bg-black/5 font-medium text-black/60">← Back to Find-Task</Link>
+            <Link to="/" className="px-3 py-1.5 rounded-lg hover:bg-black/5 font-medium text-black/60">← Back to Find-am</Link>
           </nav>
           <div className="flex-1" />
           <Link to="/community/search" search={{ q: "" } as any} className="md:hidden p-2 rounded-lg hover:bg-black/5" aria-label="Search">
             <Search className="h-4 w-4" />
           </Link>
+          <ThemeToggle />
           {c.signedIn ? (
             <>
               <Link to="/community/notifications" className="relative p-2 rounded-lg hover:bg-black/5" aria-label="Notifications">
@@ -99,7 +101,7 @@ export function CommunityShell({ children }: { children: ReactNode }) {
       <main className="flex-1 mx-auto w-full max-w-6xl px-4 py-6">{children}</main>
       <footer className="border-t border-black/5 py-6 px-4 space-y-3">
         <SocialLinks />
-        <p className="text-center text-xs text-black/50">Find-Task Community · Be kind, share knowledge, level up.</p>
+        <p className="text-center text-xs text-black/50">Find-am Community · Be kind, share knowledge, level up.</p>
       </footer>
     </div>
   );

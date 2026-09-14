@@ -12,8 +12,8 @@ export const Route = createFileRoute("/community/search")({
   head: () => ({
     meta: [
       { name: "robots", content: "noindex, nofollow" },
-      { title: "Search discussions — Find-Task Community" },
-      { name: "description", content: "Search Find-Task community threads and replies." },
+      { title: "Search discussions — Find-am Community" },
+      { name: "description", content: "Search Find-am community threads and replies." },
     ],
   }),
   validateSearch: (s) => z.object({ q: z.string().optional().default("") }).parse(s),

@@ -12,8 +12,8 @@ export const Route = createFileRoute("/community/username")({
   head: () => ({
     meta: [
       { name: "robots", content: "noindex, nofollow" },
-      { title: "Choose your community username — Find-Task" },
-      { name: "description", content: "Pick the name other members see in the Find-Task community." },
+      { title: "Choose your community username — Find-am" },
+      { name: "description", content: "Pick the name other members see in the Find-am community." },
     ],
   }),
   component: UsernamePage,

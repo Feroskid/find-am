@@ -16,10 +16,10 @@ export const Route = createFileRoute("/community/c/$slug")({
   validateSearch: (s) => SearchSchema.parse(s),
   head: ({ params }) => ({
     meta: [
-      { title: `${params.slug} discussions — Find-Task Community` },
-      { name: "description", content: `Threads, questions and tips in the ${params.slug} category of the Find-Task community.` },
-      { property: "og:title", content: `${params.slug} — Find-Task Community` },
-      { property: "og:description", content: `Browse ${params.slug} discussions in the Find-Task community.` },
+      { title: `${params.slug} discussions — Find-am Community` },
+      { name: "description", content: `Threads, questions and tips in the ${params.slug} category of the Find-am community.` },
+      { property: "og:title", content: `${params.slug} — Find-am Community` },
+      { property: "og:description", content: `Browse ${params.slug} discussions in the Find-am community.` },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
