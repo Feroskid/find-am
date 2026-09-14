@@ -9,7 +9,7 @@ import { useCommunityMe, relTime } from "@/lib/community-client";
 export const Route = createFileRoute("/community/")({
   head: () => ({
     meta: [
-      { title: "Community — Find-Task" },
+      { title: "Community — Find-am" },
       { name: "description", content: "Join the Find-am community. Share tips, earn ranks, and connect with taskers across Nigeria." },
       { property: "og:title", content: "Find-am Community" },
       { property: "og:description", content: "Discussions, tips, and rankings for the Find-am community." },

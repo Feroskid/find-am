@@ -29,7 +29,7 @@ export const Route = createFileRoute("/community/t/$threadId")({
       { title: "Discussion — Find-am Community" },
       { name: "description", content: "A discussion in the Find-am community: questions, answers and tips from Nigerian taskers." },
       { property: "og:title", content: "Find-am Community discussion" },
-      { property: "og:description", content: "Read the conversation and join in on Find-Task." },
+      { property: "og:description", content: "Read the conversation and join in on Find-am." },
       { property: "og:type", content: "article" },
       { name: "twitter:card", content: "summary" },
     ],

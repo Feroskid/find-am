@@ -17,7 +17,7 @@ export const Route = createFileRoute("/community/new")({
     meta: [
       { name: "robots", content: "noindex, nofollow" },
       { title: "Start a discussion — Find-am Community" },
-      { name: "description", content: "Ask a question or share what works with other Find-Task members." },
+      { name: "description", content: "Ask a question or share what works with other Find-am members." },
     ],
   }),
   component: NewThreadPage,

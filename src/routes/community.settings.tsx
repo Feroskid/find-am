@@ -13,7 +13,7 @@ export const Route = createFileRoute("/community/settings")({
   head: () => ({
     meta: [
       { name: "robots", content: "noindex, nofollow" },
-      { title: "Community profile settings — Find-Task" },
+      { title: "Community profile settings — Find-am" },
       { name: "description", content: "Change your community picture, bio, signature and username." },
     ],
   }),

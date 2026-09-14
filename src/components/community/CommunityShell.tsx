@@ -43,7 +43,7 @@ export function CommunityShell({ children }: { children: ReactNode }) {
         <div className="mx-auto max-w-6xl px-4 py-3 flex items-center gap-3">
           <Link to="/community" className="flex items-center gap-2 shrink-0">
             <div className="grid h-8 w-8 place-items-center rounded-lg bg-[#E5A54B] text-white font-bold">FT</div>
-            <span className="font-bold text-lg tracking-tight hidden sm:inline">Find-Task <span className="text-[#E5A54B]">Community</span></span>
+            <span className="font-bold text-lg tracking-tight hidden sm:inline">Find-am <span className="text-[#E5A54B]">Community</span></span>
           </Link>
           <nav className="hidden md:flex items-center gap-1 text-sm ml-3">
             <Link to="/community" className="px-3 py-1.5 rounded-lg hover:bg-black/5 font-medium">Home</Link>
@@ -53,7 +53,7 @@ export function CommunityShell({ children }: { children: ReactNode }) {
                 <Shield className="h-3.5 w-3.5" /> Moderation
               </Link>
             )}
-            <Link to="/" className="px-3 py-1.5 rounded-lg hover:bg-black/5 font-medium text-black/60">← Back to Find-Task</Link>
+            <Link to="/" className="px-3 py-1.5 rounded-lg hover:bg-black/5 font-medium text-black/60">← Back to Find-am</Link>
           </nav>
           <div className="flex-1" />
           <Link to="/community/search" search={{ q: "" } as any} className="md:hidden p-2 rounded-lg hover:bg-black/5" aria-label="Search">
