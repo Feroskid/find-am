@@ -43,10 +43,25 @@ export function useCommunityMe() {
     queryFn: () => meFn({ data: { token: token! } }),
   });
 
-  const data: any = q.data?.ok ? q.data.data : null;
+  const raw: any = q.data?.ok ? q.data.data : null;
+  // The API may nest the member under `member`/`profile` depending on the call.
+  const data: any = raw?.member ?? raw?.profile ?? raw;
   const needsUsername = !!data?.needs_username || (q.data && !q.data.ok && q.data.status === 428) || false;
-  const roles: string[] = data?.roles ?? [];
-  const badges: string[] = data?.badges ?? [];
+
+  // Roles can arrive as `roles`, `badges`, a single `role`, or booleans.
+  const roleSet = new Set<string>();
+  for (const v of [data?.roles, data?.badges, raw?.roles, raw?.badges]) {
+    if (Array.isArray(v)) v.forEach((r) => typeof r === "string" && roleSet.add(r));
+  }
+  for (const v of [data?.role, data?.mod_level, data?.level, raw?.level]) {
+    if (typeof v === "string" && v) roleSet.add(v);
+  }
+  if (data?.is_admin) roleSet.add("admin");
+  if (data?.is_super_moderator) roleSet.add("super_moderator");
+  if (data?.is_moderator) roleSet.add("moderator");
+
+  const roles: string[] = [...roleSet];
+  const badges: string[] = Array.isArray(data?.badges) ? data.badges : roles;
 
   return {
     ready,
