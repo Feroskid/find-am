@@ -19,7 +19,7 @@ export const Route = createFileRoute("/community/moderation")({
   head: () => ({
     meta: [
       { name: "robots", content: "noindex, nofollow" },
-      { title: "Moderation — Find-Task Community" },
+      { title: "Moderation — Find-am Community" },
       { name: "description", content: "Review reports and take action on community content." },
     ],
   }),

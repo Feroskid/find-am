@@ -11,8 +11,8 @@ export const Route = createFileRoute("/community/notifications")({
   head: () => ({
     meta: [
       { name: "robots", content: "noindex, nofollow" },
-      { title: "Notifications — Find-Task Community" },
-      { name: "description", content: "Replies, mentions and accepted answers from the Find-Task community." },
+      { title: "Notifications — Find-am Community" },
+      { name: "description", content: "Replies, mentions and accepted answers from the Find-am community." },
     ],
   }),
   component: NotificationsPage,

@@ -10,9 +10,9 @@ export const Route = createFileRoute("/community/")({
   head: () => ({
     meta: [
       { title: "Community — Find-Task" },
-      { name: "description", content: "Join the Find-Task community. Share tips, earn ranks, and connect with taskers across Nigeria." },
-      { property: "og:title", content: "Find-Task Community" },
-      { property: "og:description", content: "Discussions, tips, and rankings for the Find-Task community." },
+      { name: "description", content: "Join the Find-am community. Share tips, earn ranks, and connect with taskers across Nigeria." },
+      { property: "og:title", content: "Find-am Community" },
+      { property: "og:description", content: "Discussions, tips, and rankings for the Find-am community." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -38,7 +38,7 @@ function CommunityIndex() {
   return (
     <CommunityShell>
       <section className="mb-8 rounded-2xl bg-gradient-to-br from-[#1a1a1a] to-[#2a2a2a] text-white p-8">
-        <h1 className="font-bold text-3xl sm:text-4xl tracking-tight">Talk shop with the Find-Task community</h1>
+        <h1 className="font-bold text-3xl sm:text-4xl tracking-tight">Talk shop with the Find-am community</h1>
         <p className="mt-2 text-white/70 max-w-2xl">
           Share earning strategies, ask questions, level up your rank — JJC to OG👑. Points come from threads, replies and upvotes.
         </p>

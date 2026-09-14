@@ -12,10 +12,10 @@ import { useCommunityMe, communityError, relTime } from "@/lib/community-client"
 export const Route = createFileRoute("/community/u/$username")({
   head: ({ params }) => ({
     meta: [
-      { title: `@${params.username} — Find-Task Community` },
+      { title: `@${params.username} — Find-am Community` },
       { name: "description", content: `Community profile for @${params.username}: rank, threads and replies on Find-Task.` },
-      { property: "og:title", content: `@${params.username} on Find-Task Community` },
-      { property: "og:description", content: `See @${params.username}'s rank and contributions in the Find-Task community.` },
+      { property: "og:title", content: `@${params.username} on Find-am Community` },
+      { property: "og:description", content: `See @${params.username}'s rank and contributions in the Find-am community.` },
       { property: "og:type", content: "profile" },
       { name: "twitter:card", content: "summary" },
     ],

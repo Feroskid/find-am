@@ -99,7 +99,7 @@ export function CommunityShell({ children }: { children: ReactNode }) {
       <main className="flex-1 mx-auto w-full max-w-6xl px-4 py-6">{children}</main>
       <footer className="border-t border-black/5 py-6 px-4 space-y-3">
         <SocialLinks />
-        <p className="text-center text-xs text-black/50">Find-Task Community · Be kind, share knowledge, level up.</p>
+        <p className="text-center text-xs text-black/50">Find-am Community · Be kind, share knowledge, level up.</p>
       </footer>
     </div>
   );
