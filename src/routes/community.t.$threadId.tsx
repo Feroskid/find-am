@@ -19,6 +19,7 @@ import {
 } from "@/lib/community.functions";
 import { avatarUrl } from "@/lib/community-avatars";
 import { useCommunityMe, communityError, relTime } from "@/lib/community-client";
+import { Markdown } from "@/components/community/Markdown";
 
 const SearchSchema = z.object({ page: z.coerce.number().int().min(1).max(500).optional().default(1) });
 
@@ -177,7 +178,7 @@ function ThreadPage() {
           </div>
           <div className="flex-1 p-4 min-w-0">
             {isOp && <div className="text-[10px] font-bold uppercase text-[#E5A54B] mb-1">Original post</div>}
-            <div className="whitespace-pre-wrap break-words text-sm leading-relaxed">{item.body_md}</div>
+            <Markdown>{item.body_md}</Markdown>
             <div className="mt-3 flex items-center gap-3 text-xs text-black/50 flex-wrap">
               <span>{relTime(item.created_at)}</span>
               {item.edited_at && <span>· edited</span>}
