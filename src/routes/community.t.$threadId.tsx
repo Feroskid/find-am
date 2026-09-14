@@ -137,7 +137,8 @@ function ThreadPage() {
 
   const payload: any = q.data.data;
   const thread = payload.thread;
-  const categorySlug: string = payload.category_slug ?? "general";
+  const categorySlug: string = payload.category_slug ?? thread?.category_slug ?? "general";
+  const categoryName: string = payload.category_name ?? thread?.category_name ?? categorySlug;
   const posts: any[] = payload.posts ?? [];
   const total: number = payload.total ?? posts.length;
   const pages = Math.max(1, Math.ceil(total / PER_PAGE));
@@ -238,7 +239,7 @@ function ThreadPage() {
         <Link to="/community" className="hover:underline">Community</Link>
         {" / "}
         <Link to="/community/c/$slug" params={{ slug: categorySlug }} search={{ page: 1, sort: "latest" }} className="hover:underline">
-          {payload.category_name ?? categorySlug}
+          {categoryName}
         </Link>
       </div>
 
