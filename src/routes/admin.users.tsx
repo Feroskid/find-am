@@ -137,12 +137,10 @@ function AdminUsersPage() {
       )}
       {ctx && <UserContextPanel ctx={ctx} userId={userId} />}
 
-      {token && (
-        <CommunityUserPanel
-          token={token}
-          seedUsername={ctx?.user?.community_username ?? ctx?.community?.username ?? undefined}
-        />
-      )}
+      {token && (() => {
+        const seed = ctx?.user?.community_username ?? ctx?.community?.username ?? undefined;
+        return <CommunityUserPanel key={seed ?? "none"} token={token} seedUsername={seed} />;
+      })()}
 
       <div className="rounded-xl border border-border bg-card p-4 space-y-3">
         <h3 className="font-semibold text-ink inline-flex items-center gap-2"><Wallet className="h-4 w-4 text-primary" /> Wallet ledger</h3>
