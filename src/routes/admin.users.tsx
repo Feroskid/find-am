@@ -8,6 +8,7 @@ import {
   adminBanUser, adminFreezeUser, adminReactivateUser, adminViewLedger, adminUserContext,
 } from "@/lib/findtask.functions";
 import { AdminUserSearch } from "@/components/admin/AdminUserSearch";
+import { CommunityUserPanel } from "@/components/admin/CommunityUserPanel";
 import { useAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/admin/users")({
@@ -135,6 +136,11 @@ function AdminUsersPage() {
         <div className="inline-flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" /> Loading user context…</div>
       )}
       {ctx && <UserContextPanel ctx={ctx} userId={userId} />}
+
+      {token && (() => {
+        const seed = ctx?.user?.community_username ?? ctx?.community?.username ?? undefined;
+        return <CommunityUserPanel key={seed ?? "none"} token={token} seedUsername={seed} />;
+      })()}
 
       <div className="rounded-xl border border-border bg-card p-4 space-y-3">
         <h3 className="font-semibold text-ink inline-flex items-center gap-2"><Wallet className="h-4 w-4 text-primary" /> Wallet ledger</h3>

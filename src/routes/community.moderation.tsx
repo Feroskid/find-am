@@ -5,6 +5,7 @@ import { useState } from "react";
 import { Shield, Check, X, Lock, Unlock, Pin, EyeOff, Eye, Loader2, Ban, Search, User } from "lucide-react";
 import { toast } from "sonner";
 import { CommunityShell, AuthorChip, RankBadge, Badges } from "@/components/community/CommunityShell";
+import { RolesPanel } from "@/components/community/RolesPanel";
 import {
   listModReports,
   resolveModReport,
@@ -124,6 +125,8 @@ function ModPage() {
         <h1 className="font-bold text-2xl inline-flex items-center gap-2"><Shield className="h-5 w-5" /> Moderation</h1>
         <span className="text-xs font-semibold uppercase tracking-wider text-black/50">{level.replace("_", " ")}</span>
       </div>
+
+      {canSuspend && c.token && <RolesPanel token={c.token} />}
 
       {/* Look up any member and see what they've been up to. */}
       <div className="rounded-xl bg-white border border-black/10 p-4 mb-4">

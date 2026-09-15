@@ -49,7 +49,7 @@ export function CommunityShell({ children }: { children: ReactNode }) {
           <nav className="hidden md:flex items-center gap-1 text-sm ml-3">
             <Link to="/community" className="px-3 py-1.5 rounded-lg hover:bg-black/5 font-medium">Home</Link>
             <Link to="/community/search" search={{ q: "" } as any} className="px-3 py-1.5 rounded-lg hover:bg-black/5 font-medium">Search</Link>
-            {c.signedIn && !c.needsUsername && (
+            {c.signedIn && !c.needsUsername && c.canModerate && (
               <Link to="/community/moderation" className="px-3 py-1.5 rounded-lg hover:bg-black/5 font-medium inline-flex items-center gap-1">
                 <Shield className="h-3.5 w-3.5" /> Moderation
               </Link>
