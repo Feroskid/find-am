@@ -7,6 +7,8 @@ import { toast } from "sonner";
 import { avatarUrl } from "@/lib/community-avatars";
 import { communityError, relTime } from "@/lib/community-client";
 import { listCommunityRoles, grantCommunityRole, revokeCommunityRole } from "@/lib/community.functions";
+import { logCommunityAction } from "@/lib/community-log.functions";
+
 import { RankBadge } from "@/components/community/CommunityShell";
 
 type Role = "moderator" | "super_moderator";
