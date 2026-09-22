@@ -18,6 +18,7 @@ export function RolesPanel({ token }: { token: string }) {
   const listFn = useServerFn(listCommunityRoles);
   const grantFn = useServerFn(grantCommunityRole);
   const revokeFn = useServerFn(revokeCommunityRole);
+  const logFn = useServerFn(logCommunityAction);
 
   const [username, setUsername] = useState("");
   const [role, setRole] = useState<Role>("moderator");
@@ -43,6 +44,15 @@ export function RolesPanel({ token }: { token: string }) {
     onSuccess: (r: any) => {
       if (!r.ok) return toast.error(communityError(r));
       toast.success("Role granted");
+      void logFn({
+        data: {
+          token,
+          action: `grant_${role}`,
+          target_type: "role",
+          target_username: username.trim().replace(/^@/, ""),
+          reason: category.trim() || undefined,
+        },
+      });
       setUsername("");
       setCategory("");
       q.refetch();
@@ -51,13 +61,17 @@ export function RolesPanel({ token }: { token: string }) {
 
   const revoke = useMutation({
     mutationFn: (v: { username: string; role: Role; category_slug?: string }) => revokeFn({ data: { token, ...v } }),
-    onSuccess: (r: any) => {
+    onSuccess: (r: any, v) => {
       if (!r.ok) return toast.error(communityError(r));
       toast.success("Role removed");
+      void logFn({
+        data: { token, action: `revoke_${v.role}`, target_type: "role", target_username: v.username },
+      });
       setConfirming(null);
       q.refetch();
     },
   });
+
 
   const payload: any = q.data?.ok ? q.data.data : null;
   const rows: any[] = payload?.roles ?? payload?.members ?? payload?.items ?? (Array.isArray(payload) ? payload : []);
