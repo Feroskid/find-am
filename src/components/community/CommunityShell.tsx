@@ -2,7 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import type { ReactNode } from "react";
-import { Bell, LogIn, Plus, Shield, Search } from "lucide-react";
+import { Bell, LogIn, Plus, Shield, Search, ArrowLeft, Home } from "lucide-react";
 import { avatarUrl } from "@/lib/community-avatars";
 import { useCommunityMe, type AuthorCard } from "@/lib/community-client";
 import { listNotifications } from "@/lib/community.functions";
@@ -41,7 +41,7 @@ export function CommunityShell({ children }: { children: ReactNode }) {
   return (
     <div className="community-scope min-h-screen flex flex-col">
       <header className="sticky top-0 z-20 bg-white/90 backdrop-blur border-b border-black/5">
-        <div className="mx-auto max-w-6xl px-4 py-3 flex items-center gap-3">
+        <div className="mx-auto max-w-6xl px-4 py-3 flex items-center gap-2 sm:gap-3">
           <Link to="/community" className="flex items-center gap-2 shrink-0">
             <div className="grid h-8 w-8 place-items-center rounded-lg bg-[#E5A54B] text-white font-bold">FA</div>
             <span className="font-bold text-lg tracking-tight hidden sm:inline">Find-am <span className="text-[#E5A54B]">Community</span></span>
@@ -57,6 +57,14 @@ export function CommunityShell({ children }: { children: ReactNode }) {
             <Link to="/" className="px-3 py-1.5 rounded-lg hover:bg-black/5 font-medium text-black/60">← Back to Find-am</Link>
           </nav>
           <div className="flex-1" />
+          {/* Mobile: the nav above is hidden, so keep a way back to Find-am. */}
+          <Link
+            to="/"
+            className="md:hidden inline-flex items-center gap-1 rounded-lg border border-black/10 px-2 py-1.5 text-xs font-semibold text-black/70 hover:bg-black/5"
+            aria-label="Back to Find-am"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" /> Find-am
+          </Link>
           <Link to="/community/search" search={{ q: "" } as any} className="md:hidden p-2 rounded-lg hover:bg-black/5" aria-label="Search">
             <Search className="h-4 w-4" />
           </Link>
@@ -98,7 +106,32 @@ export function CommunityShell({ children }: { children: ReactNode }) {
           </div>
         )}
       </header>
-      <main className="flex-1 mx-auto w-full max-w-6xl px-4 py-6">{children}</main>
+      <main className="flex-1 mx-auto w-full max-w-6xl px-4 py-6 pb-24 md:pb-6">{children}</main>
+
+      {/* Mobile bottom bar — the desktop nav is hidden on small screens. */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-20 border-t border-black/10 bg-white/95 backdrop-blur">
+        <div className="grid grid-cols-4 text-[11px] font-semibold">
+          <Link to="/community" className="flex flex-col items-center gap-0.5 py-2 hover:bg-black/5">
+            <Home className="h-4 w-4" /> Home
+          </Link>
+          <Link to="/community/search" search={{ q: "" } as any} className="flex flex-col items-center gap-0.5 py-2 hover:bg-black/5">
+            <Search className="h-4 w-4" /> Search
+          </Link>
+          {c.signedIn && !c.needsUsername && c.canModerate ? (
+            <Link to="/community/moderation" className="flex flex-col items-center gap-0.5 py-2 hover:bg-black/5">
+              <Shield className="h-4 w-4" /> Mod
+            </Link>
+          ) : (
+            <Link to="/community/new" className="flex flex-col items-center gap-0.5 py-2 hover:bg-black/5">
+              <Plus className="h-4 w-4" /> Post
+            </Link>
+          )}
+          <Link to="/" className="flex flex-col items-center gap-0.5 py-2 hover:bg-black/5 text-black/60">
+            <ArrowLeft className="h-4 w-4" /> Find-am
+          </Link>
+        </div>
+      </nav>
+
       <footer className="border-t border-black/5 py-6 px-4 space-y-3">
         <SocialLinks />
         <p className="text-center text-xs text-black/50">Find-am Community · Be kind, share knowledge, level up.</p>
@@ -125,35 +158,60 @@ export function RankBadge({ rank, points }: { rank?: string | null; points?: num
   );
 }
 
-const BADGE_LABELS: Record<string, string> = {
-  admin: "Admin",
-  super_moderator: "Super mod",
-  moderator: "Mod",
+const ROLE_BADGES: Record<string, { label: string; className: string }> = {
+  admin: { label: "Admin", className: "bg-[#1a1a1a] text-[#E5A54B] ring-1 ring-[#E5A54B]/50" },
+  super_moderator: { label: "Super mod", className: "bg-violet-600 text-white" },
+  moderator: { label: "Mod", className: "bg-sky-600 text-white" },
+  member: { label: "Member", className: "bg-black/10 text-black/60" },
 };
 
-export function Badges({ badges }: { badges?: string[] | null }) {
-  if (!badges?.length) return null;
-  const order = ["admin", "super_moderator", "moderator"];
-  const sorted = [...badges].sort((a, b) => order.indexOf(a) - order.indexOf(b));
+const ROLE_ORDER = ["admin", "super_moderator", "moderator", "member"];
+
+/** Normalise whatever role shape the service sends into badge keys. */
+export function roleBadgeKeys(source?: unknown): string[] {
+  const out = new Set<string>();
+  const push = (v: unknown) => {
+    if (typeof v !== "string") return;
+    const k = v.toLowerCase().replace(/[\s-]+/g, "_");
+    if (k === "supermoderator" || k === "super_mod" || k === "supermod") out.add("super_moderator");
+    else if (k === "mod") out.add("moderator");
+    else if (ROLE_BADGES[k]) out.add(k);
+  };
+  if (Array.isArray(source)) source.forEach(push);
+  else push(source);
+  return [...out].sort((a, b) => ROLE_ORDER.indexOf(a) - ROLE_ORDER.indexOf(b));
+}
+
+/**
+ * Role badges for a member. Pass `showMember` to tag ordinary members too
+ * (used on profiles, where the absence of a badge reads as missing data).
+ */
+export function Badges({ badges, showMember = false }: { badges?: unknown; showMember?: boolean }) {
+  const keys = roleBadgeKeys(badges).filter((k) => k !== "member");
+  const shown = keys.length ? keys : showMember ? ["member"] : [];
+  if (!shown.length) return null;
   return (
     <>
-      {sorted.map((b) => (
-        <span key={b} className="text-[10px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded bg-[#1a1a1a] text-white">
-          {BADGE_LABELS[b] ?? b}
-        </span>
-      ))}
+      {shown.map((b) => {
+        const def = ROLE_BADGES[b]!;
+        return (
+          <span key={b} className={`text-[10px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded ${def.className}`}>
+            {def.label}
+          </span>
+        );
+      })}
     </>
   );
 }
 
 /** Small author line: avatar, username, badges. */
-export function AuthorChip({ author, size = 8 }: { author?: AuthorCard | null; size?: number }) {
+export function AuthorChip({ author, size = 8 }: { author?: (AuthorCard & { roles?: unknown }) | null; size?: number }) {
   if (!author) return <span className="text-xs text-black/40 italic">removed</span>;
   return (
     <Link to="/community/u/$username" params={{ username: author.username }} className="inline-flex items-center gap-1.5 hover:text-[#E5A54B]">
       <img src={avatarUrl(author.avatar_key)} alt="" className="rounded-full object-cover bg-black/5" style={{ height: size * 4, width: size * 4 }} />
       <span className="text-xs font-semibold">{author.username_display ?? author.username}</span>
-      <Badges badges={author.badges} />
+      <Badges badges={[...(Array.isArray(author.badges) ? author.badges : []), ...(Array.isArray((author as any).roles) ? (author as any).roles : [])]} />
     </Link>
   );
 }

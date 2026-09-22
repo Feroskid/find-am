@@ -406,6 +406,21 @@ export const listCommunityRoles = createServerFn({ method: "POST" })
   .inputValidator((i: unknown) => z.object({ token: Token }).parse(i))
   .handler(async ({ data }) => call("/community/admin/roles", { token: data.token }));
 
+/** Admin: the Find-am account behind a community username. */
+export const communityAdminIdentity = createServerFn({ method: "POST" })
+  .inputValidator((i: unknown) => z.object({ token: Token, username: Username }).parse(i))
+  .handler(async ({ data }) =>
+    call(`/community/admin/identity/${encodeURIComponent(data.username)}`, { token: data.token }),
+  );
+
+/** Admin: the community profile belonging to a Find-am account id. */
+export const communityAdminLookup = createServerFn({ method: "POST" })
+  .inputValidator((i: unknown) => z.object({ token: Token, userId: z.string().min(1).max(64) }).parse(i))
+  .handler(async ({ data }) =>
+    call(`/community/admin/lookup/${encodeURIComponent(data.userId)}`, { token: data.token }),
+  );
+
+
 export const grantCommunityRole = createServerFn({ method: "POST" })
   .inputValidator((i: unknown) =>
     z
