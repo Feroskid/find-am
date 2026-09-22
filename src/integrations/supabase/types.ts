@@ -79,6 +79,48 @@ export type Database = {
         }
         Relationships: []
       }
+      community_mod_actions: {
+        Row: {
+          action: string
+          actor_display: string | null
+          actor_level: string | null
+          actor_roles: string[]
+          actor_username: string
+          created_at: string
+          id: string
+          reason: string | null
+          target_id: string | null
+          target_type: string
+          target_username: string | null
+        }
+        Insert: {
+          action: string
+          actor_display?: string | null
+          actor_level?: string | null
+          actor_roles?: string[]
+          actor_username: string
+          created_at?: string
+          id?: string
+          reason?: string | null
+          target_id?: string | null
+          target_type: string
+          target_username?: string | null
+        }
+        Update: {
+          action?: string
+          actor_display?: string | null
+          actor_level?: string | null
+          actor_roles?: string[]
+          actor_username?: string
+          created_at?: string
+          id?: string
+          reason?: string | null
+          target_id?: string | null
+          target_type?: string
+          target_username?: string | null
+        }
+        Relationships: []
+      }
       community_notifications: {
         Row: {
           created_at: string
