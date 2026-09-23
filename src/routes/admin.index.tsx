@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
-import { AlertTriangle, Users, ScrollText, ArrowRight, LifeBuoy, Flag, Radar, SpellCheck2, Banknote } from "lucide-react";
+import { AlertTriangle, Users, ScrollText, ArrowRight, LifeBuoy, Flag, Radar, SpellCheck2, Banknote, MessagesSquare } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { adminListTickets } from "@/lib/support.functions";
 import { adminListDisputes, adminListReports } from "@/lib/findtask.functions";
@@ -104,6 +104,8 @@ function AdminOverview() {
         <Card to="/admin/monitoring" title="Monitoring" desc="Flagged accounts and flagged messages review queues." icon={Radar} />
         <Card to="/admin/support" title="Customer support" desc="Read and reply to support requests from users." icon={LifeBuoy} badge={counts?.open ? String(counts.open) : null} />
         <Card to="/admin/users" title="User management" desc="Freeze, ban, reactivate users and inspect ledgers." icon={Users} />
+        <Card to="/admin/community" title="Community" desc="Community reports, moderator access, account matching and moderator activity." icon={MessagesSquare} />
+
         <Card to="/admin/funds" title="Held funds" desc="Freeze or unfreeze a task's wallet credit outside a dispute." icon={Banknote} />
         <Card to="/admin/keywords" title="Banned keywords" desc="Add or remove keywords that flag messages for review." icon={SpellCheck2} />
         <Card to="/admin/audit" title="Audit log" desc="Trace every admin action across the platform." icon={ScrollText} />

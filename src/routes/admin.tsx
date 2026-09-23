@@ -1,6 +1,6 @@
 import { createFileRoute, Link, Outlet, useLocation, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
-import { Shield, AlertTriangle, Users, ScrollText, LifeBuoy, Loader2, ShieldAlert, Flag, Radar, SpellCheck2, Banknote } from "lucide-react";
+import { Shield, AlertTriangle, Users, ScrollText, LifeBuoy, Loader2, ShieldAlert, Flag, Radar, SpellCheck2, Banknote, MessagesSquare } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useAdminGate } from "@/lib/admin-gate";
 
