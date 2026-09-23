@@ -30,13 +30,6 @@ function Tile({ label, value }: { label: string; value: string | number }) {
   );
 }
 
-export type ModerationQueueResult = {
-  denied: boolean;
-  level: string;
-  canSuspend: boolean;
-  openCount: number;
-};
-
 /**
  * The report queue, member lookup and summary tiles. Shared by the community
  * Moderation dashboard and the admin console so both show the same thing.
@@ -45,12 +38,10 @@ export type ModerationQueueResult = {
 export function ModerationQueue({
   token,
   fallbackSuper = false,
-  onState,
 }: {
   token: string;
   /** Treat the viewer as a super moderator when the service doesn't say. */
   fallbackSuper?: boolean;
-  onState?: (s: ModerationQueueResult) => void;
 }) {
   const listFn = useServerFn(listModReports);
   const resFn = useServerFn(resolveModReport);
@@ -130,8 +121,6 @@ export function ModerationQueue({
   const level: string = payload?.level ?? (fallbackSuper ? "super_moderator" : "moderator");
   const canSuspend = fallbackSuper || level === "super_moderator" || level === "admin";
   const member: any = memberQ.data?.ok ? ((memberQ.data.data as any).profile ?? memberQ.data.data) : null;
-
-  onState?.({ denied, level, canSuspend, openCount });
 
   if (q.isLoading) {
     return (
