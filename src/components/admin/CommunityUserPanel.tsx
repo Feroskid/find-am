@@ -4,9 +4,10 @@ import { useServerFn } from "@tanstack/react-start";
 import { useMutation } from "@tanstack/react-query";
 import { Loader2, MessagesSquare, Search, ExternalLink, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
-import { getCommunityProfile } from "@/lib/community.functions";
+import { getCommunityProfile, communityAdminIdentity, communityAdminLookup } from "@/lib/community.functions";
 import { adminUserContext, adminSearchUsers } from "@/lib/findtask.functions";
 import { avatarUrl } from "@/lib/community-avatars";
+import { Badges } from "@/components/community/CommunityShell";
 
 const when = (v: any) => (v ? new Date(v).toLocaleDateString() : "—");
 const money = (v: any) => (v == null || v === "" ? "—" : `₦${Number(v).toLocaleString()}`);
@@ -20,41 +21,94 @@ function Row({ label, value }: { label: string; value: any }) {
   );
 }
 
+function pickId(o: any): string | null {
+  if (!o) return null;
+  const v =
+    o.user_id ?? o.findam_user_id ?? o.find_am_user_id ?? o.account_id ?? o.id ?? o.user?.user_id ?? o.user?.id;
+  return v == null || v === "" ? null : String(v);
+}
+
+function pickUsername(o: any): string | null {
+  if (!o) return null;
+  const v = o.username ?? o.community_username ?? o.member?.username ?? o.profile?.username;
+  return v ? String(v) : null;
+}
+
 /**
  * Side-by-side view of a community member and the Find-am account behind it.
- * The link comes from whatever the community profile exposes; when the service
- * doesn't provide one we fall back to a Find-am search on the same username.
+ * The link comes from the community service's admin identity/lookup endpoints,
+ * with a name search only as a last resort.
  */
-export function CommunityUserPanel({ token, seedUsername }: { token: string; seedUsername?: string }) {
+export function CommunityUserPanel({ token, seedUsername, seedUserId }: { token: string; seedUsername?: string; seedUserId?: string }) {
   const profileFn = useServerFn(getCommunityProfile);
+  const identityFn = useServerFn(communityAdminIdentity);
+  const lookupFn = useServerFn(communityAdminLookup);
   const ctxFn = useServerFn(adminUserContext);
   const searchFn = useServerFn(adminSearchUsers);
 
-  const [input, setInput] = useState(seedUsername ?? "");
+  const [mode, setMode] = useState<"username" | "userId">(seedUserId && !seedUsername ? "userId" : "username");
+  const [input, setInput] = useState(seedUserId && !seedUsername ? seedUserId : (seedUsername ?? ""));
   const [community, setCommunity] = useState<any>(null);
   const [ctx, setCtx] = useState<any>(null);
   const [linkNote, setLinkNote] = useState<string | null>(null);
 
   const load = useMutation({
     mutationFn: async (raw: string) => {
-      const username = raw.trim().replace(/^@/, "");
-      const p: any = await profileFn({ data: { username, token } });
-      if (!p.ok) throw new Error(p.status === 404 ? "No community member with that username." : p.error);
-      const prof = p.data?.profile ?? p.data?.member ?? p.data;
-
+      const value = raw.trim().replace(/^@/, "");
+      let username: string | null = null;
       let userId: string | null = null;
       let note: string | null = null;
-      const direct = prof?.user_id ?? prof?.findam_user_id ?? prof?.find_am_user_id ?? prof?.account_id;
-      if (direct) {
-        userId = String(direct);
+      let prof: any = null;
+
+      if (mode === "userId") {
+        // Find-am account id → community profile.
+        const l: any = await lookupFn({ data: { token, userId: value } });
+        if (!l.ok) {
+          throw new Error(
+            l.status === 404
+              ? "That Find-am account has no community profile."
+              : l.error,
+          );
+        }
+        const body = l.data?.member ?? l.data?.profile ?? l.data;
+        username = pickUsername(body);
+        userId = value;
+        if (!username) throw new Error("The community service returned no username for that account.");
       } else {
-        const s: any = await searchFn({ data: { q: username, token } });
-        const rows: any[] = s.ok ? (s.data?.users ?? s.data?.results ?? (Array.isArray(s.data) ? s.data : [])) : [];
-        if (rows.length === 1) {
-          userId = String(rows[0].user_id ?? rows[0].id ?? "");
-          note = "The community service doesn't return the linked account, so this match is by name only — confirm before acting.";
+        username = value;
+        // Community username → Find-am account id.
+        const idr: any = await identityFn({ data: { token, username } });
+        if (idr.ok) {
+          const body = idr.data?.identity ?? idr.data?.user ?? idr.data;
+          userId = pickId(body);
+          if (!userId) note = "The community service found the member but returned no Find-am account id.";
+        } else if (idr.status === 404) {
+          note = "The community service has no account link for that username.";
+        } else if (idr.status === 401 || idr.status === 403) {
+          note = "This account isn't allowed to look up community identities.";
         } else {
-          note = "The community service doesn't return which Find-am account this member belongs to, and the name didn't match exactly one account. Search the Find-am side above by email or ID.";
+          note = idr.error;
+        }
+      }
+
+      const p: any = await profileFn({ data: { username: username!, token } });
+      if (!p.ok) throw new Error(p.status === 404 ? "No community member with that username." : p.error);
+      prof = p.data?.profile ?? p.data?.member ?? p.data;
+
+      if (!userId) {
+        const direct = pickId(prof);
+        if (direct) {
+          userId = direct;
+          note = null;
+        } else {
+          const s: any = await searchFn({ data: { q: username!, token } });
+          const rows: any[] = s.ok ? (s.data?.users ?? s.data?.results ?? (Array.isArray(s.data) ? s.data : [])) : [];
+          if (rows.length === 1) {
+            userId = pickId(rows[0]);
+            note = "Matched by name only, because the community service didn't return the account link — confirm before acting.";
+          } else {
+            note = note ?? "Could not work out which Find-am account this member belongs to. Search the Find-am side by email or ID.";
+          }
         }
       }
 
@@ -102,17 +156,31 @@ export function CommunityUserPanel({ token, seedUsername }: { token: string; see
       <h3 className="font-semibold text-ink inline-flex items-center gap-2">
         <MessagesSquare className="h-4 w-4 text-primary" /> Community ↔ Find-am
       </h3>
+
+      <div className="flex gap-1">
+        {(["username", "userId"] as const).map((m) => (
+          <button
+            key={m}
+            onClick={() => setMode(m)}
+            className={`rounded-full px-3 py-1 text-[11px] font-semibold ${mode === m ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}
+          >
+            {m === "username" ? "By community username" : "By Find-am account ID"}
+          </button>
+        ))}
+      </div>
+
       <form
         onSubmit={(e) => {
           e.preventDefault();
-          if (input.trim().replace(/^@/, "").length >= 3) load.mutate(input);
+          const v = input.trim().replace(/^@/, "");
+          if (mode === "userId" ? v.length >= 1 : v.length >= 3) load.mutate(input);
         }}
         className="flex flex-wrap gap-2"
       >
         <input
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="community username"
+          placeholder={mode === "userId" ? "Find-am account ID" : "community username"}
           className="flex-1 min-w-[160px] rounded-lg border border-border bg-background px-3 py-2 text-sm"
         />
         <button
@@ -136,7 +204,10 @@ export function CommunityUserPanel({ token, seedUsername }: { token: string; see
             <div className="flex items-center gap-2">
               <img src={avatarUrl(community.avatar_key)} alt="" className="h-10 w-10 rounded-full object-cover bg-muted" />
               <div className="min-w-0">
-                <div className="text-sm font-semibold text-ink truncate">{community.username_display ?? community.username}</div>
+                <div className="text-sm font-semibold text-ink truncate inline-flex items-center gap-1.5">
+                  {community.username_display ?? community.username}
+                  <Badges badges={[...(community.roles ?? []), ...(community.badges ?? [])]} showMember />
+                </div>
                 <div className="text-[11px] text-muted-foreground">@{community.username}</div>
               </div>
               <Link
