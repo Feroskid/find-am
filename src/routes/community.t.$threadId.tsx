@@ -174,7 +174,7 @@ function ThreadPage() {
             </Link>
             <div className="mt-1 flex flex-wrap justify-center gap-1">
               <RankBadge rank={a?.rank} />
-              <Badges badges={a?.badges} />
+              <Badges badges={[...(a?.badges ?? []), ...((a as any)?.roles ?? [])]} />
             </div>
           </div>
           <div className="flex-1 p-4 min-w-0">

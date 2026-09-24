@@ -85,7 +85,7 @@ function ProfilePage() {
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <h1 className="font-bold text-2xl">{p.username_display ?? p.username}</h1>
-            <Badges badges={p.roles} />
+            <Badges badges={[...(p.roles ?? []), ...(p.badges ?? [])]} showMember />
             {p.is_banned && (
               <span className="text-[10px] font-bold uppercase px-1.5 py-0.5 rounded bg-red-100 text-red-700">Suspended</span>
             )}
