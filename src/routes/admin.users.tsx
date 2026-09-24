@@ -139,7 +139,7 @@ function AdminUsersPage() {
 
       {token && (() => {
         const seed = ctx?.user?.community_username ?? ctx?.community?.username ?? undefined;
-        return <CommunityUserPanel key={seed ?? "none"} token={token} seedUsername={seed} />;
+        return <CommunityUserPanel key={seed ?? "none"} token={token} seedUsername={seed} seedUserId={userId || undefined} />;
       })()}
 
       <div className="rounded-xl border border-border bg-card p-4 space-y-3">
