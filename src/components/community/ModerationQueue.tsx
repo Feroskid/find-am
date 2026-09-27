@@ -326,3 +326,47 @@ export function ModerationQueue({
     </div>
   );
 }
+
+/** Bring back a hidden thread or reply by pasting its link or id. */
+function RestoreHidden({ onRestore, busy }: { onRestore: (kind: "thread" | "post", id: string) => void; busy: boolean }) {
+  const [kind, setKind] = useState<"thread" | "post">("thread");
+  const [value, setValue] = useState("");
+  const parse = (v: string) => {
+    const s = v.trim();
+    const hash = s.match(/#(?:post-|p-)?([\w-]{6,})$/);
+    if (kind === "post" && hash) return hash[1]!;
+    const t = s.match(/\/community\/t\/([\w-]+)/);
+    if (kind === "thread" && t) return t[1]!;
+    return s.split(/[/?#]/).filter(Boolean).pop() ?? "";
+  };
+  return (
+    <div className="rounded-xl bg-white border border-black/10 p-4 mb-4">
+      <div className="text-xs font-bold uppercase tracking-wider text-black/50 mb-2 inline-flex items-center gap-1">
+        <Eye className="h-3.5 w-3.5" /> Bring back hidden content
+      </div>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          const id = parse(value);
+          if (id) onRestore(kind, id);
+        }}
+        className="flex flex-wrap gap-2"
+      >
+        <select value={kind} onChange={(e) => setKind(e.target.value as "thread" | "post")} className="rounded-lg border border-black/15 px-3 py-2 text-sm">
+          <option value="thread">Thread</option>
+          <option value="post">Reply</option>
+        </select>
+        <input
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          placeholder="Paste the link or id"
+          className="flex-1 min-w-[180px] rounded-lg border border-black/15 px-3 py-2 text-sm outline-none focus:border-[#E5A54B]"
+        />
+        <button disabled={busy || !value.trim()} className="rounded-lg bg-[#1a1a1a] text-white px-4 py-2 text-sm font-semibold inline-flex items-center gap-1 disabled:opacity-50">
+          {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Eye className="h-3.5 w-3.5" />} Unhide
+        </button>
+      </form>
+      <p className="mt-1.5 text-[11px] text-black/50">Hidden items don't show in search, so paste the link you hid it from (or its id from the activity record).</p>
+    </div>
+  );
+}
