@@ -20,7 +20,11 @@ export async function requireCommunityActor(token: string): Promise<CommunityAct
 
   const set = new Set<string>();
   for (const v of [m.roles, m.badges, raw?.roles, raw?.badges]) {
-    if (Array.isArray(v)) v.forEach((r: any) => typeof r === "string" && set.add(r));
+    if (Array.isArray(v))
+      v.forEach((r: any) => {
+        const s = typeof r === "string" ? r : r && typeof r === "object" ? r.role ?? r.name : null;
+        if (typeof s === "string" && s) set.add(s.toLowerCase());
+      });
   }
   for (const v of [m.role, m.mod_level, m.level, raw?.level]) {
     if (typeof v === "string" && v) set.add(v);

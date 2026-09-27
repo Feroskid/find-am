@@ -24,7 +24,9 @@ function Row({ label, value }: { label: string; value: any }) {
 function pickId(o: any): string | null {
   if (!o) return null;
   const v =
-    o.user_id ?? o.findam_user_id ?? o.find_am_user_id ?? o.account_id ?? o.id ?? o.user?.user_id ?? o.user?.id;
+    o.user_id ?? o.findam_user_id ?? o.find_am_user_id ?? o.findtask_user_id ?? o.findam_id ?? o.account_id ??
+    o.auth_user_id ?? o.id ?? o.user?.user_id ?? o.user?.findam_user_id ?? o.user?.id ?? o.account?.id ??
+    o.member?.user_id;
   return v == null || v === "" ? null : String(v);
 }
 

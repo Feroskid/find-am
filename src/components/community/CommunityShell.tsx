@@ -4,7 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import type { ReactNode } from "react";
 import { Bell, LogIn, Plus, Shield, Search, ArrowLeft, Home } from "lucide-react";
 import { avatarUrl } from "@/lib/community-avatars";
-import { useCommunityMe, type AuthorCard } from "@/lib/community-client";
+import { useCommunityMe, normalizeRoles, type AuthorCard } from "@/lib/community-client";
 import { listNotifications } from "@/lib/community.functions";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
@@ -169,17 +169,7 @@ const ROLE_ORDER = ["admin", "super_moderator", "moderator", "member"];
 
 /** Normalise whatever role shape the service sends into badge keys. */
 export function roleBadgeKeys(source?: unknown): string[] {
-  const out = new Set<string>();
-  const push = (v: unknown) => {
-    if (typeof v !== "string") return;
-    const k = v.toLowerCase().replace(/[\s-]+/g, "_");
-    if (k === "supermoderator" || k === "super_mod" || k === "supermod") out.add("super_moderator");
-    else if (k === "mod") out.add("moderator");
-    else if (ROLE_BADGES[k]) out.add(k);
-  };
-  if (Array.isArray(source)) source.forEach(push);
-  else push(source);
-  return [...out].sort((a, b) => ROLE_ORDER.indexOf(a) - ROLE_ORDER.indexOf(b));
+  return normalizeRoles(source).sort((a, b) => ROLE_ORDER.indexOf(a) - ROLE_ORDER.indexOf(b));
 }
 
 /**
