@@ -48,20 +48,8 @@ export function useCommunityMe() {
   const data: any = raw?.member ?? raw?.profile ?? raw;
   const needsUsername = !!data?.needs_username || (q.data && !q.data.ok && q.data.status === 428) || false;
 
-  // Roles can arrive as `roles`, `badges`, a single `role`, or booleans.
-  const roleSet = new Set<string>();
-  for (const v of [data?.roles, data?.badges, raw?.roles, raw?.badges]) {
-    if (Array.isArray(v)) v.forEach((r) => typeof r === "string" && roleSet.add(r));
-  }
-  for (const v of [data?.role, data?.mod_level, data?.level, raw?.level]) {
-    if (typeof v === "string" && v) roleSet.add(v);
-  }
-  if (data?.is_admin) roleSet.add("admin");
-  if (data?.is_super_moderator) roleSet.add("super_moderator");
-  if (data?.is_moderator) roleSet.add("moderator");
-
-  const roles: string[] = [...roleSet];
-  const badges: string[] = Array.isArray(data?.badges) ? data.badges : roles;
+  const roles: string[] = normalizeRoles(data, raw);
+  const badges: string[] = roles;
 
   return {
     ready,
@@ -84,6 +72,54 @@ export function useCommunityMe() {
       roles.includes("super_moderator") || roles.includes("admin") || badges.includes("admin"),
     refetch: q.refetch,
   };
+}
+
+/** Canonical role key for any spelling the service uses. */
+export function canonicalRole(v: unknown): string | null {
+  if (typeof v !== "string" || !v) return null;
+  const k = v.toLowerCase().replace(/[\s-]+/g, "_");
+  if (["super_moderator", "supermoderator", "super_mod", "supermod"].includes(k)) return "super_moderator";
+  if (k === "mod" || k === "moderator") return "moderator";
+  if (k === "admin" || k === "administrator") return "admin";
+  if (k === "member" || k === "user") return "member";
+  return null;
+}
+
+/**
+ * Reads roles from every shape the service sends: plain strings,
+ * `{role, category}` records, `badges` arrays, single fields and booleans.
+ */
+export function normalizeRoles(...sources: any[]): string[] {
+  const out = new Set<string>();
+  const take = (v: any) => {
+    if (Array.isArray(v)) return v.forEach(take);
+    if (v && typeof v === "object") return take(v.role ?? v.name ?? v.level);
+    const c = canonicalRole(v);
+    if (c && c !== "member") out.add(c);
+  };
+  for (const s of sources) {
+    if (!s) continue;
+    if (Array.isArray(s) || typeof s === "string") { take(s); continue; }
+    take(s.roles); take(s.badges); take(s.role); take(s.mod_level); take(s.level);
+    if (s.is_admin) out.add("admin");
+    if (s.is_super_moderator) out.add("super_moderator");
+    if (s.is_moderator) out.add("moderator");
+  }
+  const order = ["admin", "super_moderator", "moderator"];
+  return [...out].sort((a, b) => order.indexOf(a) - order.indexOf(b));
+}
+
+/** Readable label list, with category when a role is limited to one. */
+export function roleLabels(roles: any): string {
+  const names: Record<string, string> = { admin: "Admin", super_moderator: "Super moderator", moderator: "Moderator" };
+  const list = Array.isArray(roles) ? roles : roles ? [roles] : [];
+  const parts = list.map((r: any) => {
+    const key = canonicalRole(typeof r === "object" && r ? r.role : r);
+    if (!key || key === "member") return null;
+    const cat = typeof r === "object" && r ? (r.category ?? r.category_slug) : null;
+    return names[key] + (cat ? ` (${typeof cat === "object" ? cat.name ?? cat.slug : cat})` : "");
+  }).filter(Boolean);
+  return [...new Set(parts)].join(", ") || "Member";
 }
 
 export function relTime(iso?: string | null) {
