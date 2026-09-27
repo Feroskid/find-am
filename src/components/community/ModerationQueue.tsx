@@ -147,6 +147,15 @@ export function ModerationQueue({
         <Tile label="Can suspend" value={canSuspend ? "Yes" : "No"} />
       </div>
 
+      <RestoreHidden
+        busy={threadAction.isPending || postAction.isPending}
+        onRestore={(kind, id) =>
+          kind === "thread"
+            ? threadAction.mutate({ threadId: id, action: "unhide" })
+            : postAction.mutate({ postId: id, action: "unhide" })
+        }
+      />
+
       {/* Look up any member and see what they've been up to. */}
       <div className="rounded-xl bg-white border border-black/10 p-4 mb-4">
         <div className="text-xs font-bold uppercase tracking-wider text-black/50 mb-2 inline-flex items-center gap-1">
