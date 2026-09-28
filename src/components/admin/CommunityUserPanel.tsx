@@ -37,6 +37,7 @@ export function CommunityUserPanel({ token, seedUsername, seedUserId }: { token:
   const [input, setInput] = useState(seedUserId && !seedUsername ? seedUserId : (seedUsername ?? ""));
   const [community, setCommunity] = useState<any>(null);
   const [ctx, setCtx] = useState<any>(null);
+  const [linkedUserId, setLinkedUserId] = useState<string | null>(null);
   const [linkNote, setLinkNote] = useState<string | null>(null);
 
   const load = useMutation({
@@ -105,17 +106,19 @@ export function CommunityUserPanel({ token, seedUsername, seedUserId }: { token:
         if (c.ok) context = c.data;
         else note = c.error;
       }
-      return { prof, context, note };
+      return { prof, context, note, userId };
     },
     onSuccess: (r) => {
       setCommunity(r.prof);
       setCtx(r.context);
       setLinkNote(r.note);
+      setLinkedUserId(r.userId);
     },
     onError: (e: any) => {
       setCommunity(null);
       setCtx(null);
       setLinkNote(null);
+      setLinkedUserId(null);
       toast.error(e?.message ?? "Lookup failed");
     },
   });
@@ -220,12 +223,12 @@ export function CommunityUserPanel({ token, seedUsername, seedUserId }: { token:
               <>
                 <div className="flex items-center gap-2">
                   <div className="min-w-0">
-                    <div className="text-sm font-semibold text-ink truncate">{u.name ?? u.full_name ?? `User ${userId ?? ""}`}</div>
-                    <div className="text-[11px] text-muted-foreground truncate">{u.user_id ?? u.id ?? userId ?? "—"}</div>
+                    <div className="text-sm font-semibold text-ink truncate">{u.name ?? u.full_name ?? `User ${linkedUserId ?? ""}`}</div>
+                    <div className="text-[11px] text-muted-foreground truncate">{u.user_id ?? u.id ?? linkedUserId ?? "—"}</div>
                   </div>
                   <Link
                     to="/u/$userId"
-                    params={{ userId: String(u.user_id ?? u.id ?? userId ?? "") }}
+                    params={{ userId: String(u.user_id ?? u.id ?? linkedUserId ?? "") }}
                     target="_blank"
                     className="ml-auto inline-flex items-center gap-1 rounded-full border border-border px-2 py-0.5 text-[11px] font-semibold text-primary hover:bg-muted"
                   >
