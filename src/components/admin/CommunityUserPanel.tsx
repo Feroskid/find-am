@@ -2,10 +2,10 @@ import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation } from "@tanstack/react-query";
-import { Loader2, MessagesSquare, Search, ExternalLink, AlertTriangle } from "lucide-react";
+import { Loader2, MessagesSquare, Search, ExternalLink, AlertTriangle, Ban } from "lucide-react";
 import { toast } from "sonner";
 import { getCommunityProfile, communityAdminIdentity, communityAdminLookup } from "@/lib/community.functions";
-import { adminUserContext, adminSearchUsers } from "@/lib/findtask.functions";
+import { adminBanUser, adminUserContext, adminSearchUsers } from "@/lib/findtask.functions";
 import { avatarUrl } from "@/lib/community-avatars";
 import { Badges } from "@/components/community/CommunityShell";
 import { communityUserId, communityUsername, normalizeRoles, roleLabels, unwrapCommunityMember } from "@/lib/community-client";
@@ -32,6 +32,7 @@ export function CommunityUserPanel({ token, seedUsername, seedUserId }: { token:
   const lookupFn = useServerFn(communityAdminLookup);
   const ctxFn = useServerFn(adminUserContext);
   const searchFn = useServerFn(adminSearchUsers);
+  const platformBanFn = useServerFn(adminBanUser);
 
   const [mode, setMode] = useState<"username" | "userId">(seedUserId && !seedUsername ? "userId" : "username");
   const [input, setInput] = useState(seedUserId && !seedUsername ? seedUserId : (seedUsername ?? ""));
@@ -121,6 +122,15 @@ export function CommunityUserPanel({ token, seedUsername, seedUserId }: { token:
       setLinkedUserId(null);
       toast.error(e?.message ?? "Lookup failed");
     },
+  });
+  const platformBan = useMutation({
+    mutationFn: (value: { userId: string; reason: string }) => platformBanFn({ data: { token, ...value } }),
+    onSuccess: (result: any) => {
+      if (!result.ok) return toast.error(result.error ?? "Platform ban failed");
+      toast.success("Find-am account banned");
+      if (input.trim()) load.mutate(input);
+    },
+    onError: (error: any) => toast.error(error?.message ?? "Platform ban failed"),
   });
 
   const u = ctx?.user ?? ctx?.profile ?? null;
@@ -234,6 +244,20 @@ export function CommunityUserPanel({ token, seedUsername, seedUserId }: { token:
                   >
                     Open <ExternalLink className="h-3 w-3" />
                   </Link>
+                  {linkedUserId && accountStatus !== "banned" && (
+                    <button
+                      type="button"
+                      disabled={platformBan.isPending}
+                      onClick={() => {
+                        const reason = window.prompt("Reason for the Find-am platform ban:");
+                        if (!reason?.trim()) return toast.error("A reason is required.");
+                        platformBan.mutate({ userId: linkedUserId, reason: reason.trim() });
+                      }}
+                      className="inline-flex items-center gap-1 rounded-full bg-destructive px-2 py-0.5 text-[11px] font-semibold text-destructive-foreground disabled:opacity-50"
+                    >
+                      <Ban className="h-3 w-3" /> Platform ban
+                    </button>
+                  )}
                 </div>
                 <div className="mt-2">
                   <Row label="Email" value={u.email} />

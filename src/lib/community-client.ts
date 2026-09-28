@@ -151,8 +151,10 @@ function scalar(source: any, keys: string[]): string | undefined {
 export function communityUserId(source: any): string | null {
   if (typeof source === "string" || typeof source === "number") return String(source);
   if (!source || typeof source !== "object") return null;
-  const direct = scalar(source, ["user_id", "findam_user_id", "find_am_user_id", "findtask_user_id", "account_id", "auth_user_id"]);
+  const direct = scalar(source, ["user_id", "userId", "findam_user_id", "find_am_user_id", "findtask_user_id", "account_id", "auth_user_id"]);
   if (direct) return direct;
+  const knownNestedId = source.identity?.id ?? source.account?.id ?? source.user?.id;
+  if (typeof knownNestedId === "string" || typeof knownNestedId === "number") return String(knownNestedId);
   for (const child of [source.identity, source.account, source.user, source.member, source.profile, source.community]) {
     const nested = communityUserId(child);
     if (nested) return nested;
