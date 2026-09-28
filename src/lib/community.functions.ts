@@ -404,7 +404,26 @@ export const unbanMember = createServerFn({ method: "POST" })
 
 export const listCommunityRoles = createServerFn({ method: "POST" })
   .inputValidator((i: unknown) => z.object({ token: Token }).parse(i))
-  .handler(async ({ data }) => call("/community/admin/roles", { token: data.token }));
+  .handler(async ({ data }) => {
+    const result = await call("/community/admin/roles", { token: data.token });
+    if (!result.ok) return result;
+    const payload: any = result.data;
+    const rows: any[] = payload?.roles ?? payload?.assignments ?? payload?.members ?? payload?.items ?? (Array.isArray(payload) ? payload : []);
+    const enriched = await Promise.all(rows.map(async (row) => {
+      const hasName = row?.username ?? row?.member?.username ?? row?.profile?.username ?? row?.user?.username;
+      const userId = row?.user_id ?? row?.findam_user_id ?? row?.account_id ?? row?.member?.user_id ?? row?.user?.user_id;
+      if (hasName || !userId) return row;
+      const lookup = await call(`/community/admin/lookup/${encodeURIComponent(String(userId))}`, { token: data.token });
+      if (!lookup.ok) return row;
+      const member = (lookup.data as any)?.community_profile ?? (lookup.data as any)?.community_member ?? (lookup.data as any)?.member ?? (lookup.data as any)?.profile ?? (lookup.data as any)?.community ?? lookup.data;
+      return { ...row, member };
+    }));
+    if (Array.isArray(payload)) return { ok: true as const, data: enriched };
+    if (payload?.roles) return { ok: true as const, data: { ...payload, roles: enriched } };
+    if (payload?.assignments) return { ok: true as const, data: { ...payload, assignments: enriched } };
+    if (payload?.members) return { ok: true as const, data: { ...payload, members: enriched } };
+    return { ok: true as const, data: { ...payload, items: enriched } };
+  });
 
 /** Admin: the Find-am account behind a community username. */
 export const communityAdminIdentity = createServerFn({ method: "POST" })
@@ -450,5 +469,6 @@ export const revokeCommunityRole = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     const { token, ...body } = data;
-    return call("/community/admin/roles", { method: "DELETE", token, body });
+    const query = qs({ username: body.username, role: body.role, category_slug: body.category_slug });
+    return call(`/community/admin/roles${query}`, { method: "DELETE", token, body });
   });
