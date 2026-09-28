@@ -3,7 +3,7 @@ import { Shield, Loader2 } from "lucide-react";
 import { CommunityShell } from "@/components/community/CommunityShell";
 import { RolesPanel } from "@/components/community/RolesPanel";
 import { ModerationQueue } from "@/components/community/ModerationQueue";
-import { useCommunityMe } from "@/lib/community-client";
+import { moderatorCategoryScopes, useCommunityMe } from "@/lib/community-client";
 
 export const Route = createFileRoute("/community/moderation")({
   head: () => ({
@@ -11,6 +11,10 @@ export const Route = createFileRoute("/community/moderation")({
       { name: "robots", content: "noindex, nofollow" },
       { title: "Moderation — Find-am Community" },
       { name: "description", content: "Review reports and take action on community content." },
+      { property: "og:title", content: "Moderation — Find-am Community" },
+      { property: "og:description", content: "Review reports and take action on community content." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: ModPage,
@@ -56,6 +60,12 @@ function ModPage() {
     : c.isSuperMod
       ? "Super moderator dashboard"
       : "Moderator dashboard";
+  const viewerLevel: "admin" | "super_moderator" | "moderator" = c.roles.includes("admin")
+    ? "admin"
+    : c.roles.includes("super_moderator")
+      ? "super_moderator"
+      : "moderator";
+  const categoryScopes = viewerLevel === "moderator" ? moderatorCategoryScopes(c.me) : [];
 
   return (
     <CommunityShell>
@@ -66,9 +76,9 @@ function ModPage() {
         </span>
       </div>
 
-      {c.isSuperMod && <RolesPanel token={c.token} />}
+      {viewerLevel !== "moderator" && <RolesPanel token={c.token} viewerLevel={viewerLevel} />}
 
-      <ModerationQueue token={c.token} fallbackSuper={c.isSuperMod} />
+      <ModerationQueue token={c.token} viewerLevel={viewerLevel} categoryScopes={categoryScopes} />
     </CommunityShell>
   );
 }

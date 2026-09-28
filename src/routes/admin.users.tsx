@@ -12,6 +12,17 @@ import { CommunityUserPanel } from "@/components/admin/CommunityUserPanel";
 import { useAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/admin/users")({
+  head: () => ({
+    meta: [
+      { title: "User Management — Find-am Admin" },
+      { name: "description", content: "Manage Find-am accounts and linked community profiles." },
+      { property: "og:title", content: "User Management — Find-am Admin" },
+      { property: "og:description", content: "Manage Find-am accounts and linked community profiles." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   component: AdminUsersPage,
 });
 
@@ -139,7 +150,7 @@ function AdminUsersPage() {
 
       {token && (() => {
         const seed = ctx?.user?.community_username ?? ctx?.community?.username ?? undefined;
-        return <CommunityUserPanel key={seed ?? "none"} token={token} seedUsername={seed} seedUserId={userId || undefined} />;
+        return <CommunityUserPanel key={`${seed ?? "none"}:${userId}`} token={token} seedUsername={seed} seedUserId={userId || undefined} />;
       })()}
 
       <div className="rounded-xl border border-border bg-card p-4 space-y-3">

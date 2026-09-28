@@ -109,6 +109,123 @@ export function normalizeRoles(...sources: any[]): string[] {
   return [...out].sort((a, b) => order.indexOf(a) - order.indexOf(b));
 }
 
+export type CommunityRoleAssignment = {
+  assignmentId?: string;
+  userId?: string;
+  username: string;
+  displayName: string;
+  avatarKey?: string;
+  rank?: string;
+  points?: number;
+  role: "moderator" | "super_moderator" | "admin";
+  categorySlug?: string;
+  grantedAt?: string;
+  raw: any;
+};
+
+/** Unwrap the member record returned by profile, identity, lookup, or role-list calls. */
+export function unwrapCommunityMember(source: any): any {
+  if (!source || typeof source !== "object") return source;
+  return (
+    source.community_profile ??
+    source.community_member ??
+    source.member ??
+    source.profile ??
+    source.community ??
+    source.user ??
+    source.identity ??
+    source.data ??
+    source
+  );
+}
+
+function scalar(source: any, keys: string[]): string | undefined {
+  for (const key of keys) {
+    const value = source?.[key];
+    if (typeof value === "string" && value.trim()) return value.trim();
+    if (typeof value === "number") return String(value);
+  }
+  return undefined;
+}
+
+export function communityUserId(source: any): string | null {
+  if (typeof source === "string" || typeof source === "number") return String(source);
+  if (!source || typeof source !== "object") return null;
+  const direct = scalar(source, ["user_id", "userId", "findam_user_id", "find_am_user_id", "findtask_user_id", "account_id", "auth_user_id"]);
+  if (direct) return direct;
+  const knownNestedId = source.identity?.id ?? source.account?.id ?? source.user?.id;
+  if (typeof knownNestedId === "string" || typeof knownNestedId === "number") return String(knownNestedId);
+  for (const child of [source.identity, source.account, source.user, source.member, source.profile, source.community]) {
+    const nested = communityUserId(child);
+    if (nested) return nested;
+  }
+  return null;
+}
+
+export function communityUsername(source: any): string | null {
+  if (!source || typeof source !== "object") return null;
+  const direct = scalar(source, ["username", "community_username"]);
+  if (direct) return direct;
+  for (const child of [source.community_profile, source.community_member, source.member, source.profile, source.community, source.user]) {
+    const nested = communityUsername(child);
+    if (nested) return nested;
+  }
+  return null;
+}
+
+function categorySlug(value: any): string | undefined {
+  if (typeof value === "string" && value.trim()) return value.trim();
+  if (!value || typeof value !== "object") return undefined;
+  return scalar(value, ["slug", "category_slug", "name"]);
+}
+
+/** Normalize one row per assigned role while preserving identifiers needed for revocation. */
+export function normalizeRoleAssignments(source: any): CommunityRoleAssignment[] {
+  const payload = source?.data ?? source;
+  const rows: any[] = payload?.roles ?? payload?.assignments ?? payload?.members ?? payload?.items ?? (Array.isArray(payload) ? payload : []);
+  const out: CommunityRoleAssignment[] = [];
+  for (const row of rows) {
+    const person = unwrapCommunityMember(row?.member ?? row?.profile ?? row?.user ?? row);
+    const rowRoles = Array.isArray(row?.roles) ? row.roles : [row];
+    for (const roleRow of rowRoles) {
+      const role = canonicalRole(roleRow?.role ?? roleRow?.level ?? roleRow);
+      if (role !== "moderator" && role !== "super_moderator" && role !== "admin") continue;
+      const username = communityUsername(person) ?? communityUsername(row) ?? "";
+      const displayName = scalar(person, ["username_display", "display_name", "name", "full_name"]) ?? scalar(row, ["username_display", "display_name", "name", "full_name"]) ?? username;
+      out.push({
+        assignmentId: scalar(roleRow, ["assignment_id", "role_id"]) ?? scalar(row, ["assignment_id", "role_id"]),
+        userId: communityUserId(row) ?? communityUserId(person) ?? undefined,
+        username,
+        displayName,
+        avatarKey: scalar(person, ["avatar_key"]) ?? scalar(row, ["avatar_key"]),
+        rank: scalar(person, ["rank"]) ?? scalar(row, ["rank"]),
+        points: Number(person?.points ?? row?.points ?? 0),
+        role,
+        categorySlug: categorySlug(roleRow?.category_slug ?? roleRow?.category ?? row?.category_slug ?? row?.category),
+        grantedAt: scalar(roleRow, ["granted_at", "created_at"]) ?? scalar(row, ["granted_at", "created_at"]),
+        raw: row,
+      });
+    }
+  }
+  return out;
+}
+
+/** Category limits assigned to a moderator. An empty list means unscoped. */
+export function moderatorCategoryScopes(...sources: any[]): string[] {
+  const scopes = new Set<string>();
+  const walk = (value: any) => {
+    if (Array.isArray(value)) return value.forEach(walk);
+    if (!value || typeof value !== "object") return;
+    if (canonicalRole(value.role ?? value.level) === "moderator") {
+      const slug = categorySlug(value.category_slug ?? value.category);
+      if (slug) scopes.add(slug.toLowerCase());
+    }
+    walk(value.roles);
+  };
+  sources.forEach(walk);
+  return [...scopes];
+}
+
 /** Readable label list, with category when a role is limited to one. */
 export function roleLabels(roles: any): string {
   const names: Record<string, string> = { admin: "Admin", super_moderator: "Super moderator", moderator: "Moderator" };

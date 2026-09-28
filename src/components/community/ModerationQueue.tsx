@@ -37,11 +37,12 @@ function Tile({ label, value }: { label: string; value: string | number }) {
  */
 export function ModerationQueue({
   token,
-  fallbackSuper = false,
+  viewerLevel = "moderator",
+  categoryScopes = [],
 }: {
   token: string;
-  /** Treat the viewer as a super moderator when the service doesn't say. */
-  fallbackSuper?: boolean;
+  viewerLevel?: "moderator" | "super_moderator" | "admin";
+  categoryScopes?: string[];
 }) {
   const listFn = useServerFn(listModReports);
   const resFn = useServerFn(resolveModReport);
@@ -74,14 +75,15 @@ export function ModerationQueue({
     target_type: "thread" | "post" | "member" | "report";
     target_id?: string;
     target_username?: string;
+    reason?: string;
   }) => void logFn({ data: { token, ...v } });
 
   const resolve = useMutation({
-    mutationFn: (v: { reportId: string; status: "resolved" | "dismissed" }) => resFn({ data: { token, ...v } }),
+    mutationFn: (v: { reportId: string; status: "resolved" | "dismissed"; note: string }) => resFn({ data: { token, ...v } }),
     onSuccess: (r: any, v) => {
       if (!r.ok) return toast.error(communityError(r));
       toast.success("Report updated");
-      record({ action: v.status === "resolved" ? "resolve_report" : "dismiss_report", target_type: "report", target_id: v.reportId });
+      record({ action: v.status === "resolved" ? "resolve_report" : "dismiss_report", target_type: "report", target_id: v.reportId, reason: v.note });
       q.refetch();
     },
   });
@@ -116,10 +118,17 @@ export function ModerationQueue({
 
   const denied = !!(q.data && !q.data.ok && (q.data.status === 401 || q.data.status === 403));
   const payload: any = q.data?.ok ? q.data.data : null;
-  const reports: any[] = payload?.reports ?? [];
-  const openCount: number = payload?.open_count ?? (tab === "open" ? reports.length : 0);
-  const level: string = payload?.level ?? (fallbackSuper ? "super_moderator" : "moderator");
-  const canSuspend = fallbackSuper || level === "super_moderator" || level === "admin";
+  const allReports: any[] = payload?.reports ?? [];
+  const level = viewerLevel;
+  const canSuspend = level === "super_moderator" || level === "admin";
+  const normalizedScopes = categoryScopes.map((scope) => scope.toLowerCase());
+  const reports = allReports.filter((report) => {
+    if (level === "moderator" && report.target_type === "user") return false;
+    if (level !== "moderator" || normalizedScopes.length === 0) return true;
+    const slug = report.category_slug ?? report.thread?.category_slug ?? report.category?.slug ?? report.target?.category_slug;
+    return typeof slug === "string" && normalizedScopes.includes(slug.toLowerCase());
+  });
+  const openCount: number = level === "moderator" ? (tab === "open" ? reports.length : 0) : payload?.open_count ?? (tab === "open" ? reports.length : 0);
   const member: any = memberQ.data?.ok ? ((memberQ.data.data as any).profile ?? memberQ.data.data) : null;
 
   if (q.isLoading) {
@@ -156,7 +165,8 @@ export function ModerationQueue({
         }
       />
 
-      {/* Look up any member and see what they've been up to. */}
+      {/* Higher roles can inspect members; moderators work only with content reports. */}
+      {canSuspend && (
       <div className="rounded-xl bg-white border border-black/10 p-4 mb-4">
         <div className="text-xs font-bold uppercase tracking-wider text-black/50 mb-2 inline-flex items-center gap-1">
           <User className="h-3.5 w-3.5" /> Check a member
@@ -217,6 +227,7 @@ export function ModerationQueue({
           </div>
         )}
       </div>
+      )}
 
       <div className="flex gap-1 border-b border-black/10 mb-4">
         {TABS.map((t) => (
@@ -311,10 +322,10 @@ export function ModerationQueue({
                       <Ban className="h-3 w-3" /> Suspend member
                     </button>
                   )}
-                  {r.status === "open" && (
+                   {r.status === "open" && (
                     <>
-                      <button onClick={() => resolve.mutate({ reportId: String(r.id), status: "resolved" })} className="ml-auto inline-flex items-center gap-1 text-xs rounded bg-emerald-100 text-emerald-800 px-2 py-1 hover:bg-emerald-200"><Check className="h-3 w-3" /> Resolve</button>
-                      <button onClick={() => resolve.mutate({ reportId: String(r.id), status: "dismissed" })} className="inline-flex items-center gap-1 text-xs rounded bg-black/5 px-2 py-1 hover:bg-black/10"><X className="h-3 w-3" /> Dismiss</button>
+                       <button onClick={() => askForReportNote(String(r.id), "resolved", resolve.mutate)} className="ml-auto inline-flex items-center gap-1 text-xs rounded bg-emerald-100 text-emerald-800 px-2 py-1 hover:bg-emerald-200"><Check className="h-3 w-3" /> Resolve</button>
+                       <button onClick={() => askForReportNote(String(r.id), "dismissed", resolve.mutate)} className="inline-flex items-center gap-1 text-xs rounded bg-black/5 px-2 py-1 hover:bg-black/10"><X className="h-3 w-3" /> Dismiss</button>
                     </>
                   )}
                 </div>
@@ -325,6 +336,19 @@ export function ModerationQueue({
       )}
     </div>
   );
+}
+
+function askForReportNote(
+  reportId: string,
+  status: "resolved" | "dismissed",
+  submit: (value: { reportId: string; status: "resolved" | "dismissed"; note: string }) => void,
+) {
+  const note = window.prompt(`Add the moderator note for this ${status === "resolved" ? "resolution" : "dismissal"}:`);
+  if (!note?.trim()) {
+    toast.error("A moderator note is required.");
+    return;
+  }
+  submit({ reportId, status, note: note.trim() });
 }
 
 /** Bring back a hidden thread or reply by pasting its link or id. */

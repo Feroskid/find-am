@@ -2,15 +2,16 @@ import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation } from "@tanstack/react-query";
-import { Loader2, MessagesSquare, Search, ExternalLink, AlertTriangle } from "lucide-react";
+import { Loader2, MessagesSquare, Search, ExternalLink, AlertTriangle, Ban } from "lucide-react";
 import { toast } from "sonner";
 import { getCommunityProfile, communityAdminIdentity, communityAdminLookup } from "@/lib/community.functions";
-import { adminUserContext, adminSearchUsers } from "@/lib/findtask.functions";
+import { adminBanUser, adminUserContext, adminSearchUsers } from "@/lib/findtask.functions";
 import { avatarUrl } from "@/lib/community-avatars";
 import { Badges } from "@/components/community/CommunityShell";
+import { Button } from "@/components/ui/button";
+import { communityUserId, communityUsername, normalizeRoles, roleLabels, unwrapCommunityMember } from "@/lib/community-client";
 
 const when = (v: any) => (v ? new Date(v).toLocaleDateString() : "—");
-const money = (v: any) => (v == null || v === "" ? "—" : `₦${Number(v).toLocaleString()}`);
 
 function Row({ label, value }: { label: string; value: any }) {
   return (
@@ -19,21 +20,6 @@ function Row({ label, value }: { label: string; value: any }) {
       <span className="text-xs font-medium text-ink text-right truncate">{value === undefined || value === null || value === "" ? "—" : String(value)}</span>
     </div>
   );
-}
-
-function pickId(o: any): string | null {
-  if (!o) return null;
-  const v =
-    o.user_id ?? o.findam_user_id ?? o.find_am_user_id ?? o.findtask_user_id ?? o.findam_id ?? o.account_id ??
-    o.auth_user_id ?? o.id ?? o.user?.user_id ?? o.user?.findam_user_id ?? o.user?.id ?? o.account?.id ??
-    o.member?.user_id;
-  return v == null || v === "" ? null : String(v);
-}
-
-function pickUsername(o: any): string | null {
-  if (!o) return null;
-  const v = o.username ?? o.community_username ?? o.member?.username ?? o.profile?.username;
-  return v ? String(v) : null;
 }
 
 /**
@@ -47,11 +33,13 @@ export function CommunityUserPanel({ token, seedUsername, seedUserId }: { token:
   const lookupFn = useServerFn(communityAdminLookup);
   const ctxFn = useServerFn(adminUserContext);
   const searchFn = useServerFn(adminSearchUsers);
+  const platformBanFn = useServerFn(adminBanUser);
 
   const [mode, setMode] = useState<"username" | "userId">(seedUserId && !seedUsername ? "userId" : "username");
   const [input, setInput] = useState(seedUserId && !seedUsername ? seedUserId : (seedUsername ?? ""));
   const [community, setCommunity] = useState<any>(null);
   const [ctx, setCtx] = useState<any>(null);
+  const [linkedUserId, setLinkedUserId] = useState<string | null>(null);
   const [linkNote, setLinkNote] = useState<string | null>(null);
 
   const load = useMutation({
@@ -72,8 +60,8 @@ export function CommunityUserPanel({ token, seedUsername, seedUserId }: { token:
               : l.error,
           );
         }
-        const body = l.data?.member ?? l.data?.profile ?? l.data;
-        username = pickUsername(body);
+        const body = unwrapCommunityMember(l.data);
+        username = communityUsername(body) ?? communityUsername(l.data);
         userId = value;
         if (!username) throw new Error("The community service returned no username for that account.");
       } else {
@@ -81,8 +69,7 @@ export function CommunityUserPanel({ token, seedUsername, seedUserId }: { token:
         // Community username → Find-am account id.
         const idr: any = await identityFn({ data: { token, username } });
         if (idr.ok) {
-          const body = idr.data?.identity ?? idr.data?.user ?? idr.data;
-          userId = pickId(body);
+          userId = communityUserId(idr.data);
           if (!userId) note = "The community service found the member but returned no Find-am account id.";
         } else if (idr.status === 404) {
           note = "The community service has no account link for that username.";
@@ -93,20 +80,21 @@ export function CommunityUserPanel({ token, seedUsername, seedUserId }: { token:
         }
       }
 
-      const p: any = await profileFn({ data: { username: username!, token } });
+      if (!username) throw new Error("The community service returned no username for that account.");
+      const p: any = await profileFn({ data: { username, token } });
       if (!p.ok) throw new Error(p.status === 404 ? "No community member with that username." : p.error);
-      prof = p.data?.profile ?? p.data?.member ?? p.data;
+      prof = unwrapCommunityMember(p.data);
 
       if (!userId) {
-        const direct = pickId(prof);
+        const direct = communityUserId(p.data) ?? communityUserId(prof);
         if (direct) {
           userId = direct;
           note = null;
         } else {
-          const s: any = await searchFn({ data: { q: username!, token } });
+          const s: any = await searchFn({ data: { q: username, token } });
           const rows: any[] = s.ok ? (s.data?.users ?? s.data?.results ?? (Array.isArray(s.data) ? s.data : [])) : [];
           if (rows.length === 1) {
-            userId = pickId(rows[0]);
+            userId = communityUserId(rows[0]) ?? (rows[0]?.id == null ? null : String(rows[0].id));
             note = "Matched by name only, because the community service didn't return the account link — confirm before acting.";
           } else {
             note = note ?? "Could not work out which Find-am account this member belongs to. Search the Find-am side by email or ID.";
@@ -120,24 +108,33 @@ export function CommunityUserPanel({ token, seedUsername, seedUserId }: { token:
         if (c.ok) context = c.data;
         else note = c.error;
       }
-      return { prof, context, note };
+      return { prof, context, note, userId };
     },
     onSuccess: (r) => {
       setCommunity(r.prof);
       setCtx(r.context);
       setLinkNote(r.note);
+      setLinkedUserId(r.userId);
     },
     onError: (e: any) => {
       setCommunity(null);
       setCtx(null);
       setLinkNote(null);
+      setLinkedUserId(null);
       toast.error(e?.message ?? "Lookup failed");
     },
   });
+  const platformBan = useMutation({
+    mutationFn: (value: { userId: string; reason: string }) => platformBanFn({ data: { token, ...value } }),
+    onSuccess: (result: any) => {
+      if (!result.ok) return toast.error(result.error ?? "Platform ban failed");
+      toast.success("Find-am account banned");
+      if (input.trim()) load.mutate(input);
+    },
+    onError: (error: any) => toast.error(error?.message ?? "Platform ban failed"),
+  });
 
   const u = ctx?.user ?? ctx?.profile ?? null;
-  const posted: any[] = ctx?.posted_tasks ?? [];
-  const working: any[] = ctx?.working_tasks ?? [];
   const frozen = u ? u.is_frozen || !!u.frozen_until : false;
   const accountStatus = u ? (frozen ? "frozen" : String(u.user_status ?? "active")) : null;
 
@@ -149,7 +146,7 @@ export function CommunityUserPanel({ token, seedUsername, seedUserId }: { token:
       flags.push("Community access is suspended while the Find-am account is active.");
     if (!u.email_verified && u.email_verified !== undefined) flags.push("Find-am email is not verified.");
     if (u.kyc_verified === false) flags.push("Find-am identity check is not complete.");
-    if (Array.isArray(community.roles) && community.roles.length > 0 && accountStatus !== "active")
+    if (normalizeRoles(community).length > 0 && accountStatus !== "active")
       flags.push("This member holds community roles on a non-active Find-am account.");
   }
 
@@ -208,7 +205,7 @@ export function CommunityUserPanel({ token, seedUsername, seedUserId }: { token:
               <div className="min-w-0">
                 <div className="text-sm font-semibold text-ink truncate inline-flex items-center gap-1.5">
                   {community.username_display ?? community.username}
-                  <Badges badges={[...(community.roles ?? []), ...(community.badges ?? [])]} showMember />
+                  <Badges badges={community} showMember />
                 </div>
                 <div className="text-[11px] text-muted-foreground">@{community.username}</div>
               </div>
@@ -226,7 +223,7 @@ export function CommunityUserPanel({ token, seedUsername, seedUserId }: { token:
               <Row label="Points" value={community.points ?? 0} />
               <Row label="Threads" value={community.thread_count ?? 0} />
               <Row label="Replies" value={community.post_count ?? 0} />
-              <Row label="Roles" value={(community.roles ?? []).join(", ") || "member"} />
+              <Row label="Roles" value={roleLabels(community.roles ?? community.badges)} />
               <Row label="Suspended" value={community.is_banned ? "Yes" : "No"} />
               <Row label="Joined community" value={when(community.created_at)} />
             </div>
@@ -237,26 +234,39 @@ export function CommunityUserPanel({ token, seedUsername, seedUserId }: { token:
               <>
                 <div className="flex items-center gap-2">
                   <div className="min-w-0">
-                    <div className="text-sm font-semibold text-ink truncate">{u.name ?? `User ${u.user_id ?? ""}`}</div>
-                    <div className="text-[11px] text-muted-foreground truncate">{u.user_id ?? "—"}</div>
+                    <div className="text-sm font-semibold text-ink truncate">{u.name ?? u.full_name ?? `User ${linkedUserId ?? ""}`}</div>
+                    <div className="text-[11px] text-muted-foreground truncate">{u.user_id ?? u.id ?? linkedUserId ?? "—"}</div>
                   </div>
                   <Link
                     to="/u/$userId"
-                    params={{ userId: String(u.user_id ?? "") }}
+                    params={{ userId: String(u.user_id ?? u.id ?? linkedUserId ?? "") }}
                     target="_blank"
                     className="ml-auto inline-flex items-center gap-1 rounded-full border border-border px-2 py-0.5 text-[11px] font-semibold text-primary hover:bg-muted"
                   >
                     Open <ExternalLink className="h-3 w-3" />
                   </Link>
+                  {linkedUserId && accountStatus !== "banned" && (
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="destructive"
+                      disabled={platformBan.isPending}
+                      onClick={() => {
+                        const reason = window.prompt("Reason for the Find-am platform ban:");
+                        if (!reason?.trim()) return toast.error("A reason is required.");
+                        platformBan.mutate({ userId: linkedUserId, reason: reason.trim() });
+                      }}
+                      className="h-6 rounded-full px-2 text-[11px]"
+                    >
+                      <Ban className="h-3 w-3" /> Platform ban
+                    </Button>
+                  )}
                 </div>
                 <div className="mt-2">
                   <Row label="Email" value={u.email} />
                   <Row label="Phone" value={u.phone} />
                   <Row label="Status" value={accountStatus} />
                   <Row label="Identity check" value={u.kyc_verified ? "Verified" : "Not verified"} />
-                  <Row label="Tasks posted" value={posted.length} />
-                  <Row label="Tasks working" value={working.length} />
-                  <Row label="Wallet" value={money(ctx?.wallet?.balance)} />
                   <Row label="Joined Find-am" value={when(u.created_at)} />
                 </div>
               </>

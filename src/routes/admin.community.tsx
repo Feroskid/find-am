@@ -9,9 +9,20 @@ import { RolesPanel } from "@/components/community/RolesPanel";
 import { CommunityUserPanel } from "@/components/admin/CommunityUserPanel";
 import { listCommunityRoles } from "@/lib/community.functions";
 import { listCommunityActions } from "@/lib/community-log.functions";
+import { normalizeRoleAssignments } from "@/lib/community-client";
 
 export const Route = createFileRoute("/admin/community")({
-  head: () => ({ meta: [{ title: "Community — Find-am Admin" }, { name: "robots", content: "noindex" }] }),
+  head: () => ({
+    meta: [
+      { title: "Community Moderation — Find-am Admin" },
+      { name: "description", content: "Review community reports, roles, account links, and moderator activity." },
+      { property: "og:title", content: "Community Moderation — Find-am Admin" },
+      { property: "og:description", content: "Review community reports, roles, account links, and moderator activity." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   component: AdminCommunityPage,
 });
 
@@ -124,9 +135,10 @@ function AdminCommunityPage() {
   });
 
   const rolePayload: any = (rolesQ.data as any)?.ok ? (rolesQ.data as any).data : null;
-  const roleRows: any[] = rolePayload?.roles ?? rolePayload?.members ?? rolePayload?.items ?? (Array.isArray(rolePayload) ? rolePayload : []);
-  const mods = roleRows.filter((r) => (r.role ?? r.level) !== "super_moderator").length;
-  const supers = roleRows.filter((r) => (r.role ?? r.level) === "super_moderator").length;
+  const roleRows = normalizeRoleAssignments(rolePayload);
+  const mods = roleRows.filter((r) => r.role === "moderator").length;
+  const supers = roleRows.filter((r) => r.role === "super_moderator").length;
+  const holders = new Set(roleRows.map((r) => r.username || r.userId).filter(Boolean)).size;
 
   if (!token) return null;
 
@@ -144,7 +156,7 @@ function AdminCommunityPage() {
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
         <Stat label="Moderators" value={rolesQ.isPending ? "…" : mods} />
         <Stat label="Super moderators" value={rolesQ.isPending ? "…" : supers} />
-        <Stat label="Role holders" value={rolesQ.isPending ? "…" : roleRows.length} />
+        <Stat label="Role holders" value={rolesQ.isPending ? "…" : holders} />
       </div>
 
       <div className="flex gap-1 border-b border-border overflow-x-auto">
@@ -163,12 +175,12 @@ function AdminCommunityPage() {
 
       {tab === "queue" && (
         <div className="community-scope rounded-2xl border border-border p-4">
-          <ModerationQueue token={token} fallbackSuper />
+          <ModerationQueue token={token} viewerLevel="admin" />
         </div>
       )}
       {tab === "team" && (
         <div className="community-scope rounded-2xl border border-border p-4">
-          <RolesPanel token={token} />
+          <RolesPanel token={token} viewerLevel="admin" />
         </div>
       )}
       {tab === "match" && <CommunityUserPanel token={token} />}
