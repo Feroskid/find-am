@@ -138,6 +138,7 @@ function AdminCommunityPage() {
   const roleRows = normalizeRoleAssignments(rolePayload);
   const mods = roleRows.filter((r) => r.role === "moderator").length;
   const supers = roleRows.filter((r) => r.role === "super_moderator").length;
+  const holders = new Set(roleRows.map((r) => r.username || r.userId).filter(Boolean)).size;
 
   if (!token) return null;
 
@@ -155,7 +156,7 @@ function AdminCommunityPage() {
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
         <Stat label="Moderators" value={rolesQ.isPending ? "…" : mods} />
         <Stat label="Super moderators" value={rolesQ.isPending ? "…" : supers} />
-        <Stat label="Role holders" value={rolesQ.isPending ? "…" : roleRows.length} />
+        <Stat label="Role holders" value={rolesQ.isPending ? "…" : holders} />
       </div>
 
       <div className="flex gap-1 border-b border-border overflow-x-auto">

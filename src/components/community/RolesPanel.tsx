@@ -78,7 +78,7 @@ export function RolesPanel({ token, viewerLevel = "super_moderator" }: { token: 
 
 
   const payload: any = q.data?.ok ? q.data.data : null;
-  const assignments = normalizeRoleAssignments(payload);
+  const assignments = normalizeRoleAssignments(payload).filter((assignment) => assignment.role !== "admin");
   const people = [...assignments.reduce((map, assignment) => {
     const key = assignment.username.toLowerCase() || assignment.userId || `unknown:${assignment.assignmentId ?? map.size}`;
     const current = map.get(key);

@@ -8,6 +8,7 @@ import { getCommunityProfile, communityAdminIdentity, communityAdminLookup } fro
 import { adminBanUser, adminUserContext, adminSearchUsers } from "@/lib/findtask.functions";
 import { avatarUrl } from "@/lib/community-avatars";
 import { Badges } from "@/components/community/CommunityShell";
+import { Button } from "@/components/ui/button";
 import { communityUserId, communityUsername, normalizeRoles, roleLabels, unwrapCommunityMember } from "@/lib/community-client";
 
 const when = (v: any) => (v ? new Date(v).toLocaleDateString() : "—");
@@ -245,18 +246,20 @@ export function CommunityUserPanel({ token, seedUsername, seedUserId }: { token:
                     Open <ExternalLink className="h-3 w-3" />
                   </Link>
                   {linkedUserId && accountStatus !== "banned" && (
-                    <button
+                    <Button
                       type="button"
+                      size="sm"
+                      variant="destructive"
                       disabled={platformBan.isPending}
                       onClick={() => {
                         const reason = window.prompt("Reason for the Find-am platform ban:");
                         if (!reason?.trim()) return toast.error("A reason is required.");
                         platformBan.mutate({ userId: linkedUserId, reason: reason.trim() });
                       }}
-                      className="inline-flex items-center gap-1 rounded-full bg-destructive px-2 py-0.5 text-[11px] font-semibold text-destructive-foreground disabled:opacity-50"
+                      className="h-6 rounded-full px-2 text-[11px]"
                     >
                       <Ban className="h-3 w-3" /> Platform ban
-                    </button>
+                    </Button>
                   )}
                 </div>
                 <div className="mt-2">

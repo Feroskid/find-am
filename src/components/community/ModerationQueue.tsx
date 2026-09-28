@@ -128,7 +128,7 @@ export function ModerationQueue({
     const slug = report.category_slug ?? report.thread?.category_slug ?? report.category?.slug ?? report.target?.category_slug;
     return typeof slug === "string" && normalizedScopes.includes(slug.toLowerCase());
   });
-  const openCount: number = payload?.open_count ?? (tab === "open" ? reports.length : 0);
+  const openCount: number = level === "moderator" ? (tab === "open" ? reports.length : 0) : payload?.open_count ?? (tab === "open" ? reports.length : 0);
   const member: any = memberQ.data?.ok ? ((memberQ.data.data as any).profile ?? memberQ.data.data) : null;
 
   if (q.isLoading) {
