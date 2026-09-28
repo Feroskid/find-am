@@ -60,7 +60,11 @@ function ModPage() {
     : c.isSuperMod
       ? "Super moderator dashboard"
       : "Moderator dashboard";
-  const viewerLevel = c.roles.includes("admin") ? "admin" : c.isSuperMod ? "super_moderator" : "moderator";
+  const viewerLevel: "admin" | "super_moderator" | "moderator" = c.roles.includes("admin")
+    ? "admin"
+    : c.roles.includes("super_moderator")
+      ? "super_moderator"
+      : "moderator";
   const categoryScopes = viewerLevel === "moderator" ? moderatorCategoryScopes(c.me) : [];
 
   return (
@@ -72,7 +76,7 @@ function ModPage() {
         </span>
       </div>
 
-      {c.isSuperMod && <RolesPanel token={c.token} viewerLevel={viewerLevel} />}
+      {viewerLevel !== "moderator" && <RolesPanel token={c.token} viewerLevel={viewerLevel} />}
 
       <ModerationQueue token={c.token} viewerLevel={viewerLevel} categoryScopes={categoryScopes} />
     </CommunityShell>
