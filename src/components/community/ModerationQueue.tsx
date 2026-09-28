@@ -75,6 +75,7 @@ export function ModerationQueue({
     target_type: "thread" | "post" | "member" | "report";
     target_id?: string;
     target_username?: string;
+    reason?: string;
   }) => void logFn({ data: { token, ...v } });
 
   const resolve = useMutation({
@@ -118,7 +119,6 @@ export function ModerationQueue({
   const denied = !!(q.data && !q.data.ok && (q.data.status === 401 || q.data.status === 403));
   const payload: any = q.data?.ok ? q.data.data : null;
   const allReports: any[] = payload?.reports ?? [];
-  const openCount: number = payload?.open_count ?? (tab === "open" ? reports.length : 0);
   const level = viewerLevel;
   const canSuspend = level === "super_moderator" || level === "admin";
   const normalizedScopes = categoryScopes.map((scope) => scope.toLowerCase());
@@ -128,6 +128,7 @@ export function ModerationQueue({
     const slug = report.category_slug ?? report.thread?.category_slug ?? report.category?.slug ?? report.target?.category_slug;
     return typeof slug === "string" && normalizedScopes.includes(slug.toLowerCase());
   });
+  const openCount: number = payload?.open_count ?? (tab === "open" ? reports.length : 0);
   const member: any = memberQ.data?.ok ? ((memberQ.data.data as any).profile ?? memberQ.data.data) : null;
 
   if (q.isLoading) {

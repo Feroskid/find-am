@@ -12,7 +12,17 @@ import { listCommunityActions } from "@/lib/community-log.functions";
 import { normalizeRoleAssignments } from "@/lib/community-client";
 
 export const Route = createFileRoute("/admin/community")({
-  head: () => ({ meta: [{ title: "Community — Find-am Admin" }, { name: "robots", content: "noindex" }] }),
+  head: () => ({
+    meta: [
+      { title: "Community Moderation — Find-am Admin" },
+      { name: "description", content: "Review community reports, roles, account links, and moderator activity." },
+      { property: "og:title", content: "Community Moderation — Find-am Admin" },
+      { property: "og:description", content: "Review community reports, roles, account links, and moderator activity." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   component: AdminCommunityPage,
 });
 

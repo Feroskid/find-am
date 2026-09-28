@@ -12,6 +12,17 @@ import { CommunityUserPanel } from "@/components/admin/CommunityUserPanel";
 import { useAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/admin/users")({
+  head: () => ({
+    meta: [
+      { title: "User Management — Find-am Admin" },
+      { name: "description", content: "Manage Find-am accounts and linked community profiles." },
+      { property: "og:title", content: "User Management — Find-am Admin" },
+      { property: "og:description", content: "Manage Find-am accounts and linked community profiles." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   component: AdminUsersPage,
 });
 
