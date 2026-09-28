@@ -9,6 +9,7 @@ import { RolesPanel } from "@/components/community/RolesPanel";
 import { CommunityUserPanel } from "@/components/admin/CommunityUserPanel";
 import { listCommunityRoles } from "@/lib/community.functions";
 import { listCommunityActions } from "@/lib/community-log.functions";
+import { normalizeRoleAssignments } from "@/lib/community-client";
 
 export const Route = createFileRoute("/admin/community")({
   head: () => ({ meta: [{ title: "Community — Find-am Admin" }, { name: "robots", content: "noindex" }] }),
@@ -124,9 +125,9 @@ function AdminCommunityPage() {
   });
 
   const rolePayload: any = (rolesQ.data as any)?.ok ? (rolesQ.data as any).data : null;
-  const roleRows: any[] = rolePayload?.roles ?? rolePayload?.members ?? rolePayload?.items ?? (Array.isArray(rolePayload) ? rolePayload : []);
-  const mods = roleRows.filter((r) => (r.role ?? r.level) !== "super_moderator").length;
-  const supers = roleRows.filter((r) => (r.role ?? r.level) === "super_moderator").length;
+  const roleRows = normalizeRoleAssignments(rolePayload);
+  const mods = roleRows.filter((r) => r.role === "moderator").length;
+  const supers = roleRows.filter((r) => r.role === "super_moderator").length;
 
   if (!token) return null;
 
@@ -163,12 +164,12 @@ function AdminCommunityPage() {
 
       {tab === "queue" && (
         <div className="community-scope rounded-2xl border border-border p-4">
-          <ModerationQueue token={token} fallbackSuper />
+          <ModerationQueue token={token} viewerLevel="admin" />
         </div>
       )}
       {tab === "team" && (
         <div className="community-scope rounded-2xl border border-border p-4">
-          <RolesPanel token={token} />
+          <RolesPanel token={token} viewerLevel="admin" />
         </div>
       )}
       {tab === "match" && <CommunityUserPanel token={token} />}

@@ -3,7 +3,7 @@ import { Shield, Loader2 } from "lucide-react";
 import { CommunityShell } from "@/components/community/CommunityShell";
 import { RolesPanel } from "@/components/community/RolesPanel";
 import { ModerationQueue } from "@/components/community/ModerationQueue";
-import { useCommunityMe } from "@/lib/community-client";
+import { moderatorCategoryScopes, useCommunityMe } from "@/lib/community-client";
 
 export const Route = createFileRoute("/community/moderation")({
   head: () => ({
@@ -56,6 +56,8 @@ function ModPage() {
     : c.isSuperMod
       ? "Super moderator dashboard"
       : "Moderator dashboard";
+  const viewerLevel = c.roles.includes("admin") ? "admin" : c.isSuperMod ? "super_moderator" : "moderator";
+  const categoryScopes = viewerLevel === "moderator" ? moderatorCategoryScopes(c.me) : [];
 
   return (
     <CommunityShell>
@@ -66,9 +68,9 @@ function ModPage() {
         </span>
       </div>
 
-      {c.isSuperMod && <RolesPanel token={c.token} />}
+      {c.isSuperMod && <RolesPanel token={c.token} viewerLevel={viewerLevel} />}
 
-      <ModerationQueue token={c.token} fallbackSuper={c.isSuperMod} />
+      <ModerationQueue token={c.token} viewerLevel={viewerLevel} categoryScopes={categoryScopes} />
     </CommunityShell>
   );
 }
