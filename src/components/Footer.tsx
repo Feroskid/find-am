@@ -30,7 +30,7 @@ const COLS: { title: string; links: { to: string; label: string }[] }[] = [
       { to: "/map", label: "Live task map" },
         { to: "/faq", label: "FAQ" },
       { to: "/community", label: "Community" },
-      { to: "/coming-soon", label: "Earn money" },
+      { to: "/register", label: "Earn money" },
     ],
   },
   {
