@@ -4,7 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useMutation } from "@tanstack/react-query";
 import { Loader2, MessagesSquare, Search, ExternalLink, AlertTriangle, Ban } from "lucide-react";
 import { toast } from "sonner";
-import { getCommunityProfile, communityAdminIdentity, communityAdminLookup } from "@/lib/community.functions";
+import { getCommunityProfile, communityAdminIdentity, communityAdminLookup, searchCommunity } from "@/lib/community.functions";
 import { adminBanUser, adminUserContext, adminSearchUsers } from "@/lib/findtask.functions";
 import { avatarUrl } from "@/lib/community-avatars";
 import { Badges } from "@/components/community/CommunityShell";
@@ -33,6 +33,7 @@ export function CommunityUserPanel({ token, seedUsername, seedUserId }: { token:
   const lookupFn = useServerFn(communityAdminLookup);
   const ctxFn = useServerFn(adminUserContext);
   const searchFn = useServerFn(adminSearchUsers);
+  const commSearchFn = useServerFn(searchCommunity);
   const platformBanFn = useServerFn(adminBanUser);
 
   const [mode, setMode] = useState<"username" | "userId">(seedUserId && !seedUsername ? "userId" : "username");
@@ -77,6 +78,20 @@ export function CommunityUserPanel({ token, seedUsername, seedUserId }: { token:
           note = "This account isn't allowed to look up community identities.";
         } else {
           note = idr.error;
+        }
+        // Community search links username → Find-am user id; use exact match.
+        if (!userId) {
+          const cs: any = await commSearchFn({ data: { q: username, token } });
+          if (cs.ok) {
+            const d = cs.data?.data ?? cs.data;
+            const pools: any[] = [d?.users, d?.members, d?.profiles, d?.results, d?.items, Array.isArray(d) ? d : null].filter(Array.isArray) as any[];
+            const lower = username.toLowerCase();
+            for (const pool of pools) {
+              const hit = pool.find((r: any) => (communityUsername(r) ?? "").toLowerCase() === lower);
+              const id = hit ? communityUserId(hit) : null;
+              if (id) { userId = id; note = null; break; }
+            }
+          }
         }
       }
 

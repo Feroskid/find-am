@@ -43,7 +43,7 @@ export function MainMenu() {
         { to: "/community", label: "Help topics", chevron: true },
         { to: "/faq", label: "FAQ" },
         { to: "/login", label: "Log in" },
-        { to: "/coming-soon", label: "Sign up" },
+        { to: "/register", label: "Sign up" },
       ];
 
   return (

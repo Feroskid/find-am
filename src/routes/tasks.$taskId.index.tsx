@@ -31,14 +31,14 @@ export const Route = createFileRoute("/tasks/$taskId/")({
   notFoundComponent: TaskNotFound,
 });
 
-function TaskError({ error, reset }: { error: Error; reset: () => void }) {
+function TaskError({ error, reset }: { error: unknown; reset: () => void }) {
   const router = useRouter();
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <TaskHeader />
       <main className="mx-auto w-full max-w-xl px-4 py-16 text-center">
         <h1 className="font-display text-2xl text-ink">Something went wrong</h1>
-        <p className="mt-2 text-sm text-muted-foreground">{error?.message ?? "We couldn't load this task."}</p>
+        <p className="mt-2 text-sm text-muted-foreground">{(error as Error | undefined)?.message ?? "We couldn't load this task."}</p>
         <button
           onClick={() => { router.invalidate(); reset(); }}
           className="mt-6 inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-bold text-primary-foreground"
