@@ -31,7 +31,7 @@ export const Route = createFileRoute("/tasks/$taskId/")({
   notFoundComponent: TaskNotFound,
 });
 
-function TaskError({ error, reset }: { error: Error; reset: () => void }) {
+function TaskError({ error, reset }: { error: unknown; reset: () => void }) {
   const router = useRouter();
   return (
     <div className="min-h-screen flex flex-col bg-background">
