@@ -323,23 +323,7 @@ function TasksHome() {
       {/* ARTICLES */}
       <section className="mx-auto max-w-7xl w-full px-4 sm:px-6 py-16">
         <h2 className="font-display text-3xl sm:text-4xl text-ink">Articles, stories & more</h2>
-        <div className="mt-8 grid md:grid-cols-3 gap-6">
-          {[
-            { tag: "CASE STUDY", title: "How Edible Blooms scales operations with on-demand support", body: "Built a smarter, leaner staffing approach across every city it serves." },
-            { tag: "GUIDE", title: "Top hay fever hacks for the rainy season", body: "Keep those pesky allergies at bay with these tips." },
-            { tag: "MONEY", title: "How to save on electricity bills", body: "Cost of living going up — keep your energy bills down with these tips." },
-          ].map((a) => (
-            <article key={a.title} className="rounded-2xl border border-border bg-card overflow-hidden hover:shadow-md transition">
-              <div className="h-40 bg-gradient-to-br from-primary/25 via-sky-400/20 to-emerald-400/25" />
-              <div className="p-5">
-                <div className="text-[10px] font-bold uppercase tracking-widest text-primary">{a.tag}</div>
-                <h3 className="mt-1 font-display text-lg text-ink leading-snug">{a.title}</h3>
-                <p className="mt-2 text-sm text-muted-foreground line-clamp-2">{a.body}</p>
-                <button className="mt-3 text-sm font-bold text-primary hover:underline">Read more →</button>
-              </div>
-            </article>
-          ))}
-        </div>
+        <NewsGrid />
       </section>
 
       <Footer />
