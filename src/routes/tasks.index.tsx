@@ -12,6 +12,7 @@ import { Footer } from "@/components/Footer";
 import { TaskCard, toCardData } from "@/components/TaskCard";
 import { useAuth } from "@/lib/auth";
 import { listTasks } from "@/lib/findtask.functions";
+import { getNewsFeed } from "@/lib/news.functions";
 
 export const Route = createFileRoute("/tasks/")({
   head: () => ({
@@ -98,7 +99,7 @@ function TasksHome() {
             <Link to="/post-task" className="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-full bg-primary px-7 py-3.5 text-sm font-bold text-primary-foreground shadow-lg hover:opacity-90">
               Post your task for free <ArrowRight className="h-4 w-4" />
             </Link>
-            <Link to="/coming-soon" className="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-full border-2 border-ink/80 px-7 py-3.5 text-sm font-bold text-ink hover:bg-ink hover:text-background">
+            <Link to="/register" className="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-full border-2 border-ink/80 px-7 py-3.5 text-sm font-bold text-ink hover:bg-ink hover:text-background">
               Earn money as a Tasker
             </Link>
           </div>
@@ -273,7 +274,7 @@ function TasksHome() {
                 </li>
               ))}
             </ul>
-            <Link to="/coming-soon" className="mt-7 inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-bold text-primary-foreground hover:opacity-90">
+            <Link to="/register" className="mt-7 inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-bold text-primary-foreground hover:opacity-90">
               Earn money as a Tasker
             </Link>
           </div>
@@ -508,3 +509,31 @@ function RandomTasksRail() {
 }
 
 
+
+function NewsGrid() {
+  const q = useQuery({ queryKey: ["news-feed"], queryFn: () => getNewsFeed(), staleTime: 3600_000 });
+  if (q.isLoading) return <div className="mt-8 py-10 text-center"><Loader2 className="h-5 w-5 animate-spin inline text-muted-foreground" /></div>;
+  const items = q.data?.items ?? [];
+  if (!items.length) return <p className="mt-8 text-sm text-muted-foreground">News is unavailable right now. Please check back later.</p>;
+  return (
+    <div className="mt-8 grid md:grid-cols-3 gap-6">
+      {items.map((a) => (
+        <article key={a.link} className="rounded-2xl border border-border bg-card overflow-hidden hover:shadow-md transition flex flex-col">
+          {a.image ? (
+            <img src={a.image} alt="" loading="lazy" className="h-40 w-full object-cover" />
+          ) : (
+            <div className="h-40 bg-gradient-to-br from-primary/25 via-primary/10 to-accent" />
+          )}
+          <div className="p-5 flex-1 flex flex-col">
+            <div className="text-[10px] font-bold uppercase tracking-widest text-primary">
+              {a.category}{a.date ? ` · ${new Date(a.date).toLocaleDateString()}` : ""}
+            </div>
+            <h3 className="mt-1 font-display text-lg text-ink leading-snug">{a.title}</h3>
+            <p className="mt-2 text-sm text-muted-foreground line-clamp-2">{a.summary}</p>
+            <a href={a.link} target="_blank" rel="noopener noreferrer" className="mt-auto pt-3 text-sm font-bold text-primary hover:underline">Read more →</a>
+          </div>
+        </article>
+      ))}
+    </div>
+  );
+}
