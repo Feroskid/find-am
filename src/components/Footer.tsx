@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { Instagram, Youtube } from "lucide-react";
+import { InstallAppCard } from "@/components/InstallAppCard";
 
 const XIcon = () => (
   <svg viewBox="0 0 24 24" aria-hidden="true" className="h-4 w-4" fill="currentColor">
@@ -87,6 +88,7 @@ export function Footer() {
   return (
     <footer className="bg-footer text-footer-foreground mt-16">
       <div className="mx-auto max-w-7xl px-5 sm:px-6 py-12">
+        <InstallAppCard className="mb-10 max-w-md border border-background/15" />
         <div className="grid gap-10 md:grid-cols-5 text-sm">
           {COLS.map((c) => (
             <div key={c.title}>
