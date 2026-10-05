@@ -1,4 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { InstallAppCard } from "@/components/InstallAppCard";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
@@ -135,6 +136,7 @@ function ProfilePage() {
     <div className="min-h-screen flex flex-col bg-background">
       <TaskHeader />
       <main className="mx-auto w-full max-w-5xl px-4 sm:px-6 py-8 flex-1">
+        <InstallAppCard dismissible className="mb-6 max-w-md" />
         <h1 className="text-3xl font-bold tracking-tight inline-flex items-center gap-2">
           <User className="h-7 w-7" /> Your profile
         </h1>

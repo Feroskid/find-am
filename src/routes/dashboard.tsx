@@ -1,4 +1,5 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
+import { InstallAppCard } from "@/components/InstallAppCard";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
@@ -120,6 +121,7 @@ function Dashboard() {
     <div className="min-h-screen flex flex-col bg-background">
       <TaskHeader />
       <main className="mx-auto w-full max-w-7xl px-4 sm:px-6 py-8 flex-1">
+        <InstallAppCard dismissible className="mb-6 max-w-md" />
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
           <div>
             <h1 className="font-display text-3xl sm:text-4xl text-ink">Welcome back, {displayName}</h1>
