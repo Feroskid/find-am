@@ -20,7 +20,7 @@ const SECTIONS = [
   ["eligibility", "3. Eligibility"],
   ["accounts", "4. User accounts"],
   ["tasks", "5. Posted tasks and services"],
-  ["payments", "6. Payments, escrow, and fees"],
+  ["payments", "6. Payments, Held Funds, and fees"],
   ["liability", "7. Liability, disclaimers & indemnity"],
   ["disputes", "8. Dispute resolution"],
   ["data", "9. Data protection and privacy"],
@@ -105,7 +105,7 @@ function Terms() {
             <p><strong>(e) Licence.</strong> By submitting User Content, you grant Integer Tech Ltd a non-exclusive, royalty-free, worldwide licence to host, store, display, and use that content as necessary to operate and provide the Platform.</p>
           </section>
 
-          <section id="payments" className="mt-6"><h2>6. Payments, escrow, and fees</h2>
+          <section id="payments" className="mt-6"><h2>6. Payments, Held Funds, and fees</h2>
             <h3>6.1 Pricing</h3>
             <p>The Employer sets the compensation payable for a Task (the "Task Price") when posting the Task.</p>
             <h3>6.2 Platform Held Funding</h3>
@@ -155,7 +155,15 @@ function Terms() {
           </section>
 
           <section id="ip" className="mt-6"><h2>10. Intellectual property</h2>
+            <h3>10.1 Platform Intellectual Property</h3>
             <p>All Platform content, trademarks, software, source code, designs, logos, graphics, and intellectual property rights remain the exclusive property of Integer Tech Ltd unless otherwise stated. Users are granted a limited, revocable, non-transferable licence to access and use the Platform solely for lawful purposes. No User may reproduce, modify, reverse engineer, distribute, or commercially exploit Platform content without prior written consent.</p>
+            <h3>10.2 Task Deliverables</h3>
+            <p><strong>10.2.1</strong> Unless the Task description states otherwise, on release of the full Task Price to the Tasker, the Tasker assigns to the Poster all intellectual property rights in the deliverables created specifically for that Task.</p>
+            <p><strong>10.2.2</strong> Until that payment is released, all rights remain with the Tasker. If the Task Price is refunded to the Poster in FULL, no rights transfer occur, and the Poster must stop using the deliverables.</p>
+            <p><strong>10.2.3</strong> The Tasker keeps ownership of pre-existing materials, tools, templates and know-how, and grants the Poster a non-exclusive, perpetual licence to use them as part of the deliverables.</p>
+            <p><strong>10.2.4</strong> Unless the Poster requests confidentiality in the Task description, the Tasker may show the deliverables in a portfolio.</p>
+            <p><strong>10.2.5</strong> The Tasker confirms the deliverables are original and do not knowingly infringe third-party rights. The Poster confirms they have the rights to any materials they supply.</p>
+            <p><strong>10.2.6</strong> Integer Tech Ltd claims no ownership of deliverables and only uses them under Section 5.3(e) to operate the Platform.</p>
           </section>
 
           <section id="termination" className="mt-6"><h2>11. Termination</h2>
