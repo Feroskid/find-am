@@ -1,4 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { displayTaskStatus } from "@/lib/task-status";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
@@ -53,7 +54,7 @@ function MyTasksPage() {
       remote: !!(row.is_remote ?? t.is_remote),
       loc: row.location_text ?? row.location ?? t.location_text ?? t.location,
       deadline: row.deadline ?? t.deadline,
-      status: String(row.status ?? t.task_status ?? t.status ?? "open").toLowerCase(),
+      status: displayTaskStatus({ ...t, ...row, status: row.status ?? t.task_status ?? t.status }),
       offers: row.offers_count ?? row.applications_count ?? t.offers_count ?? t.applications_count ?? 0,
       groupId: row.task_group_id ?? t.task_group_id ?? null,
       groupIndex: row.group_index ?? t.group_index ?? null,
@@ -217,6 +218,11 @@ function MyTasksPage() {
                             {Number(n.offers) > 0 && <span>· {n.offers} offer{Number(n.offers) === 1 ? "" : "s"}</span>}
                           </div>
                         </Link>
+                        {(n.status === "cancelled" || n.status === "canceled") && (
+                          <Link to="/post-task" search={{ from: String(n.id) } as any} className="mt-2 inline-flex rounded-full border border-primary px-4 py-1.5 text-xs font-bold text-primary hover:bg-primary/5">
+                            Post Task Again
+                          </Link>
+                        )}
                       </li>
                     ))}
                   </>

@@ -10,16 +10,18 @@ import { toast } from "sonner";
 import { TaskHeader } from "@/components/TaskHeader";
 import { LocationPicker, type LatLng } from "@/components/LocationPicker";
 import { useAuth } from "@/lib/auth";
-import { getCategories, createTask } from "@/lib/findtask.functions";
+import { getCategories, createTask, getTask } from "@/lib/findtask.functions";
 import { computeFees, formatNaira } from "@/lib/fees";
 
 export const Route = createFileRoute("/post-task")({
+  validateSearch: (s: Record<string, unknown>): { from?: string } =>
+    s.from != null && String(s.from) ? { from: String(s.from) } : {},
   head: () => ({ meta: [
       { name: "robots", content: "noindex, nofollow" },{ title: "Post a task — Find-task" }] }),
   component: PostTaskPage,
 });
 
-const MIN_BUDGET = 2000;
+const MIN_BUDGET = 1000;
 
 type Milestone = { title: string; amount: string; description: string; due_date: string };
 
@@ -53,6 +55,53 @@ function PostTaskPage() {
   const [deadline, setDeadline] = useState("");
   const [isMilestone, setIsMilestone] = useState(false);
   const [milestones, setMilestones] = useState<Milestone[]>([]);
+
+  // "Post Task Again": prefill the form from a previous (cancelled) task.
+  const { from } = Route.useSearch();
+  const fetchTask = useServerFn(getTask);
+  const [prefilled, setPrefilled] = useState(false);
+  const fromQ = useQuery({
+    queryKey: ["task", from, "repost"],
+    queryFn: () => (fetchTask as any)({ data: { taskId: from } }),
+    enabled: !!from,
+  });
+  useEffect(() => {
+    if (prefilled || !fromQ.data?.ok) return;
+    const d: any = fromQ.data.data;
+    const t: any = d?.task ?? d;
+    if (!t) return;
+    // Wait for categories so we can place the category in the right dropdown.
+    const catId = Number(t.category_id ?? t.category?.category_id ?? 0) || null;
+    if (catId && categories.length === 0) return;
+    setTitle(String(t.title ?? ""));
+    setDescription(String(t.description ?? ""));
+    setBudget(t.budget != null ? String(Math.round(Number(t.budget))) : "");
+    const remote = !!Number(t.is_remote ?? 0) || t.is_remote === true;
+    setIsRemote(remote);
+    if (!remote) {
+      setLocation(String(t.location_text ?? t.location ?? ""));
+      const lat = Number(t.location_lat ?? t.lat), lng = Number(t.location_lng ?? t.lng);
+      if (Number.isFinite(lat) && Number.isFinite(lng) && (lat || lng)) setCoords({ lat, lng } as LatLng);
+    }
+    if (catId) {
+      const parent = categories.find((c) => c.category_id === catId);
+      if (parent) setParentCat(catId);
+      else {
+        const owner = categories.find((c) => (c.subcategories ?? []).some((sc: any) => sc.category_id === catId));
+        if (owner) { setParentCat(owner.category_id); setSubCat(catId); }
+      }
+    }
+    const ms: any[] = t.milestones ?? d?.milestones ?? [];
+    if (Array.isArray(ms) && ms.length) {
+      setIsMilestone(true);
+      setMilestones(ms.map((m) => ({
+        title: String(m.title ?? ""), amount: String(m.amount ?? ""),
+        description: String(m.description ?? ""), due_date: "",
+      })));
+    }
+    setPrefilled(true);
+    toast.message("Details copied from your cancelled task. Review, edit and publish.");
+  }, [fromQ.data, categories, prefilled]);
 
   const selectedParent = categories.find((c) => c.category_id === parentCat);
   const subOptions: any[] = selectedParent?.subcategories ?? [];

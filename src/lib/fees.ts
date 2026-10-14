@@ -13,7 +13,7 @@ export interface FeeBreakdown {
   taskerReceives: number;
 }
 
-export const MIN_TASK_BUDGET = 2000;
+export const MIN_TASK_BUDGET = 1000;
 export const FIXED_FEE = 100;
 export const SERVICE_FEE_RATE = 0.10;
 export const VAT_RATE = 0.075;

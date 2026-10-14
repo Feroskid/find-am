@@ -17,7 +17,7 @@ import {
 import { useAuth } from "@/lib/auth";
 import { FeeBreakdown } from "@/components/FeeBreakdown";
 import { computeFees, formatNaira } from "@/lib/fees";
-import { isTaskClosed, closedTaskLabel } from "@/lib/task-status";
+import { isTaskClosed, closedTaskLabel, displayTaskStatus } from "@/lib/task-status";
 
 export const Route = createFileRoute("/tasks/$taskId/")({
   head: ({ params }) => ({
@@ -293,7 +293,7 @@ function TaskDetail() {
     },
   });
 
-  const status = String(task?.status ?? "open").toLowerCase();
+  const status = task ? displayTaskStatus(task) : "open";
   // A still-open task whose deadline has passed is expired: nobody can offer on it.
   const isExpired =
     status === "expired" ||
@@ -410,14 +410,14 @@ function TaskDetail() {
           <div className="mt-8 text-muted-foreground">No task data.</div>
         ) : status === "disputed" ? (
           <DisputedTaskView task={task} taskId={taskId} isParticipant={isPoster || !!myApplication} />
-        ) : isTaskClosed({ status: task.status, deadline: task.deadline }) && !isPoster ? (
+        ) : isTaskClosed(task) && !isPoster ? (
 
           <div className="mx-auto mt-10 max-w-md rounded-2xl border border-border bg-card p-8 text-center">
             <h1 className="font-display text-2xl text-ink">
-              This task is {closedTaskLabel({ status: task.status, deadline: task.deadline }).toLowerCase()}
+              This task is {closedTaskLabel(task).toLowerCase()}
             </h1>
             <p className="mt-2 text-sm text-muted-foreground">
-              {closedTaskLabel({ status: task.status, deadline: task.deadline }) === "Cancelled"
+              {closedTaskLabel(task) === "Cancelled"
                 ? "The poster cancelled this task, so it can no longer be opened or bid on."
                 : "The deadline for this task has passed, so it can no longer be opened or bid on."}
             </p>
@@ -675,6 +675,11 @@ function TaskDetail() {
                     {useWorkspace && (
                       <Link to="/tasks/$taskId/workspace" params={{ taskId }} search={{} as any} className="block w-full rounded-full border border-border py-3 text-sm font-bold hover:bg-muted">
                         Open workspace
+                      </Link>
+                    )}
+                    {(status === "cancelled" || status === "canceled") && (
+                      <Link to="/post-task" search={{ from: taskId } as any} className="block w-full rounded-full bg-primary py-3 text-sm font-bold text-primary-foreground hover:opacity-90">
+                        Post Task Again
                       </Link>
                     )}
                     {status === "open" ? (
