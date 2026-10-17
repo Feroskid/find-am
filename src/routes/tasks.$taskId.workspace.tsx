@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Loader2, ArrowLeft, Send, CheckCircle2, AlertTriangle, Star, Banknote, MapPin, Navigation, Flag, Paperclip, X } from "lucide-react";
+import { Loader2, ArrowLeft, Send, CheckCircle2, AlertTriangle, Star, Banknote, MapPin, Navigation, Flag, Paperclip, X, Reply } from "lucide-react";
 import { toast } from "sonner";
 import { TaskHeader } from "@/components/TaskHeader";
 import { useAuth } from "@/lib/auth";
