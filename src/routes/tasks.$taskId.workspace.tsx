@@ -58,6 +58,7 @@ function Attachment({ url }: { url: string }) {
 function WorkspacePage() {
   const { taskId } = Route.useParams();
   const { with: withTasker, dispute: disputeFlag } = Route.useSearch();
+  const [replyingTo, setReplyingTo] = useState<any | null>(null);
   const { token, ready, user } = useAuth();
   const navigate = useNavigate();
   useEffect(() => {
@@ -150,11 +151,13 @@ function WorkspacePage() {
         }
       }
       const text = draft.trim() || (attachment_url ? "📎 Attachment" : "");
-      return sFn({ data: { taskId, message_text: text, attachment_url, recipient_id: withTasker, token: token! } });
+      const reply_to_id = replyingTo ? (replyingTo.message_id ?? replyingTo.id ?? null) : null;
+      return sFn({ data: { taskId, message_text: text, attachment_url, recipient_id: withTasker, reply_to_id, token: token! } });
     },
     onSuccess: (r) => {
       if (r.ok) {
         setDraft("");
+        setReplyingTo(null);
         setPendingFile(null);
         if (fileRef.current) fileRef.current.value = "";
         msgsQ.refetch();
@@ -281,26 +284,59 @@ function WorkspacePage() {
               const isSystem = m.is_system === 1 || m.is_system === true;
               const text = m.message_text ?? m.body ?? m.message ?? m.text ?? "";
               const attachment = m.attachment_url ?? m.attachment ?? m.media_url ?? null;
+              const key = m.message_id ?? m.id ?? i;
+              const divider = m.created_at && needsDivider(rawMessages[i - 1], m) ? (
+                <div className="flex justify-center my-2">
+                  <span className="rounded-full bg-background border border-border px-3 py-0.5 text-[11px] font-medium text-muted-foreground">{dayLabel(m.created_at)}</span>
+                </div>
+              ) : null;
 
               // System/opener messages render as a neutral centered pill, not attributed to anyone.
               if (isSystem) {
                 return (
-                  <div key={m.message_id ?? m.id ?? i} className="flex justify-center my-1">
-                    <span className="rounded-full bg-muted px-3 py-1 text-[11px] text-muted-foreground text-center max-w-[85%]">
-                      {text}
-                    </span>
+                  <div key={key}>
+                    {divider}
+                    <div className="flex justify-center my-1">
+                      <span className="rounded-full bg-muted px-3 py-1 text-[11px] text-muted-foreground text-center max-w-[85%]">
+                        {text}
+                      </span>
+                    </div>
                   </div>
                 );
               }
 
               const senderId = m.sender_id ?? m.user_id ?? m.from;
               const mine = senderId !== undefined && String(senderId) === String(myId);
+              const hasReply = m.reply_to_id != null;
+              const quote = m.reply_text ? truncate(String(m.reply_text), 80) : m.reply_attachment ? "📎 Attachment" : "Original message";
               return (
-                <div key={m.message_id ?? m.id ?? i} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
-                  <div className={`max-w-[75%] rounded-2xl px-3.5 py-2 text-sm ${mine ? "bg-primary text-primary-foreground" : "bg-background border border-border"}`}>
-                    <div className="whitespace-pre-wrap break-words">{text}</div>
-                    {attachment && <Attachment url={String(attachment)} />}
-                    {m.created_at && <div className={`mt-0.5 text-[10px] ${mine ? "text-primary-foreground/70" : "text-muted-foreground"}`}>{new Date(m.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</div>}
+                <div key={key}>
+                  {divider}
+                  <div className={`group flex items-center gap-1 ${mine ? "flex-row-reverse" : ""}`}>
+                    <div
+                      title={m.created_at ? new Date(m.created_at).toLocaleString() : undefined}
+                      className={`max-w-[75%] rounded-2xl px-3.5 py-2 text-sm ${mine ? "bg-primary text-primary-foreground" : "bg-background border border-border"}`}
+                    >
+                      {hasReply && (
+                        <div className={`mb-1 rounded-lg border-l-2 px-2 py-1 text-xs ${mine ? "border-primary-foreground/60 bg-primary-foreground/10" : "border-primary bg-muted"}`}>
+                          <div className="font-semibold">{m.reply_sender_name ?? "Message"}</div>
+                          <div className="opacity-80">{quote}</div>
+                        </div>
+                      )}
+                      <div className="whitespace-pre-wrap break-words">{text}</div>
+                      {attachment && <Attachment url={String(attachment)} />}
+                      {m.created_at && <div className={`mt-0.5 text-[10px] ${mine ? "text-primary-foreground/70" : "text-muted-foreground"}`}>{new Date(m.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</div>}
+                    </div>
+                    {!messagingClosed && (
+                      <button
+                        type="button"
+                        onClick={() => setReplyingTo(m)}
+                        aria-label="Reply"
+                        className="rounded-full p-1.5 text-muted-foreground opacity-60 hover:bg-muted hover:text-foreground group-hover:opacity-100"
+                      >
+                        <Reply className="h-3.5 w-3.5" />
+                      </button>
+                    )}
                   </div>
                 </div>
               );
@@ -313,6 +349,18 @@ function WorkspacePage() {
             </div>
           ) : (
             <div className="border-t border-border">
+              {replyingTo && (
+                <div className="flex items-center gap-2 border-b border-border bg-muted/40 px-3 py-2 text-xs">
+                  <Reply className="h-3.5 w-3.5 shrink-0 text-primary" />
+                  <div className="min-w-0 flex-1">
+                    <div className="font-semibold text-foreground">Replying to {senderLabel(replyingTo)}</div>
+                    <div className="truncate text-muted-foreground">{msgSnippet(replyingTo)}</div>
+                  </div>
+                  <button type="button" aria-label="Cancel reply" onClick={() => setReplyingTo(null)} className="text-muted-foreground hover:text-foreground">
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              )}
               {pendingFile && (
                 <div className="flex items-center gap-2 px-3 pt-3 text-xs text-muted-foreground">
                   <Paperclip className="h-3.5 w-3.5" />

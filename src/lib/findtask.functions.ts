@@ -361,6 +361,7 @@ export const sendMessage = createServerFn({ method: "POST" })
       message_text: z.string().min(1).max(4000),
       attachment_url: z.string().url().max(2048).optional(),
       recipient_id: z.string().optional(),
+      reply_to_id: z.union([z.string(), z.number()]).nullable().optional(),
       token: Token,
     }).parse(i),
   )
