@@ -16,6 +16,36 @@ import { uploadTaskMedia } from "@/lib/media.functions";
 import { submitSupportTicket } from "@/lib/support.functions";
 import { MilestoneActions } from "@/components/MilestoneActions";
 
+function dayLabel(iso: string) {
+  const d = new Date(iso);
+  const today = new Date();
+  const yesterday = new Date();
+  yesterday.setDate(today.getDate() - 1);
+  const same = (a: Date, b: Date) => a.toDateString() === b.toDateString();
+  if (same(d, today)) return "Today";
+  if (same(d, yesterday)) return "Yesterday";
+  return d.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", year: "numeric" });
+}
+
+function needsDivider(prev: any, cur: any) {
+  if (!prev?.created_at) return true;
+  return new Date(prev.created_at).toDateString() !== new Date(cur.created_at).toDateString();
+}
+
+function truncate(s: string, n: number) {
+  return s.length > n ? `${s.slice(0, n).trimEnd()}…` : s;
+}
+
+function msgSnippet(m: any) {
+  const t = String(m?.message_text ?? m?.body ?? m?.text ?? "").trim();
+  if (!t || (t === "📎 Attachment" && m?.attachment_url)) return m?.attachment_url ? "📎 Attachment" : "";
+  return truncate(t.replace(/\s+/g, " "), 80);
+}
+
+function senderLabel(m: any) {
+  return m?.sender_name ?? m?.sender_username ?? "this message";
+}
+
 
 export const Route = createFileRoute("/tasks/$taskId/workspace")({
   validateSearch: (s: Record<string, unknown> = {}) => ({
